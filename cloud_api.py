@@ -66,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
     def dispatch(self, method):
         password = os.environ.get('SIGNALAS_ACCESS_PASSWORD', '')
         if len(password) < 16:
-            self.send({'error': 'Vercel aplinkoje reikia nustatyti SIGNALAS_ACCESS_PASSWORD (bent 16 ženklų).', 'configured': False}, 503)
+            self.send({'error': 'Vercel aplinkoje reikia nustatyti SIGNALAS_ACCESS_PASSWORD (bent 16 ženklų).', 'configured': False, 'reason': 'access_password_missing' if not password else 'access_password_too_short'}, 503)
             return
         route, args = self.route()
         cookies = SimpleCookie()
