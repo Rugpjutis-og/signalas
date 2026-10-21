@@ -72,7 +72,6 @@ def bounds(packet, period=None, root=ROOT, *, start_date=None, end_date=None):
 
 
 def store_period(end_date, root=ROOT, *, start_date=None):
-    from integrations import private_json
     if start_date is None:
         # Backwards-compatible end-only clients retain their saved duration.
         first, last = bounds({}, None, root) if (root / "var/dashboard-period.json").exists() else (None, None)
@@ -80,7 +79,12 @@ def store_period(end_date, root=ROOT, *, start_date=None):
         parsed = date.fromisoformat(end_date)
         start_date = (parsed - timedelta(days=duration - 1)).isoformat()
     calendar_range(start_date, end_date)  # Validate before changing the saved selection.
-    private_json(root / "var/dashboard-period.json", {"start_date": start_date, "end_date": end_date})
+    value = {"start_date": start_date, "end_date": end_date}
+    if hasattr(root, 'write'):
+        root.write('dashboard-period.json', value)
+    else:
+        from integrations import private_json
+        private_json(root / "var/dashboard-period.json", value)
 
 
 def coverage(packet, start, end):
@@ -97,6 +101,8 @@ def scoped(records, start, end):
 
 
 def store_context(value, root=ROOT):
+    if hasattr(root, 'save_context'):
+        return root.save_context(value)
     from integrations import private_json
     value = context_data(value)
     path = root / "var/live-context.json"

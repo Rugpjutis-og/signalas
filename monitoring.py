@@ -70,6 +70,8 @@ def _instant(value):
 
 
 def status(root=ROOT, *, collected_at=None, now=None):
+    if hasattr(root, 'monitoring_status'):
+        return root.monitoring_status(collected_at=collected_at, now=now)
     root = Path(root)
     now = now or datetime.now(timezone.utc)
     reason = None
