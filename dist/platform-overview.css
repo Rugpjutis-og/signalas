@@ -1,0 +1,54 @@
+body.platform-view .search-field,body.platform-view .select-wrap:has(#theme),body.platform-view .status-select,body.platform-view #theme-scope,body.platform-view #active-filter,body.platform-view #kpis,body.platform-view #export-button,body.platform-view #analysis-context-note{display:none}
+body.platform-view .toolbar{justify-content:flex-end}
+.platform-scope{font-size:11px;line-height:1.85;color:#75839a;margin:8px 0 22px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 13px}
+.platform-mode{padding:5px 9px;background:#f1edff;color:#8160ba;border:1px solid #e6dcfa;border-radius:5px;font-size:10px;font-weight:550}
+.platform-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch;margin-bottom:24px}
+.platform-category{background:#f1f2f8;border-color:#e0e4ef;overflow:hidden}
+.platform-category-heading{min-height:70px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(115deg,#9275e7,#b394f5);color:#fff}
+.platform-category.likes .platform-category-heading{background:linear-gradient(115deg,#7484ee,#9fa5fa)}
+.platform-category.shares .platform-category-heading{background:linear-gradient(115deg,#d77ab8,#eaa4d0)}
+.platform-category-heading h2{font-size:15px;font-weight:600;line-height:1.4;letter-spacing:-.2px;margin:0}
+.platform-category-heading svg{flex-shrink:0;opacity:.9}
+.platform-category-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+.platform-post{padding:17px 16px;background:white;border:1px solid #e8ebf4;border-radius:11px;min-width:0;box-shadow:0 2px 6px #1d2c4504}
+.platform-post-meta{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;font-size:11px;line-height:1.65;color:#8591a4;margin-bottom:13px}
+.platform-post-meta strong{color:#34435c;font-size:12px;overflow-wrap:anywhere}
+.platform-post-meta time{font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.platform-counter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;background:#f1ecff;border-radius:6px;color:#9270ce;font-size:10px;margin-bottom:13px}
+.likes .platform-counter{background:#edf0ff;color:#6574c9}.shares .platform-counter{background:#fbeef7;color:#b974a3}
+.platform-counter strong{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.source-text{font-size:12px;line-height:1.85;color:#4b5970;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 15px}
+.source-full summary{font-size:11px;color:#6173c5;cursor:pointer;line-height:1.8;margin:4px 0 13px;width:fit-content}
+.source-copy:has(.source-full[open]) .source-excerpt{display:none}
+.source-media{margin:10px 0 16px}.source-media img,.source-media video{width:100%;max-height:260px;object-fit:contain;display:block;border-radius:7px;background:#f4f6f9}
+.source-media figcaption{font-size:10px;color:#8491a5;line-height:1.7;margin-top:6px}
+.source-content-body{display:flow-root;min-width:0}
+.source-thumbnail{float:right;width:96px;margin:0 0 9px 12px;max-width:40%}
+.source-thumbnail-preview{display:block;position:relative;overflow:hidden;width:100%;aspect-ratio:4/3;border-radius:7px;background:#f2f4f8;border:1px solid #e2e7f0;line-height:0}
+.source-thumb-image{display:block;width:100%;height:100%;object-fit:cover;opacity:0}
+.source-thumb-image[data-source-loaded=true]{opacity:1}
+.source-thumbnail-preview:focus-visible{outline:3px solid #586de0;outline-offset:3px}
+.source-thumbnail figcaption{font-size:8px;line-height:1.5;color:#8b96aa;margin-top:5px}
+.source-photo-count{position:absolute;right:4px;bottom:4px;background:#172740d9;color:white;border-radius:4px;padding:3px 5px;font-size:10px;line-height:1.3;font-weight:600}
+@media(max-width:500px){.source-thumbnail{width:80px;margin-left:10px}.source-thumbnail figcaption{font-size:7px}}
+.source-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.source-link{display:inline-flex;align-items:center;gap:5px;color:#596ba6;background:#eff2f8;border:1px solid #e3e8f0;padding:7px 10px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:550;line-height:1.5}
+.source-link:hover{background:#e6ebf8;color:#435ba5}.source-link:focus-visible{outline:2px solid #586de0;outline-offset:3px}
+.source-unavailable{font-size:10px;color:#8b96a8;line-height:1.8}
+.source-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.platform-empty{font-size:12px;line-height:1.8;color:#7c889c;padding:12px 4px;margin:0;min-height:80px}
+.platform-data-note{font-size:11px;line-height:1.85;color:#97744a;margin:0;padding:11px 13px;background:#fff8ea;border-radius:7px}
+.platform-authors>.platform-data-note{margin:0 22px 20px}
+.platform-method{font-size:11px;line-height:1.85;color:#8591a5;margin:0;padding:0 22px 20px}
+.platform-author-list{list-style:none;margin:0;padding:0 22px 5px}
+.platform-author{padding:19px 0;border-top:1px solid #edf0f5}
+.platform-author-row{display:flex;align-items:flex-start;gap:15px}
+.platform-rank{display:grid;place-items:center;flex-shrink:0;background:#eef1fc;color:#7786c5;border-radius:8px;width:36px;height:36px;font-size:12px;font-variant-numeric:tabular-nums}
+.platform-author-info h3{font-size:13px;font-weight:600;color:#34435d;margin:0 0 6px;line-height:1.6}
+.platform-author-info p{font-size:11px;color:#8c97a9;margin:0 0 8px;line-height:1.7}
+.platform-author-info>strong{font-size:12px;font-weight:550;line-height:1.8;color:#647398}
+.platform-author-posts{margin:13px 0 0 51px}.platform-author-posts>summary{color:#7482a2;font-size:11px;line-height:1.8;cursor:pointer;width:fit-content}
+.platform-author-posts>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.platform-authors>.platform-empty{padding:0 22px 24px}.platform-loading{padding:24px;font-size:12px;color:#748198;line-height:1.8}
+@media(max-width:850px){.platform-categories{grid-template-columns:1fr}.platform-category-heading{min-height:62px}.platform-category-body{padding:16px}.platform-author-posts>div{grid-template-columns:1fr}}
+@media(max-width:500px){.platform-scope{font-size:10px}.platform-category-heading{padding:16px}.platform-category-heading h2{font-size:14px}.platform-author-list{padding:0 15px 5px}.platform-method{padding:0 15px 17px}.platform-author-posts{margin-left:0}.platform-author-info>strong{font-size:11px}.platform-authors>.platform-data-note{margin:0 15px 15px}.platform-post{padding:15px}.source-text{font-size:12px}}

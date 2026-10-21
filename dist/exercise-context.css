@@ -1,0 +1,37 @@
+body.context-view .toolbar,body.context-view #theme-scope,body.context-view #active-filter,body.context-view #kpis,body.context-view #export-button,body.context-view #analysis-context-note{display:none}
+.exercise-context-panel{max-width:960px;margin:0 auto}
+.exercise-context-form{padding:0 24px 26px}
+.exercise-context-form>label{display:block;font-weight:600;color:#34435f;font-size:13px;margin:22px 0 6px}
+.exercise-context-form>label:first-child{margin-top:0}
+.exercise-context-form>p{font-size:12px;line-height:1.8;color:#69788d;margin:0 0 10px}
+.exercise-context-form textarea{display:block;resize:vertical;min-height:120px;width:100%;border:1px solid #dce3ee;border-radius:8px;background:#fcfdff;padding:14px 16px;color:#34435f;font-family:inherit;font-size:13px;line-height:1.8}
+.exercise-context-form textarea::placeholder{color:#8b97aa}
+.exercise-context-form textarea[readonly]{background:#f5f7fa;border-color:#e6ebf2;color:#516078}
+.exercise-context-form>.exercise-context-note{margin:18px 0;color:#68778b}
+.exercise-context-actions{display:flex;align-items:center;flex-wrap:wrap;gap:16px}
+.exercise-context-actions p{margin:0;line-height:1.8;font-size:12px;color:#28775e}
+.exercise-context-form>#exercise-save-error{color:#a4413e;margin-top:10px}
+.exercise-context-form>.exercise-context-integration{margin-top:20px;padding-top:16px;border-top:1px solid #e7ebf1;font-size:11px;color:#77849a}
+.analysis-context-note{margin:14px 0 20px;padding:12px 16px;background:#edf2f8;border:1px solid #e1e7f0;border-radius:8px;color:#64758e;font-size:11px;line-height:1.8}
+.analysis-context-note p{margin:0}
+@media(max-width:700px){.exercise-context-form{padding:0 16px 20px}.exercise-context-form textarea{font-size:16px;padding:12px}.exercise-context-actions{align-items:flex-start;flex-direction:column}.analysis-context-note{padding:10px 12px}}
+.exercise-name-mappings{margin:25px 0;border-top:1px solid #e7ebf1;padding-top:22px}
+.exercise-name-mappings h3{font-size:14px;color:#34435f;margin:0 0 8px;font-weight:600}
+.exercise-name-mappings>p{font-size:12px;color:#69788d;line-height:1.8;margin:0 0 14px}
+.name-mappings-table{border-collapse:collapse;width:100%;table-layout:fixed;border:1px solid #e2e8f0;font-size:12px}
+.name-mappings-table th{text-align:left;font-size:11px;color:#68788e;background:#f6f8fb;font-weight:550;padding:12px}
+.name-mappings-table td{padding:12px;border-top:1px solid #e7ebf1;vertical-align:top;overflow-wrap:anywhere}
+.name-mappings-table td:first-child,.name-mappings-table th:first-child{width:43%}
+.name-mappings-table input{width:100%;min-width:0;padding:10px 11px;background:#fcfdff;border:1px solid #dce3ee;border-radius:6px;color:#34435f;line-height:1.6;font-size:12px}
+.name-mappings-table input[readonly]{background:#f5f7fa;color:#516078;border-color:#e6ebf2}
+.name-mappings-table input[aria-invalid=true]{border-color:#bf7772}
+.mapping-name-actions{display:flex;align-items:flex-start;gap:8px}
+.mapping-name-actions input{flex:1}
+.mapping-remove{flex-shrink:0;padding:11px 8px;border:0;background:transparent;color:#9b4c49;border-radius:5px;font-size:11px;line-height:1.6}
+.mapping-remove:hover{background:#fbefee}
+.mapping-add{margin-top:13px;font-size:11px}
+.mapping-error{font-size:11px;line-height:1.7;color:#a4413e;margin:7px 0 0}
+.mapping-error:empty{display:none}
+.mapping-empty{font-size:12px;line-height:1.8;color:#7d899c}
+.mapping-cell-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:700px){.name-mappings-table,.name-mappings-table tbody{display:block;border:0}.name-mappings-table thead{display:none}.name-mappings-table tr{display:block;border:1px solid #e2e8f0;border-radius:8px;margin:10px 0;padding:4px}.name-mappings-table td,.name-mappings-table td:first-child{display:block;width:100%;padding:9px;border:0}.mapping-cell-label{position:static;width:auto;height:auto;overflow:visible;clip:auto;display:block;font-size:11px;margin-bottom:6px;color:#68788e}.name-mappings-table input{font-size:16px;padding:9px}.mapping-remove{font-size:11px;padding:13px 5px}.mapping-name-actions{gap:5px}}

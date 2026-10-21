@@ -1,0 +1,14 @@
+{
+  "exercise_id": null,
+  "audience": {
+    "exercise_id": null,
+    "status": "missing",
+    "count": null
+  },
+  "growth_policy": {
+    "minPrevious": 1,
+    "minAbsoluteIncrease": 3,
+    "minPercent": 50,
+    "minAudienceFraction": 0.01
+  }
+}
