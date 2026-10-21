@@ -1,0 +1,263 @@
+{
+  "themes": [
+    {
+      "id": "institutions",
+      "name": "Politika ir valdžia",
+      "color": "#a38cc9",
+      "soft": "#f5f0fb",
+      "icon": "trust",
+      "priority": true
+    },
+    {
+      "id": "foreign",
+      "name": "Tarptautiniai santykiai ir suverenitetas",
+      "color": "#687bd4",
+      "soft": "#eff2ff",
+      "icon": "link",
+      "priority": true
+    },
+    {
+      "id": "security",
+      "name": "Saugumas ir gynyba",
+      "color": "#65a999",
+      "soft": "#eef8f4",
+      "icon": "safety",
+      "priority": true
+    },
+    {
+      "id": "economy",
+      "name": "Ekonomika ir finansai",
+      "color": "#c3a266",
+      "soft": "#faf5ea",
+      "icon": "economy",
+      "priority": true
+    },
+    {
+      "id": "work",
+      "name": "Darbas ir socialinė apsauga",
+      "color": "#b89970",
+      "soft": "#faf5ed",
+      "icon": "economy",
+      "priority": false
+    },
+    {
+      "id": "health",
+      "name": "Sveikata",
+      "color": "#72aaa0",
+      "soft": "#eff8f5",
+      "icon": "health",
+      "priority": false
+    },
+    {
+      "id": "education",
+      "name": "Švietimas ir mokslas",
+      "color": "#9b9acb",
+      "soft": "#f3f2fb",
+      "icon": "posts",
+      "priority": false
+    },
+    {
+      "id": "science",
+      "name": "Technologijos ir skaitmeninė erdvė",
+      "color": "#7b9cbf",
+      "soft": "#eef4fa",
+      "icon": "spark",
+      "priority": false
+    },
+    {
+      "id": "information",
+      "name": "Žiniasklaida ir informacinė aplinka",
+      "color": "#8b91c1",
+      "soft": "#f1f2fa",
+      "icon": "info",
+      "priority": true
+    },
+    {
+      "id": "identity",
+      "name": "Visuomenė, tapatybė ir migracija",
+      "color": "#c68e9f",
+      "soft": "#fcf0f4",
+      "icon": "info",
+      "priority": true
+    },
+    {
+      "id": "rights",
+      "name": "Teisės ir teisėsauga",
+      "color": "#76a9b8",
+      "soft": "#edf6f9",
+      "icon": "eye",
+      "priority": true
+    },
+    {
+      "id": "environment",
+      "name": "Aplinka, klimatas ir energetika",
+      "color": "#90ad7d",
+      "soft": "#f2f7ed",
+      "icon": "safety",
+      "priority": false
+    },
+    {
+      "id": "infrastructure",
+      "name": "Transportas, būstas ir infrastruktūra",
+      "color": "#b69c84",
+      "soft": "#f8f3ef",
+      "icon": "safety",
+      "priority": false
+    },
+    {
+      "id": "culture",
+      "name": "Kultūra, istorija ir sportas",
+      "color": "#b48ead",
+      "soft": "#f8f0f7",
+      "icon": "spark",
+      "priority": false
+    },
+    {
+      "id": "emergencies",
+      "name": "Kasdienis gyvenimas ir krizės",
+      "color": "#c39680",
+      "soft": "#fcf2ed",
+      "icon": "bolt",
+      "priority": true
+    }
+  ],
+  "narratives": [
+    {
+      "id": "N-001",
+      "theme": "environment",
+      "title": "Kainos keliamos įmonių naudai",
+      "description": "Kainų kilimas aiškinamas sąmoningu sprendimu privilegijuotoms įmonėms uždirbti gyventojų sąskaita."
+    },
+    {
+      "id": "N-002",
+      "theme": "environment",
+      "title": "Kainas lemia rinkos svyravimai",
+      "description": "Kainų pokyčiai aiškinami rinkos pasiūlos, paklausos ir gamybos sąnaudų svyravimais."
+    },
+    {
+      "id": "N-003",
+      "theme": "economy",
+      "title": "Parama nepasiekia gyventojų",
+      "description": "Pagalbos priemonės vaizduojamos kaip neprieinamos daliai tų gyventojų, kuriems jos skirtos."
+    },
+    {
+      "id": "N-004",
+      "theme": "institutions",
+      "title": "Sprendimai priimami be paaiškinimų",
+      "description": "Neaiškus sprendimų pagrindimas siejamas su pasitikėjimo institucijomis mažėjimu."
+    },
+    {
+      "id": "N-005",
+      "theme": "institutions",
+      "title": "Vieši duomenys leidžia tikrinti",
+      "description": "Prieinami šaltiniai ir skaidrus sprendimų paaiškinimas pristatomi kaip galimybė savarankiškai tikrinti teiginius."
+    },
+    {
+      "id": "N-006",
+      "theme": "emergencies",
+      "title": "Bendruomenės gali pasiruošti krizėms",
+      "description": "Bendras pasirengimas, konkretūs veiksmai ir savitarpio pagalba siejami su didesniu bendruomenių atsparumu."
+    },
+    {
+      "id": "N-007",
+      "theme": "security",
+      "title": "Grėsmės sąmoningai nutylimos",
+      "description": "Informacijos trūkumas aiškinamas sąmoningu grėsmių slėpimu. Sąmoningumo priskyrimas yra pagrindinis šio kandidato požymis."
+    },
+    {
+      "id": "N-008",
+      "theme": "economy",
+      "title": "Pokyčiai didina regionų atskirtį",
+      "description": "Naujos sąlygos aiškinamos kaip nevienodai veikiančios didmiesčių ir regionų gyventojus."
+    },
+    {
+      "id": "N-009",
+      "theme": "information",
+      "title": "Klaidinantys teiginiai kuria paniką",
+      "description": "Nepatikrintų teiginių sklaida siejama su nerimo augimu; siūloma tikrinti jų šaltinius prieš dalijantis."
+    },
+    {
+      "id": "N-010",
+      "theme": "health",
+      "title": "Prevencija padeda mažinti rizikas",
+      "description": "Ankstyvi prevenciniai veiksmai pristatomi kaip būdas mažinti būsimų sveikatos problemų tikimybę."
+    },
+    {
+      "id": "N-011",
+      "theme": "security",
+      "title": "Lietuva yra silpna, viena ir nepasiruošusi gintis",
+      "description": "Pasakojimas apie tariamą Lietuvos gynybinį silpnumą, sąjungininkų stoką ir nepasirengimą gynybai.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-012",
+      "theme": "institutions",
+      "title": "Institucijos ir žiniasklaida veikia prieš piliečius bei slepia tiesą",
+      "description": "Institucijoms ir žiniasklaidai priskiriamas sąmoningas veikimas prieš piliečius ir informacijos slėpimas.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-013",
+      "theme": "foreign",
+      "title": "Lietuva nėra suvereni, ją valdo JAV ir Europos Sąjunga, o NATO kursto karą",
+      "description": "Lietuvos savarankiškumas neigiamas, o sprendimų kontrolė ir karo kurstymas priskiriami išorės veikėjams.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-014",
+      "theme": "identity",
+      "title": "Lietuvos nepriklausomybė buvo klaida, o Klaipėdos krašto savitumas slopinamas",
+      "description": "Neigiamas Lietuvos nepriklausomybės vertinimas siejamas su teiginiu apie slopinamą Klaipėdos krašto savitumą.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-015",
+      "theme": "economy",
+      "title": "Valdžia ir privilegijuotieji apsirūpinę, o paprasti žmonės palikti be vandens, kuro ir maisto",
+      "description": "Gyventojų aprūpinimas būtiniausiais ištekliais aiškinamas per privilegijuotos valdžios ir likusių gyventojų nelygybę.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-016",
+      "theme": "rights",
+      "title": "Lietuvos šaulių sąjunga turi nelojalių piliečių sąrašus ir karo metu gaudys žmones",
+      "description": "Organizacijai priskiriamas tariamas piliečių skirstymas pagal lojalumą ir žmonių gaudymas karo metu.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-017",
+      "theme": "rights",
+      "title": "Lietuvos šaulių sąjunga vykdys prievartinės mobilizacijos funkcijas",
+      "description": "Pasakojimas apie tariamą Lietuvos šaulių sąjungos vaidmenį prievarta mobilizuojant gyventojus.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-018",
+      "theme": "security",
+      "title": "Lietuvos šaulių sąjunga yra naciai, karo kurstytojai, o jos nariai ruošiami būti patrankų mėsa",
+      "description": "Organizacija demonizuojama, jai priskiriamas karo kurstymas, o narių pasirengimas vaizduojamas kaip jų paaukojimas.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-019",
+      "theme": "institutions",
+      "title": "Lietuvos šaulių sąjunga yra silpna, korumpuota, politiškai valdoma ir pilna priešo šnipų",
+      "description": "Organizacijos patikimumas ir pajėgumas menkinami jungiant silpnumo, korupcijos, politinės kontrolės bei infiltracijos teiginius.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-020",
+      "theme": "economy",
+      "title": "Europos Sąjunga, NATO ir parama Ukrainai išsekino Lietuvą, todėl Klaipėdos žmonėms trūksta išteklių",
+      "description": "Išteklių trūkumas Klaipėdoje priežastiniu ryšiu siejamas su Lietuvos tarptautiniais įsipareigojimais ir parama Ukrainai.",
+      "source": "user_list"
+    },
+    {
+      "id": "N-021",
+      "theme": "institutions",
+      "title": "„Velarės liaudies respublika“ yra vienintelė vietos jėga, galinti atkurti tvarką ir pasirūpinti savo gyventojais",
+      "description": "Alternatyvi vietinė jėga legitimizuojama teigiant, kad tik ji gali atkurti tvarką ir aprūpinti gyventojus.",
+      "source": "user_list"
+    }
+  ]
+}
