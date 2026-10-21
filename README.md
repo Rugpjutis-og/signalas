@@ -1,5 +1,11 @@
 # Signalas · vietinė Python versija
 
+## Vercel peržiūra
+
+`vercel.json` publikuoja tik `dist/` kaip statinę demonstracinę peržiūrą (Framework: Other, Output Directory: dist, be build komandos). Du perrašymo adresai aiškiai įjungia demonstracinį režimą ir sustabdyto srauto indikatorių. Tai nėra tikrų Diasporos duomenų serveris. Vietinis Python serveris ir jo API lieka nepakeisti.
+
+Į Vercel nekelkite `.env`, `var/`, privačių įrašų ar prisijungimo duomenų. Tikro srauto talpinimui reikėtų atskiros autorizuotos serverio integracijos ir privataus duomenų saugojimo; ši peržiūra jų neįjungia.
+
 ## Tikri duomenys ir visos platformos aprėptis
 
 Sąsaja dabar gali veikti tikrų duomenų režimu (`var/dashboard-mode.json`, `mode: live`). Demonstraciniai kiekiai ir ryšiai šiame režime nerodomi. Laikotarpis „Nuo–Iki“ pasirenkamas kalendoriuje ir abi datos išsaugomos atskirai nuo rinkinio; turima imtis ar naujas importas jos nekeičia. AI rezultatai susieti su konkrečiu turiniu ir pradiniu kontekstu; pakeitus vieną jų, senas rezultatas nenaudojamas.
