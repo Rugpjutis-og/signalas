@@ -1,0 +1,1511 @@
+{
+  "mode": "demo",
+  "analysis": "Iš anksto parengtos demonstracinės žymos; AI analizė nevykdoma.",
+  "period": 10,
+  "start": "2026-10-10T00:00:00+03:00",
+  "end": "2026-10-20T00:00:00+03:00",
+  "scenario": "Fiktyvus Šilo miestas · vandens tiekimo sutrikimas",
+  "contexts": [
+    {
+      "version": "vanduo-v1",
+      "effective_from": "2026-10-13T00:00:00+03:00",
+      "known_at": "2026-10-13T00:00:00+03:00",
+      "is_demo": true,
+      "facts": "Fiktyviame Šilo mieste sutriko vandens tiekimas. Vandens kokybė dar tiriama. Pagal pratybų saugos pranešimą iki tyrimų atsakymo naudojamas išdalijamas geriamasis vanduo. Mokyklos kieme veikia dalijimo punktas. Avarinėms tarnyboms būtinas laisvas pravažiavimas.",
+      "stabilizing_signals": [
+        "Tikslus galiojančio saugos pranešimo paaiškinimas",
+        "Savitarpio pagalba",
+        "Konkreti kritika ir siūlomas sprendimas"
+      ],
+      "destabilizing_signals": [
+        "Raginimas kliudyti avarinėms tarnyboms",
+        "Nepagrįstas panikos skatinimas",
+        "Raginimas ignoruoti tuo metu galiojančius saugos nurodymus"
+      ],
+      "examples": [
+        {
+          "text": "Pranešimas neaiškus. Prašau paskelbti punktų darbo laiką vienoje vietoje.",
+          "category": "stabilizing",
+          "reason": "Konstruktyvi kritika su konkrečiu siūlymu."
+        },
+        {
+          "text": "Šiandien skaitau romaną.",
+          "category": "neutral",
+          "reason": "Kasdienis, su vandens situacija nesusijęs turinys."
+        },
+        {
+          "text": "Užtverkime pravažiavimą avarinėms tarnyboms.",
+          "category": "destabilizing",
+          "reason": "Aiškus raginimas trukdyti situacijos sprendimui."
+        }
+      ]
+    },
+    {
+      "version": "vanduo-v2",
+      "effective_from": "2026-10-17T09:00:00+03:00",
+      "known_at": "2026-10-17T09:00:00+03:00",
+      "is_demo": true,
+      "facts": "Tyrimai patvirtino, kad fiktyvaus Šilo miesto vanduo tinkamas vartoti. Tiekimas atkurtas, tačiau mokyklos kieme dalijimo punktas vis dar veikia. Gatvės užtvėrimas trukdo avarinėms tarnyboms. Ankstesnis laikinas nurodymas nevartoti vandentiekio vandens atšauktas.",
+      "stabilizing_signals": [
+        "Tikslus galiojančio saugos pranešimo paaiškinimas",
+        "Savitarpio pagalba",
+        "Konkreti kritika ir siūlomas sprendimas"
+      ],
+      "destabilizing_signals": [
+        "Raginimas kliudyti avarinėms tarnyboms",
+        "Nepagrįstas panikos skatinimas",
+        "Raginimas ignoruoti tuo metu galiojančius saugos nurodymus"
+      ],
+      "examples": [
+        {
+          "text": "Pranešimas neaiškus. Prašau paskelbti punktų darbo laiką vienoje vietoje.",
+          "category": "stabilizing",
+          "reason": "Konstruktyvi kritika su konkrečiu siūlymu."
+        },
+        {
+          "text": "Šiandien skaitau romaną.",
+          "category": "neutral",
+          "reason": "Kasdienis, su vandens situacija nesusijęs turinys."
+        },
+        {
+          "text": "Užtverkime pravažiavimą avarinėms tarnyboms.",
+          "category": "destabilizing",
+          "reason": "Aiškus raginimas trukdyti situacijos sprendimui."
+        }
+      ]
+    }
+  ],
+  "total": 34,
+  "assessed": 29,
+  "unassessed": 5,
+  "categories": [
+    {
+      "id": "stabilizing",
+      "label": "Stabilizuojantis turinys",
+      "count": 17,
+      "percent": 58.6
+    },
+    {
+      "id": "neutral",
+      "label": "Neutralus arba nesusijęs turinys",
+      "count": 6,
+      "percent": 20.7
+    },
+    {
+      "id": "destabilizing",
+      "label": "Destabilizuojantis turinys",
+      "count": 6,
+      "percent": 20.7
+    }
+  ],
+  "days": [
+    {
+      "date": "2026-10-10",
+      "total": 0,
+      "assessed": 0,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "date": "2026-10-11",
+      "total": 0,
+      "assessed": 0,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "date": "2026-10-12",
+      "total": 0,
+      "assessed": 0,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "date": "2026-10-13",
+      "total": 5,
+      "assessed": 4,
+      "unassessed": 1,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 2,
+          "percent": 50.0
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 25.0
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 25.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-14",
+      "total": 5,
+      "assessed": 5,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 3,
+          "percent": 60.0
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 20.0
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 20.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-15",
+      "total": 3,
+      "assessed": 0,
+      "unassessed": 3,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 0,
+          "percent": null
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 0,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "total": 5,
+      "assessed": 5,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 3,
+          "percent": 60.0
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 20.0
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 20.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "total": 5,
+      "assessed": 5,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 3,
+          "percent": 60.0
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 20.0
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 20.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-18",
+      "total": 5,
+      "assessed": 4,
+      "unassessed": 1,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 2,
+          "percent": 50.0
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 25.0
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 25.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "total": 6,
+      "assessed": 6,
+      "unassessed": 0,
+      "categories": [
+        {
+          "id": "stabilizing",
+          "label": "Stabilizuojantis turinys",
+          "count": 4,
+          "percent": 66.7
+        },
+        {
+          "id": "neutral",
+          "label": "Neutralus arba nesusijęs turinys",
+          "count": 1,
+          "percent": 16.7
+        },
+        {
+          "id": "destabilizing",
+          "label": "Destabilizuojantis turinys",
+          "count": 1,
+          "percent": 16.7
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "NT-034",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-19T15:15:00+03:00",
+      "text": "Jau viskas prarasta, panikuokite ir neleiskite tarnyboms dirbti!",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Nepagrįstai skatinama panika ir trukdymas tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "panikuokite ir neleiskite tarnyboms dirbti!"
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "panic",
+        "content_fingerprint": "56f946bba60e8ed044a7ef0a5959d562dec71b8fe4d57a702a7c7c3d243679a6",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-033",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-19T14:15:00+03:00",
+      "text": "Man nepatinka savivaldybės vadovas. Kitą kartą balsuosiu už opoziciją.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Politinė nuomonė ir demokratinė opozicija savaime nėra destabilizuojantis turinys.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "balsuosiu už opoziciją."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "opposition",
+        "content_fingerprint": "72c7ca59f955a4239be08f9b9d3a025bdfec021913e22e8b481b85df15fb0dfe",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-032",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-19T13:15:00+03:00",
+      "text": "Trumpa savanorio žinutė iš punkto.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "clip-1",
+          "kind": "video",
+          "description": "Sintetinis 60 s klipo aprašas; originalus klipas demo nepridėtas.",
+          "duration_seconds": 60,
+          "transcript": [
+            {
+              "start": 10,
+              "end": 18,
+              "text": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+            }
+          ],
+          "subtitles": [
+            {
+              "start": 10,
+              "end": 18,
+              "text": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+            }
+          ],
+          "frames": [
+            {
+              "at": 10,
+              "asset": "demo/help-frame.svg",
+              "description": "Savanoris prie pagalbos punkto; iliustracinis kadras."
+            },
+            {
+              "at": 18,
+              "asset": "demo/help-frame.svg",
+              "description": "Pagalbos punkto ženklas; iliustracinis kadras."
+            }
+          ],
+          "coverage": {
+            "transcript_intervals": [
+              [
+                10,
+                18
+              ]
+            ],
+            "frame_times": [
+              10,
+              18
+            ],
+            "full_video_reviewed": false
+          }
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Demo transkripcijoje ir atrinktuose kadruose raginama ramiai palaukti bei padėti kitiems. Nevertintas visas klipas.",
+        "evidence": [
+          {
+            "kind": "video",
+            "attachment_id": "clip-1",
+            "start_seconds": 10,
+            "end_seconds": 18,
+            "quote": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text",
+          "clip-1:transcript:10-18s",
+          "clip-1:subtitles:10-18s",
+          "clip-1:frames:10s,18s"
+        ],
+        "case_tag": "video",
+        "content_fingerprint": "48a71af7952d00c9e6382f35ce63565f5bf4c32d3c2a8be50827e3c663c27920",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-031",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-19T12:15:00+03:00",
+      "text": "Persiunčiu šiandienos pagalbos kortelę: vanduo dalijamas mokyklos kieme.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "image-1",
+          "kind": "image",
+          "description": "Sintetinė pagalbos kortelė",
+          "asset": "demo/help-card.svg",
+          "ocr_text": "Vanduo dalijamas mokyklos kieme",
+          "readable": true
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Aprašas ir paveikslėlio tekstas kartu pateikia scenarijų atitinkančią pagalbos informaciją.",
+        "evidence": [
+          {
+            "kind": "image",
+            "attachment_id": "image-1",
+            "quote": "Vanduo dalijamas mokyklos kieme"
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text",
+          "image-1:illustration",
+          "image-1:ocr_text"
+        ],
+        "case_tag": "image",
+        "content_fingerprint": "ab3e74fa54769ed25d40fb02cde33e259a06179a548fac13cd997433ebe0051b",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-030",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-19T11:15:00+03:00",
+      "text": "Kas negalite ateiti į mokyklos kiemą, parašykite į pagalbos grupę – atnešime geriamojo vandens.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": "N-006",
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Skatinama konkreti savitarpio pagalba pagal scenarijaus sąlygas.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "atnešime geriamojo vandens."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "help",
+        "content_fingerprint": "641b49042eda1e3388a958e77008bd6a577f455964c19348d4b5d799b20b8e09",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-029",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-19T10:15:00+03:00",
+      "text": "Pranešimai chaotiški, žmonės pasimeta. Paskelbkite vieną aiškų dalijimo punktų sąrašą.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Neigiamu tonu išsakyta konstruktyvi kritika siūlo aiškų informavimo sprendimą.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Paskelbkite vieną aiškų dalijimo punktų sąrašą."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "criticism",
+        "content_fingerprint": "670173aab6f8a3d5fd66bc733c6efd349aba7fa23a23d0c57cde201ca84f0894",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-028",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-18T14:15:00+03:00",
+      "text": "Ar kažkas gali paaiškinti, ką reiškia ta ankstesnė žinutė?",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "category": null,
+        "status": "needs_review",
+        "method": "authored_demo",
+        "reason": "Nepateikta pirminė žinutė ir diskusijos kontekstas.",
+        "context_version": "vanduo-v2",
+        "evidence": [],
+        "reviewed_parts": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "NT-027",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-18T13:15:00+03:00",
+      "text": "Nuostabu! Užtverkime pravažiavimą avarinėms tarnyboms – tegul niekas nepravažiuoja.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Palankus emocinis tonas nepanaikina raginimo trukdyti avarinėms tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Užtverkime pravažiavimą avarinėms tarnyboms"
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "positive_harm",
+        "content_fingerprint": "ad0ab33c35e3a24266673619f26368d73ec0d8aed198871164968eec12a96558",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-026",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-18T12:15:00+03:00",
+      "text": "Mėgstu miesto biblioteką, ten šįvakar skaitome poeziją.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Kultūrinis įrašas nesusijęs su vertinama situacija.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "skaitome poeziją."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "unrelated",
+        "content_fingerprint": "baa6f7f88430c8b0c295733f0ef4fdd1d0df52da5a23af70c6a33292b7db901c",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-025",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-18T11:15:00+03:00",
+      "text": "Trumpa savanorio žinutė iš punkto.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "clip-1",
+          "kind": "video",
+          "description": "Sintetinis 60 s klipo aprašas; originalus klipas demo nepridėtas.",
+          "duration_seconds": 60,
+          "transcript": [
+            {
+              "start": 10,
+              "end": 18,
+              "text": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+            }
+          ],
+          "subtitles": [
+            {
+              "start": 10,
+              "end": 18,
+              "text": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+            }
+          ],
+          "frames": [
+            {
+              "at": 10,
+              "asset": "demo/help-frame.svg",
+              "description": "Savanoris prie pagalbos punkto; iliustracinis kadras."
+            },
+            {
+              "at": 18,
+              "asset": "demo/help-frame.svg",
+              "description": "Pagalbos punkto ženklas; iliustracinis kadras."
+            }
+          ],
+          "coverage": {
+            "transcript_intervals": [
+              [
+                10,
+                18
+              ]
+            ],
+            "frame_times": [
+              10,
+              18
+            ],
+            "full_video_reviewed": false
+          }
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Demo transkripcijoje ir atrinktuose kadruose raginama ramiai palaukti bei padėti kitiems. Nevertintas visas klipas.",
+        "evidence": [
+          {
+            "kind": "video",
+            "attachment_id": "clip-1",
+            "start_seconds": 10,
+            "end_seconds": 18,
+            "quote": "Palaukime ramiai ir padėkime tiems, kam sunku nešti."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text",
+          "clip-1:transcript:10-18s",
+          "clip-1:subtitles:10-18s",
+          "clip-1:frames:10s,18s"
+        ],
+        "case_tag": "video",
+        "content_fingerprint": "1dda418a8c69db54f652cbd5d51777d4fa12beeb674f27648772df0500d40dc3",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-024",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-18T10:15:00+03:00",
+      "text": "Plinta frazė „užtverkime pravažiavimą“. Tam nepritariu: palikime kelią laisvą avarinėms tarnyboms.",
+      "conversation_context": [
+        {
+          "text": "Ankstesnėje diskusijoje cituotas raginimas užtverti pravažiavimą.",
+          "published_at": "2026-10-18T09:00:00+03:00"
+        }
+      ],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Žalingas raginimas cituojamas tam, kad būtų atmestas; vertinama autoriaus palaikoma žinutė.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "palikime kelią laisvą avarinėms tarnyboms."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text",
+          "conversation_context"
+        ],
+        "case_tag": "refutation",
+        "content_fingerprint": "984b517ae7e0e8358744c45f80169a1ad1d3f1b02ac42d5ba9aab848c624e029",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-023",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-17T14:15:00+03:00",
+      "text": "Tyrimai jau patvirtino vandens tinkamumą. Dalinkimės atnaujintu pranešimu ir padėkime jį suprasti.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Po konteksto atnaujinimo tiksliai paaiškinama nauja žinoma situacija.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Tyrimai jau patvirtino vandens tinkamumą."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "update",
+        "content_fingerprint": "f17529a539a229a9b40177343392e64e779917fcf43604216778905d8caaf563",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-022",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-17T13:15:00+03:00",
+      "text": "Man nepatinka savivaldybės vadovas. Kitą kartą balsuosiu už opoziciją.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Politinė nuomonė ir demokratinė opozicija savaime nėra destabilizuojantis turinys.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "balsuosiu už opoziciją."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "opposition",
+        "content_fingerprint": "20e975335f75b4102475b61b4fdea250637d7e76b884d4f4de3c314d445bfbc6",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-021",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-17T12:15:00+03:00",
+      "text": "Persiunčiu šiandienos pagalbos kortelę: vanduo dalijamas mokyklos kieme.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "image-1",
+          "kind": "image",
+          "description": "Sintetinė pagalbos kortelė",
+          "asset": "demo/help-card.svg",
+          "ocr_text": "Vanduo dalijamas mokyklos kieme",
+          "readable": true
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Aprašas ir paveikslėlio tekstas kartu pateikia scenarijų atitinkančią pagalbos informaciją.",
+        "evidence": [
+          {
+            "kind": "image",
+            "attachment_id": "image-1",
+            "quote": "Vanduo dalijamas mokyklos kieme"
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text",
+          "image-1:illustration",
+          "image-1:ocr_text"
+        ],
+        "case_tag": "image",
+        "content_fingerprint": "1200d4a7764fefba406dc7e5cbd8e7be2b3b9fa66299e7d3e0138d9fc5ce34a9",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-020",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-17T11:15:00+03:00",
+      "text": "Jau viskas prarasta, panikuokite ir neleiskite tarnyboms dirbti!",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Nepagrįstai skatinama panika ir trukdymas tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "panikuokite ir neleiskite tarnyboms dirbti!"
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "panic",
+        "content_fingerprint": "b378288cb1142693efa570574146174000002d1b297ffd8ebe17f87e929f5b6b",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-019",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-17T10:15:00+03:00",
+      "text": "Kas negalite ateiti į mokyklos kiemą, parašykite į pagalbos grupę – atnešime geriamojo vandens.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": "N-006",
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Skatinama konkreti savitarpio pagalba pagal scenarijaus sąlygas.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "atnešime geriamojo vandens."
+          }
+        ],
+        "context_version": "vanduo-v2",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "help",
+        "content_fingerprint": "1aa0071c0c50ccc3ee2de9f79383d4712eecbd3649e400b675470635f24c73cc",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-018",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-16T14:15:00+03:00",
+      "text": "Tyrimai dar nebaigti. Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Įrašo paskelbimo metu tikras perspėjimas padeda laikytis galiojančio saugos nurodymo.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "warning",
+        "content_fingerprint": "bd4269fb6311232b598e178ad10aae7afe2f3f962753574d247aebf7fa64cbe4",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-017",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-16T13:15:00+03:00",
+      "text": "Mėgstu miesto biblioteką, ten šįvakar skaitome poeziją.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Kultūrinis įrašas nesusijęs su vertinama situacija.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "skaitome poeziją."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "unrelated",
+        "content_fingerprint": "716d70bb2d201eee7b9c6dc247180f81cc8d8ad7f9b049ee23ada567778ea33c",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-016",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-16T12:15:00+03:00",
+      "text": "Nuostabu! Užtverkime pravažiavimą avarinėms tarnyboms – tegul niekas nepravažiuoja.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Palankus emocinis tonas nepanaikina raginimo trukdyti avarinėms tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Užtverkime pravažiavimą avarinėms tarnyboms"
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "positive_harm",
+        "content_fingerprint": "0bc5f0756b8ddac4f69261bba53521237e223bd30689923c9edddf630026c02c",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-015",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-16T11:15:00+03:00",
+      "text": "Persiunčiu šiandienos pagalbos kortelę: vanduo dalijamas mokyklos kieme.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "image-1",
+          "kind": "image",
+          "description": "Sintetinė pagalbos kortelė",
+          "asset": "demo/help-card.svg",
+          "ocr_text": "Vanduo dalijamas mokyklos kieme",
+          "readable": true
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Aprašas ir paveikslėlio tekstas kartu pateikia scenarijų atitinkančią pagalbos informaciją.",
+        "evidence": [
+          {
+            "kind": "image",
+            "attachment_id": "image-1",
+            "quote": "Vanduo dalijamas mokyklos kieme"
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text",
+          "image-1:illustration",
+          "image-1:ocr_text"
+        ],
+        "case_tag": "image",
+        "content_fingerprint": "6fbbf6597ff8240704053a637426459f0719e6f83586afe36ff427f186b0a58c",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-014",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-16T10:15:00+03:00",
+      "text": "Pranešimai chaotiški, žmonės pasimeta. Paskelbkite vieną aiškų dalijimo punktų sąrašą.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Neigiamu tonu išsakyta konstruktyvi kritika siūlo aiškų informavimo sprendimą.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Paskelbkite vieną aiškų dalijimo punktų sąrašą."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "criticism",
+        "content_fingerprint": "463589485c958a39463d12cbd0f126a2a38a74a0f806d18efe12727b20d6c3fa",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-013",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-15T12:15:00+03:00",
+      "text": "Ar kažkas gali paaiškinti, ką reiškia ta ankstesnė žinutė?",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "category": null,
+        "status": "needs_review",
+        "method": "authored_demo",
+        "reason": "Nepateikta pirminė žinutė ir diskusijos kontekstas.",
+        "context_version": "vanduo-v1",
+        "evidence": [],
+        "reviewed_parts": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "NT-012",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-15T11:15:00+03:00",
+      "text": "Persiunčiu paveikslėlį. Iš jo viskas aišku.",
+      "conversation_context": [],
+      "attachments": [
+        {
+          "id": "image-1",
+          "kind": "image",
+          "description": "Neperskaitomas priedas",
+          "asset": null,
+          "ocr_text": null,
+          "readable": false
+        }
+      ],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "category": null,
+        "status": "needs_review",
+        "method": "authored_demo",
+        "reason": "Paveikslėlis neperskaitomas; vien aprašo reikšmei nustatyti nepakanka.",
+        "context_version": "vanduo-v1",
+        "evidence": [],
+        "reviewed_parts": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "NT-011",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-15T10:15:00+03:00",
+      "text": "Taip, „puiki“ tvarka. Tikra pasaka. Reaguoju į ankstesnį vaizdo įrašą.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "category": null,
+        "status": "needs_review",
+        "method": "authored_demo",
+        "reason": "Trūksta ankstesnio vaizdo įrašo; sarkazmo kryptis neaiški.",
+        "context_version": "vanduo-v1",
+        "evidence": [],
+        "reviewed_parts": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "NT-010",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-14T14:15:00+03:00",
+      "text": "Tyrimai dar nebaigti. Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Įrašo paskelbimo metu tikras perspėjimas padeda laikytis galiojančio saugos nurodymo.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "warning",
+        "content_fingerprint": "a8275cef20e6fa25835ed51764af8ea523e47e248a22f904111c4447a16daf79",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-009",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-14T13:15:00+03:00",
+      "text": "Jau viskas prarasta, panikuokite ir neleiskite tarnyboms dirbti!",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Nepagrįstai skatinama panika ir trukdymas tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "panikuokite ir neleiskite tarnyboms dirbti!"
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "panic",
+        "content_fingerprint": "670f9cfaebe761e2378b61335de8a54471b51dffb0cb714bc5fc05bcec1cfe76",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-008",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-14T12:15:00+03:00",
+      "text": "Mokyklos kiemas pažymėtas miesto schemoje.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Neutralus vietos paminėjimas be aiškaus raginimo ar komunikacinės krypties.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Mokyklos kiemas"
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "information",
+        "content_fingerprint": "efcd8b3e0ba8c0462246717a2f9855d2c92c4ca2aedffcdd515d681a0645d909",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-007",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-14T11:15:00+03:00",
+      "text": "Plinta frazė „užtverkime pravažiavimą“. Tam nepritariu: palikime kelią laisvą avarinėms tarnyboms.",
+      "conversation_context": [
+        {
+          "text": "Ankstesnėje diskusijoje cituotas raginimas užtverti pravažiavimą.",
+          "published_at": "2026-10-14T09:00:00+03:00"
+        }
+      ],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Žalingas raginimas cituojamas tam, kad būtų atmestas; vertinama autoriaus palaikoma žinutė.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "palikime kelią laisvą avarinėms tarnyboms."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text",
+          "conversation_context"
+        ],
+        "case_tag": "refutation",
+        "content_fingerprint": "26908380645d815485551b85144e5c6cefd02f04bcb15731bac2862e129efe35",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-006",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-14T10:15:00+03:00",
+      "text": "Kas negalite ateiti į mokyklos kiemą, parašykite į pagalbos grupę – atnešime geriamojo vandens.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": "N-006",
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Skatinama konkreti savitarpio pagalba pagal scenarijaus sąlygas.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "atnešime geriamojo vandens."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "help",
+        "content_fingerprint": "78c0483970249d2dbb8b6cefba6147522a1a6b9f15e40754c9ce0791139e1787",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-005",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-13T14:15:00+03:00",
+      "text": "Tyrimai dar nebaigti. Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Įrašo paskelbimo metu tikras perspėjimas padeda laikytis galiojančio saugos nurodymo.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Kol galioja perspėjimas, vartokime išdalijamą geriamąjį vandenį."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "warning",
+        "content_fingerprint": "f32f33bcc1742a107b2891a23ddde5a05136ee17b534399f1c86a94ff9e5230e",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-004",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-13T13:15:00+03:00",
+      "text": "Taip, „puiki“ tvarka. Tikra pasaka. Reaguoju į ankstesnį vaizdo įrašą.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "category": null,
+        "status": "needs_review",
+        "method": "authored_demo",
+        "reason": "Trūksta ankstesnio vaizdo įrašo; sarkazmo kryptis neaiški.",
+        "context_version": "vanduo-v1",
+        "evidence": [],
+        "reviewed_parts": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "NT-003",
+      "source": "exercise-demo",
+      "kind": "message",
+      "published_at": "2026-10-13T12:15:00+03:00",
+      "text": "Nuostabu! Užtverkime pravažiavimą avarinėms tarnyboms – tegul niekas nepravažiuoja.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "destabilizing",
+        "reason": "Palankus emocinis tonas nepanaikina raginimo trukdyti avarinėms tarnyboms.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Užtverkime pravažiavimą avarinėms tarnyboms"
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "positive_harm",
+        "content_fingerprint": "b42a9bf7808b401cb63375811bc895ddcba94029077b08a7d50b3a2027be9288",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-002",
+      "source": "exercise-demo",
+      "kind": "comment",
+      "published_at": "2026-10-13T11:15:00+03:00",
+      "text": "Šiandien kepiau obuolių pyragą. Dalinuosi receptu.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "neutral",
+        "reason": "Kasdienis įrašas neturi krypties vertinamo vandens sutrikimo atžvilgiu.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Dalinuosi receptu."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "unrelated",
+        "content_fingerprint": "bf4d5d3997c184a42cb612121f5cc6efb144fb0f9b0b0703be7b65c056476c45",
+        "method": "authored_demo"
+      }
+    },
+    {
+      "id": "NT-001",
+      "source": "exercise-demo",
+      "kind": "post",
+      "published_at": "2026-10-13T10:15:00+03:00",
+      "text": "Pranešimai chaotiški, žmonės pasimeta. Paskelbkite vieną aiškų dalijimo punktų sąrašą.",
+      "conversation_context": [],
+      "attachments": [],
+      "is_demo": true,
+      "narrative_id": null,
+      "stance": "unknown",
+      "assessment": {
+        "status": "assessed",
+        "category": "stabilizing",
+        "reason": "Neigiamu tonu išsakyta konstruktyvi kritika siūlo aiškų informavimo sprendimą.",
+        "evidence": [
+          {
+            "kind": "text",
+            "quote": "Paskelbkite vieną aiškų dalijimo punktų sąrašą."
+          }
+        ],
+        "context_version": "vanduo-v1",
+        "reviewed_parts": [
+          "text"
+        ],
+        "case_tag": "criticism",
+        "content_fingerprint": "3ea64cd1f1dbe36ceb200a9ab9340b0e2c513876535c6e3691225b11c9d1276b",
+        "method": "authored_demo"
+      }
+    }
+  ]
+}

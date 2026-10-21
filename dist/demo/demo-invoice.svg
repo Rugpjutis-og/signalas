@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="288" viewBox="0 0 384 288" role="img" aria-label="Demonstracinė sąskaitos iliustracija">
+<rect width="384" height="288" rx="16" fill="#eef0fb"/>
+<rect x="84" y="26" width="216" height="238" rx="12" fill="#fff" stroke="#d8def0" stroke-width="3"/>
+<text x="108" y="62" font-family="sans-serif" font-size="13" font-weight="700" fill="#7e89bc">DEMO · ILIUSTRACIJA</text>
+<rect x="108" y="88" width="108" height="10" rx="5" fill="#8d9bde"/>
+<rect x="108" y="113" width="164" height="7" rx="3" fill="#e3e7f3"/>
+<rect x="108" y="134" width="164" height="7" rx="3" fill="#e3e7f3"/>
+<rect x="108" y="155" width="123" height="7" rx="3" fill="#e3e7f3"/>
+<path d="M108 187h164" stroke="#e2e6f1" stroke-width="2"/>
+<text x="108" y="228" font-family="sans-serif" font-size="31" fill="#7c8ac8">€</text>
+<rect x="147" y="209" width="125" height="16" rx="5" fill="#bdc6ee"/>
+</svg>

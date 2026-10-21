@@ -1,0 +1,290 @@
+{
+  "mode": "demo",
+  "exercise_id": "demo-platform",
+  "start": "2026-10-19T00:00:00+03:00",
+  "end": "2026-10-20T00:00:00+03:00",
+  "counter_scope": "lifetime_for_posts_published_in_period",
+  "categories": [
+    {
+      "id": "comments",
+      "label": "Labiausiai diskutuojami",
+      "items": [
+        {
+          "id": "DEMO-P11",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Ieva · demonstracinė paskyra",
+          "published_at": "2026-10-19T09:15:00+03:00",
+          "text": "Ką manote apie šį pasiūlymą?\n\nNorėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. ",
+          "is_demo": true,
+          "media": [
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-card.svg",
+              "originalUrl": "demo/help-card.svg",
+              "alt": "Demonstracinė informacinės kortelės iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-frame.svg",
+              "originalUrl": "demo/help-frame.svg",
+              "alt": "Demonstracinė pagalbos punkto iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/demo-invoice.svg",
+              "originalUrl": "demo/demo-invoice.svg",
+              "alt": "Demonstracinė dokumento iliustracija"
+            }
+          ],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 38
+        },
+        {
+          "id": "DEMO-P01",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Rasa · demonstracinė paskyra",
+          "published_at": "2026-10-19T08:15:00+03:00",
+          "text": "Susitarkime dėl pagalbos punkto darbo laiko. Šiandien budime iki 18 valandos. Parašykite komentaruose, kuriuo metu patogiausia užsukti.\n\nŠi schema – demonstracinė iliustracija.",
+          "is_demo": true,
+          "media": [
+            {
+              "kind": "image",
+              "thumbnailUrl": null,
+              "originalUrl": "demo/help-frame.svg",
+              "alt": "Demonstracinė pagalbos punkto iliustracija",
+              "caption": "Demonstracinė iliustracija"
+            }
+          ],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 12
+        },
+        {
+          "id": "DEMO-P18",
+          "source": "platform-demo",
+          "kind": "reshare",
+          "author_name": "Lina · demonstracinė paskyra",
+          "published_at": "2026-10-19T16:15:00+03:00",
+          "text": "Persidaliju bendruomenės pranešimu.",
+          "is_demo": true,
+          "media": [],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 6
+        }
+      ],
+      "missing_posts": 0,
+      "status": "ok"
+    },
+    {
+      "id": "likes",
+      "label": "Daugiausia patiktukų",
+      "items": [
+        {
+          "id": "DEMO-P11",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Ieva · demonstracinė paskyra",
+          "published_at": "2026-10-19T09:15:00+03:00",
+          "text": "Ką manote apie šį pasiūlymą?\n\nNorėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. ",
+          "is_demo": true,
+          "media": [
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-card.svg",
+              "originalUrl": "demo/help-card.svg",
+              "alt": "Demonstracinė informacinės kortelės iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-frame.svg",
+              "originalUrl": "demo/help-frame.svg",
+              "alt": "Demonstracinė pagalbos punkto iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/demo-invoice.svg",
+              "originalUrl": "demo/demo-invoice.svg",
+              "alt": "Demonstracinė dokumento iliustracija"
+            }
+          ],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 23
+        },
+        {
+          "id": "DEMO-P18",
+          "source": "platform-demo",
+          "kind": "reshare",
+          "author_name": "Lina · demonstracinė paskyra",
+          "published_at": "2026-10-19T16:15:00+03:00",
+          "text": "Persidaliju bendruomenės pranešimu.",
+          "is_demo": true,
+          "media": [],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 10
+        },
+        {
+          "id": "DEMO-P06",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Mantas · demonstracinė paskyra",
+          "published_at": "2026-10-19T13:15:00+03:00",
+          "text": "Kurią savaitės dieną galėtumėte prisidėti prie bendro kiemo tvarkymo? Ieškome laiko, tinkamo daugiau kaimynų.",
+          "is_demo": true,
+          "media": [],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 9
+        }
+      ],
+      "missing_posts": 0,
+      "status": "ok"
+    },
+    {
+      "id": "shares",
+      "label": "Daugiausia dalinamasi",
+      "items": [
+        {
+          "id": "DEMO-P11",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Ieva · demonstracinė paskyra",
+          "published_at": "2026-10-19T09:15:00+03:00",
+          "text": "Ką manote apie šį pasiūlymą?\n\nNorėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. ",
+          "is_demo": true,
+          "media": [
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-card.svg",
+              "originalUrl": "demo/help-card.svg",
+              "alt": "Demonstracinė informacinės kortelės iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/help-frame.svg",
+              "originalUrl": "demo/help-frame.svg",
+              "alt": "Demonstracinė pagalbos punkto iliustracija"
+            },
+            {
+              "kind": "image",
+              "thumbnailUrl": "demo/demo-invoice.svg",
+              "originalUrl": "demo/demo-invoice.svg",
+              "alt": "Demonstracinė dokumento iliustracija"
+            }
+          ],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 11
+        },
+        {
+          "id": "DEMO-P18",
+          "source": "platform-demo",
+          "kind": "reshare",
+          "author_name": "Lina · demonstracinė paskyra",
+          "published_at": "2026-10-19T16:15:00+03:00",
+          "text": "Persidaliju bendruomenės pranešimu.",
+          "is_demo": true,
+          "media": [],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 5
+        },
+        {
+          "id": "DEMO-P01",
+          "source": "platform-demo",
+          "kind": "post",
+          "author_name": "Rasa · demonstracinė paskyra",
+          "published_at": "2026-10-19T08:15:00+03:00",
+          "text": "Susitarkime dėl pagalbos punkto darbo laiko. Šiandien budime iki 18 valandos. Parašykite komentaruose, kuriuo metu patogiausia užsukti.\n\nŠi schema – demonstracinė iliustracija.",
+          "is_demo": true,
+          "media": [
+            {
+              "kind": "image",
+              "thumbnailUrl": null,
+              "originalUrl": "demo/help-frame.svg",
+              "alt": "Demonstracinė pagalbos punkto iliustracija",
+              "caption": "Demonstracinė iliustracija"
+            }
+          ],
+          "sourceUrl": null,
+          "parentSourceUrl": null,
+          "count": 4
+        }
+      ],
+      "missing_posts": 0,
+      "status": "ok"
+    }
+  ],
+  "authors": {
+    "items": [
+      {
+        "author_id": "demo-person-01",
+        "author_name": "Rasa · demonstracinė paskyra",
+        "authored_posts": 3,
+        "active_authored_posts": 3,
+        "median_engagement_percent": 30.434782608695656,
+        "score": 60.86956521739131,
+        "posts": [
+          {
+            "id": "DEMO-P03",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Rasa · demonstracinė paskyra",
+            "published_at": "2026-10-19T10:15:00+03:00",
+            "text": "Kaimynų mainų lentyna jau paruošta. Galima atnešti perskaitytą knygą ir pasiimti kitą.",
+            "is_demo": true,
+            "media": [],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          },
+          {
+            "id": "DEMO-P02",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Rasa · demonstracinė paskyra",
+            "published_at": "2026-10-19T09:15:00+03:00",
+            "text": "Ačiū atėjusiems į susitikimą. Pasidalinkite, kuriuos klausimus turėtume aptarti kitą kartą.",
+            "is_demo": true,
+            "media": [],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          },
+          {
+            "id": "DEMO-P01",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Rasa · demonstracinė paskyra",
+            "published_at": "2026-10-19T08:15:00+03:00",
+            "text": "Susitarkime dėl pagalbos punkto darbo laiko. Šiandien budime iki 18 valandos. Parašykite komentaruose, kuriuo metu patogiausia užsukti.\n\nŠi schema – demonstracinė iliustracija.",
+            "is_demo": true,
+            "media": [
+              {
+                "kind": "image",
+                "thumbnailUrl": null,
+                "originalUrl": "demo/help-frame.svg",
+                "alt": "Demonstracinė pagalbos punkto iliustracija",
+                "caption": "Demonstracinė iliustracija"
+              }
+            ],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          }
+        ]
+      }
+    ],
+    "incomplete_authors": 0,
+    "missing_identity_posts": 0,
+    "status": "ok",
+    "policy": {
+      "min_active_posts": 3,
+      "positive_median_required": true,
+      "activity_weight": "log2(1 + active_posts)"
+    }
+  },
+  "period": 1
+}
