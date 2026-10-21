@@ -1,3 +1,21 @@
+# Signalas · Vercel ir Neon
+
+## Dabartinis veikimo būdas
+
+Pagrindinė aplikacija: https://signalas-ecru.vercel.app/. Python API (`api/index.py`, `cloud_api.py`) veikia Vercel; visi nuolatiniai įrašai, komentarai, medijos metaduomenys, pratybų kontekstas, datos, analizės rezultatai ir surinkimo būsena saugomi Neon Postgres. Naršyklėje nenaudojamas localStorage ar IndexedDB; prisijungimui naudojamas tik Secure / HttpOnly / SameSite sesijos slapukas.
+
+„Atnaujinti duomenis“ surenka visą autorizuotai paskyrai matomą srautą ir jos profilį, ne visą Diasporos serverį. Pasikartojantys paspaudimai neleidžia paleisti lygiagrečių rinkimų (duomenų bazės lease). Rinkimas vykdomas tik rankiniu būdu; ankstesnė vietinė kasvalandinė automatika sustabdyta. Filtrų ir būsenos periodinės užklausos tik skaito duomenų bazę, nieko nerenka iš Diasporos ir nepaleidžia AI.
+
+Vercel **Production** paslaptys: `DATABASE_URL` (valdo Neon integracija), `SIGNALAS_ACCESS_PASSWORD` (bent 16 ženklų, atskiras aplikacijos prieigos slaptažodis), `DIASPORA_BASE_URL`, `DIASPORA_USERNAME`, `DIASPORA_PASSWORD`. Nieko nevadinkite NEXT_PUBLIC_ ar VITE_. Kiekvienas API turinio ir medijos skaitymas tikrina prisijungimą; keičiantiems veiksmams papildomai reikia tos pačios kilmės ir CSRF. Be prieigos slaptažodžio API užsidaro, o demonstraciniai duomenys neįjungiami automatiškai.
+
+Duomenų bazėje `signalas_fetches` saugo surinkimų kopijas, `signalas_content` – naujausius turinio vienetus, `signalas_state` – kontekstą, datas ir analizės/būsenos duomenis; `signalas_jobs` valdo rinkimo blokavimą. Kontekstas išsaugomas vieną kartą, ir lygiagretūs bandymai jo neperrašo. Originalūs medijos adresai saugomi kaip metaduomenys; prieigos reikalaujančios nuotraukos perduodamos tik prisijungus, jų failai diske nekaupiami.
+
+Vercel funkcijos trukmė – iki 300 s. Viršijus šią vykdymo ribą ankstesnė sėkminga kopija lieka duomenų bazėje; blokavimas baigia galioti po 6 min. Bendras įrašų skaičiaus limitas netaikomas. Ilgalaikiams dideliems rinkimams vėliau gali reikėti užduočių eilės; atskiras mokamas worker ar planas dabar nekuriamas.
+
+## Ankstesnės vietinės versijos dokumentacija
+
+Žemiau pateiktos vietinės komandos išsaugotos ankstesnės versijos priežiūrai. Jos nėra dabartinės Vercel aplikacijos vykdymo ar saugojimo mechanizmas. Ankstesnės vietinės kopijos automatiškai netrinamos.
+
 # Signalas · vietinė Python versija
 
 ## Vercel peržiūra

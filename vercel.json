@@ -5,12 +5,17 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/dashboard/bootstrap",
-      "destination": "/demo/dashboard-bootstrap.json"
-    },
-    {
-      "source": "/api/monitoring/status",
-      "destination": "/demo/monitoring-status.json"
+      "source": "/api/:path*",
+      "destination": "/api/index?route=:path*"
     }
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{var/**,.env*,tests/**,work/**,.git/**}"
+    }
+  },
+  "regions": [
+    "fra1"
   ]
 }
