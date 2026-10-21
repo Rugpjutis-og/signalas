@@ -1,22 +1,19 @@
 """Platform-wide content ranking. Offline demo adapter; no live collection or AI."""
 import json
-import math
-from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
 from periods import PERIODS
 
 from content import diaspora_photos, normalize_media, source_reference
-from metrics import audience_ids, author_statistics, post_engagement, timestamp
+from metrics import timestamp
+from author_ranking import AUTHOR_POLICY, rank_authors
 
 ROOT = Path(__file__).resolve().parent
-# Product trial criteria, not statistically validated thresholds. One source for ranking policy.
-AUTHOR_POLICY = {'min_active_posts': 3, 'positive_median_required': True, 'activity_weight': 'log2(1 + active_posts)'}
 CATEGORIES = [('comments', 'Labiausiai diskutuojami'), ('likes', 'Daugiausia patiktukų'), ('shares', 'Daugiausia dalinamasi')]
 
 
 def adapt_diaspora_post(raw, *, source, exercise_id, sourceUrl=None, parentSourceUrl=None,
-                        visibility=None, visible_account_ids=None, interactions_complete=False, media=None, source_base_url=None):
+                        visibility=None, visible_account_ids=None, interactions_complete=False, media=None, source_base_url=None, author_classification=None):
     """Normalize trusted API JSON without guessing URLs, recipients or completeness.
     Caller supplies source-provided links and authoritative exercise/visibility metadata.
     Raw counters are lifetime totals. Diaspora's post comments collection includes replies.
@@ -25,8 +22,10 @@ def adapt_diaspora_post(raw, *, source, exercise_id, sourceUrl=None, parentSourc
     author = raw.get('author') or {}
     data = raw.get('interactions') or {}
     interactions = []
+    completeness = {}
     complete = interactions_complete and all(isinstance(data.get(key), list) for key in ('likes', 'comments', 'reshares'))
     for key, kind in [('likes', 'like'), ('comments', 'comment'), ('reshares', 'share')]:
+        completeness['shares' if key == 'reshares' else key] = (interactions_complete and isinstance(data.get(key), list) and len(data[key]) == data.get(key + '_count'))
         if data.get(key + '_count') is not None and len(data.get(key) or []) != data[key + '_count']:
             complete = False
         for action in data.get(key) or []:
@@ -40,7 +39,8 @@ def adapt_diaspora_post(raw, *, source, exercise_id, sourceUrl=None, parentSourc
             'sourceUrl': source_reference({'sourceUrl': sourceUrl or raw.get('sourceUrl') or raw.get('url')})['sourceUrl'],
             'parentSourceUrl': source_reference({'parentSourceUrl': parentSourceUrl or raw.get('parentSourceUrl')})['parentSourceUrl'],
             'visibility': visibility, 'visible_account_ids': visible_account_ids,
-            'interactions_complete': complete, 'interactions': interactions,
+            'interactions_complete': complete, 'interaction_completeness': completeness, 'interactions': interactions,
+            'author_classification': author_classification,
             'counter_scope': 'lifetime', 'comments_include_replies': True,
             'counters': {'comments': data.get('comments_count'), 'likes': data.get('likes_count'), 'shares': data.get('reshares_count')},
             'media': normalize_media(media, source_base_url=source_base_url) if media is not None else diaspora_photos(raw.get('photos'), source_base_url=source_base_url)}
@@ -88,41 +88,9 @@ def scoped_posts(records, start, end, exercise_id):
     return list(unique.values())
 
 
-def engagement(post, snapshots):
-    matches = [s for s in snapshots if audience_ids(s, post.get('exercise_id'), post.get('published_at')) is not None]
-    return post_engagement(post, matches[0] if len(matches) == 1 else None)
-
-
-def author_ranking(posts, snapshots):
-    by_author = defaultdict(list)
-    unidentified = 0
-    for post in posts:
-        if post['kind'] != 'post':
-            continue
-        if not post.get('author_id'):
-            unidentified += 1
-            continue
-        by_author[post['author_id']].append(post)
-    ranked, incomplete = [], 0
-    for author_id, authored in by_author.items():
-        stats = author_statistics(authored, lambda p: engagement(p, snapshots))
-        if stats['median_engagement_percent'] is None:
-            incomplete += 1
-            continue
-        # Include every original post, also those with zero interactions, in the median.
-        typical = stats['median_engagement_percent']
-        active = stats['active_authored_posts']
-        if active < AUTHOR_POLICY['min_active_posts'] or typical <= 0:
-            continue
-        ranked.append({'author_id': author_id, 'author_name': authored[0].get('author_name') or author_id,
-                       'authored_posts': len(authored), 'active_authored_posts': active,
-                       'median_engagement_percent': typical, 'score': typical * math.log2(1 + active),
-                       'posts': [public_content(p) for p in sorted(authored, key=lambda p: timestamp(p['published_at']), reverse=True)]})
-    ranked.sort(key=lambda a: (-a['score'], -a['median_engagement_percent'], -a['active_authored_posts'], a['author_id']))
-    missing = incomplete or unidentified
-    return {'items': ranked[:5], 'incomplete_authors': incomplete, 'missing_identity_posts': unidentified,
-            'status': 'partial' if missing and ranked else 'missing_data' if missing else 'ok' if ranked else 'empty',
-            'policy': AUTHOR_POLICY}
+def author_ranking(posts, snapshots=None):
+    # Weighted creation/action score does not use an exercise-audience denominator.
+    return rank_authors(posts, public_content)
 
 
 def report(records, snapshots, *, exercise_id, start, end, mode):

@@ -85,3 +85,20 @@ Prieš patikimą tiesioginę integraciją dar reikia: autoritetingo pratybų ID 
 ## Patikrinimas
 
 `python3 -m unittest discover -s tests -v` tikrina API ir Python skaičiavimus; JS rinkiniai `test_growth.cjs`, `test_counts.cjs`, `test_exercise_context.cjs` tikrina naratyvų statistiką bei bendrą sąsajos prieigą. Įtraukti 5/100 = 5 %, 5/250 = 2 %, 5/500 = 1 %, 100 komentarų iš 5 paskyrų, neaktyvūs nariai, autorius, ribotas matomumas, dublių pašalinimas tarp įrašų, nulinė / nežinoma auditorija, istoriniai sąrašai, persijungimas tarp pratybų, medianos pilnumas, maži kiekiai bei laikotarpio keitimas. Interaktyvus lokalaus prototipo valdymas šiame audite neatliekamas pagal ankstesnį vartotojo pageidavimą; programinės patikros to nepakeičia.
+
+## Autorių reitingas: 80 / 15 / 5 (naujas vietinis pakeitimas)
+
+Ankstesnę medianos ir logaritmo reitingo formulę pakeičia `author_ranking.py` vienintelis `AUTHOR_POLICY`. Vertinami bent 3 skirtingi originalūs įrašai pasirinktame paskelbimo laikotarpyje. Paprasti persidalijimai ir paties autoriaus parašyti komentarai nėra originalūs įrašai.
+
+`Balas = 80 × O / max(O) + 15 × K / max(K) + 5 × P / max(P)`, kur O – skirtingų originalių įrašų skaičius, K – jų gauti kitų paskyrų komentarai su atsakymais, P – jų gauti kitų paskyrų persidalijimai. Maksimumai imami iš visų tinkamų asmeninių autorių prieš atrenkant pirmą penketą. Nulinio maksimumo dalis lygi 0; svoriai neperskirstomi. Balas 0–100 nėra auditorijos procentas ar peržiūrų rodiklis. Naujas svorinis rodiklis nereikalauja žinoti visos pratybų auditorijos. Kitų auditorijos rodiklių formulės nekeičiamos.
+
+Vienodi tekstai (Unicode ir tarpų normalizacija) su ta pačia nuosava medija vienam autoriui skaičiuojami kartą; pasirenkamas ankstesnis šio kartojimo įrašas. Tai nepagrindžia semantinio unikalumo ar autorystės – AI / plagiato patikra nevyksta. Tuščias neprieinamas turinys ir nepilni sąveikų duomenys nežymimi nuliais. Gauti veiksmai deduplikuojami pagal tikrus sąveikų ID, pašalinant paties autoriaus veiksmus; keli skirtingi komentarai iš to paties žmogaus yra keli komentarai, ne keli žmonės. Turinio ir sąveikų skaitiklių laiko semantika išlieka: pasirinktu laikotarpiu paskelbti įrašai ir jų bendros gautos sąveikos.
+
+Paskyros tipo prioritetas – patvirtinta platformos arba pratybų administratoriaus `author_classification`. Jei jos nėra, taikomas išplečiamas `ORGANIZATION_INDICATORS` žodynas ir domenų taisyklės: žiniasklaida, verslas, institucijos, politinės ir nepelno organizacijos, švietimas, sveikata, kultūra, bendruomenės bei religinės organizacijos. Neigiamų organizacijos požymių neturintis vardas / slapyvardis laikomas tikėtinu asmeniniu profiliu ir taip pažymimas sąsajoje. Vien vietovardžio nepakanka. Organizaciniai, neaiškūs ar prieštaringi profiliai nereitinguojami ir nekeičia normalizavimo maksimumų. Euristika negarantuoja tikro asmens / organizacijos atskyrimo; ji gali klysti. Tikriems jau surinktiems JSON įrašams papildomų laukų nebuvimas suderinamas, DB schemos keitimo nereikia.
+
+
+### Originalo kalba
+
+Tekstinės AI analizės instrukcija apima visas pateikto teksto kalbas ir jų mišinius. Naratyvai siejami pagal reikšmę, citatos bei pratybų pavadinimai lieka originalūs, paaiškinimai – lietuviški. Kalbos neaiškumas reiškia „Reikia peržiūros“, ne neutralią kryptį. Tai instrukcija aiškiai paleidžiamam tekstinės analizės bandymui, ne automatiškai visą srautą vertinantis procesas; medijos vaizdai ir garsas vis dar neanalizuojami.
+
+Paskyrų pavadinimų euristika papildyta anglų, rusų, ukrainiečių, lenkų, latvių, vokiečių, prancūzų ir ispanų kalbų organizacijų žymenimis (`name_indicators.py`). Ji nepretenduoja suprasti visų pasaulio kalbų; nežinomiems raštams be patvirtintų metaduomenų tipas lieka neaiškus. Kalba ar vietovardis savaime nenustato paskyros tipo. Originalus vardas ir turinys nekeičiami.

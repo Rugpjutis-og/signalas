@@ -173,5 +173,28 @@ class IntegrationTests(unittest.TestCase):
             openai_analysis.validate_result({**valid, "theme_id": "invented-theme"}, catalog)
 
 
+    def test_multilingual_analysis_preserves_original_evidence_and_names(self):
+        text = 'Nie panikujcie. Не паникуйте. Stay calm. Šilo miestas.'
+        valid = {"theme_id": None, "narrative_id": None, "candidate_title": None, "stance": "unknown",
+                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": text}
+        unit = {"id":"language-test", "source":"test", "kind":"comment", "text":text,
+                "published_at":"2026-10-21T10:00:00Z", "media":[]}
+        response={"status":"completed","output":[{"type":"message","content":[
+            {"type":"output_text","text":json.dumps(valid,ensure_ascii=False)}]}]}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory); (root/'data').mkdir()
+            (root/'data/catalog.json').write_text(json.dumps(app.catalog()))
+            with patch.object(openai_analysis,'api_key',return_value='test-secret'), patch.object(openai_analysis,'build_opener') as opener:
+                opener.return_value.open.return_value.__enter__.return_value=io.BytesIO(json.dumps(response).encode())
+                result=openai_analysis.analyze(unit,{"initialSituation":"Šilo miestas","confirmedFacts":"Faktai"},root=root)
+                sent=json.loads(opener.return_value.open.call_args.args[0].data)
+                self.assertEqual(json.loads(sent['input'])['analysis_input']['content']['text'],text)
+                self.assertEqual(result['original_text'],text)
+                self.assertEqual(result['result']['evidence'],text)
+                self.assertIn('originalo kalba',sent['instructions'])
+                self.assertIn('pagal prasmę tarp kalbų',sent['instructions'])
+                self.assertIn('kalbinio paaiškinimo',sent['instructions'])
+
+
 if __name__ == "__main__":
     unittest.main()

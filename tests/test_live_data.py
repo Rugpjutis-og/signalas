@@ -87,7 +87,8 @@ class LiveDataTests(unittest.TestCase):
     def test_platform_unknown_audience_not_derived_from_interactions(self):
         report = live_data.platform(7, self.root)
         self.assertEqual(report["categories"][0]["items"][0]["count"], 100)
-        self.assertEqual(report["authors"]["status"], "missing_data")
+        self.assertEqual(report["authors"]["status"], "empty")
+        self.assertEqual(report["authors"]["below_minimum_authors"], 1)
         self.assertEqual(report["authors"]["items"], [])
         self.assertEqual(report["categories"][2]["status"], "missing_data")
         self.assertEqual(len(report["posts"]), 1)

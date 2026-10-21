@@ -221,6 +221,11 @@
         "comments": 12,
         "likes": 8,
         "shares": 4
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -327,6 +332,11 @@
         "comments": 4,
         "likes": 7,
         "shares": 2
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -402,6 +412,11 @@
         "comments": 3,
         "likes": 4,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -491,6 +506,11 @@
         "comments": 5,
         "likes": 3,
         "shares": 2
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -516,6 +536,11 @@
         "comments": 0,
         "likes": 0,
         "shares": 0
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -621,6 +646,11 @@
         "comments": 3,
         "likes": 9,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -683,6 +713,11 @@
         "comments": 2,
         "likes": 3,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -795,6 +830,11 @@
         "comments": 4,
         "likes": 5,
         "shares": 5
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -820,6 +860,11 @@
         "comments": 0,
         "likes": 0,
         "shares": 0
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -845,6 +890,11 @@
         "comments": 0,
         "likes": 0,
         "shares": 0
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1358,6 +1408,11 @@
         "comments": 38,
         "likes": 23,
         "shares": 11
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1430,6 +1485,11 @@
         "comments": 3,
         "likes": 2,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1502,6 +1562,11 @@
         "comments": 3,
         "likes": 2,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1574,6 +1639,11 @@
         "comments": 3,
         "likes": 2,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1644,6 +1714,11 @@
         "comments": 4,
         "likes": 2,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1713,6 +1788,11 @@
         "comments": 3,
         "likes": 3,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1769,6 +1849,11 @@
         "comments": 2,
         "likes": 2,
         "shares": 1
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     },
     {
@@ -1925,6 +2010,11 @@
         "comments": 6,
         "likes": 10,
         "shares": 5
+      },
+      "author_classification": {
+        "type": "person",
+        "verified": true,
+        "provenance": "exercise_administrator"
       }
     }
   ]

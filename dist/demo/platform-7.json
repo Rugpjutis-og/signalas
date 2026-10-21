@@ -215,58 +215,18 @@
   "authors": {
     "items": [
       {
-        "author_id": "demo-person-04",
-        "author_name": "Gabija · demonstracinė paskyra",
-        "authored_posts": 3,
-        "active_authored_posts": 3,
-        "median_engagement_percent": 28.57142857142857,
-        "score": 57.14285714285714,
-        "posts": [
-          {
-            "id": "DEMO-P12",
-            "source": "platform-demo",
-            "kind": "post",
-            "author_name": "Gabija · demonstracinė paskyra",
-            "published_at": "2026-10-19T10:15:00+03:00",
-            "text": "Mažos grupės susitikimas vyks bibliotekoje. Kas galėtų ateiti anksčiau padėti paruošti erdvę?",
-            "is_demo": true,
-            "media": [],
-            "sourceUrl": null,
-            "parentSourceUrl": null
-          },
-          {
-            "id": "DEMO-P13",
-            "source": "platform-demo",
-            "kind": "post",
-            "author_name": "Gabija · demonstracinė paskyra",
-            "published_at": "2026-10-18T11:15:00+03:00",
-            "text": "Pasiūlykite kitam susitikimui tinkamą temą.",
-            "is_demo": true,
-            "media": [],
-            "sourceUrl": null,
-            "parentSourceUrl": null
-          },
-          {
-            "id": "DEMO-P14",
-            "source": "platform-demo",
-            "kind": "post",
-            "author_name": "Gabija · demonstracinė paskyra",
-            "published_at": "2026-10-17T12:15:00+03:00",
-            "text": "Pasidalinkime, kuri pagalba šiandien labiausiai praverstų.",
-            "is_demo": true,
-            "media": [],
-            "sourceUrl": null,
-            "parentSourceUrl": null
-          }
-        ]
-      },
-      {
         "author_id": "demo-person-01",
+        "source": "platform-demo",
         "author_name": "Rasa · demonstracinė paskyra",
         "authored_posts": 5,
-        "active_authored_posts": 4,
-        "median_engagement_percent": 17.391304347826086,
-        "score": 40.381358171954126,
+        "unique_original_posts": 5,
+        "duplicate_posts": 0,
+        "account_classification": {
+          "type": "person",
+          "method": "verified_metadata"
+        },
+        "received_comments": 24,
+        "received_shares": 9,
         "posts": [
           {
             "id": "DEMO-P03",
@@ -336,15 +296,27 @@
             "sourceUrl": null,
             "parentSourceUrl": null
           }
-        ]
+        ],
+        "score_components": {
+          "originals": 80.0,
+          "comments": 15.0,
+          "shares": 5.0
+        },
+        "score": 100.0
       },
       {
         "author_id": "demo-person-02",
+        "source": "platform-demo",
         "author_name": "Mantas · demonstracinė paskyra",
         "authored_posts": 5,
-        "active_authored_posts": 3,
-        "median_engagement_percent": 13.043478260869565,
-        "score": 26.08695652173913,
+        "unique_original_posts": 5,
+        "duplicate_posts": 0,
+        "account_classification": {
+          "type": "person",
+          "method": "verified_metadata"
+        },
+        "received_comments": 9,
+        "received_shares": 7,
         "posts": [
           {
             "id": "DEMO-P06",
@@ -406,15 +378,85 @@
             "sourceUrl": null,
             "parentSourceUrl": null
           }
-        ]
+        ],
+        "score_components": {
+          "originals": 80.0,
+          "comments": 5.625,
+          "shares": 3.888888888888889
+        },
+        "score": 89.51388888888889
+      },
+      {
+        "author_id": "demo-person-04",
+        "source": "platform-demo",
+        "author_name": "Gabija · demonstracinė paskyra",
+        "authored_posts": 3,
+        "unique_original_posts": 3,
+        "duplicate_posts": 0,
+        "account_classification": {
+          "type": "person",
+          "method": "verified_metadata"
+        },
+        "received_comments": 9,
+        "received_shares": 3,
+        "posts": [
+          {
+            "id": "DEMO-P12",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Gabija · demonstracinė paskyra",
+            "published_at": "2026-10-19T10:15:00+03:00",
+            "text": "Mažos grupės susitikimas vyks bibliotekoje. Kas galėtų ateiti anksčiau padėti paruošti erdvę?",
+            "is_demo": true,
+            "media": [],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          },
+          {
+            "id": "DEMO-P13",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Gabija · demonstracinė paskyra",
+            "published_at": "2026-10-18T11:15:00+03:00",
+            "text": "Pasiūlykite kitam susitikimui tinkamą temą.",
+            "is_demo": true,
+            "media": [],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          },
+          {
+            "id": "DEMO-P14",
+            "source": "platform-demo",
+            "kind": "post",
+            "author_name": "Gabija · demonstracinė paskyra",
+            "published_at": "2026-10-17T12:15:00+03:00",
+            "text": "Pasidalinkime, kuri pagalba šiandien labiausiai praverstų.",
+            "is_demo": true,
+            "media": [],
+            "sourceUrl": null,
+            "parentSourceUrl": null
+          }
+        ],
+        "score_components": {
+          "originals": 48.0,
+          "comments": 5.625,
+          "shares": 1.6666666666666667
+        },
+        "score": 55.291666666666664
       },
       {
         "author_id": "demo-person-05",
+        "source": "platform-demo",
         "author_name": "Jonas · demonstracinė paskyra",
         "authored_posts": 3,
-        "active_authored_posts": 3,
-        "median_engagement_percent": 8.695652173913043,
-        "score": 17.391304347826086,
+        "unique_original_posts": 3,
+        "duplicate_posts": 0,
+        "account_classification": {
+          "type": "person",
+          "method": "verified_metadata"
+        },
+        "received_comments": 9,
+        "received_shares": 3,
         "posts": [
           {
             "id": "DEMO-P17",
@@ -452,17 +494,38 @@
             "sourceUrl": null,
             "parentSourceUrl": null
           }
-        ]
+        ],
+        "score_components": {
+          "originals": 48.0,
+          "comments": 5.625,
+          "shares": 1.6666666666666667
+        },
+        "score": 55.291666666666664
       }
     ],
-    "incomplete_authors": 0,
-    "missing_identity_posts": 0,
-    "status": "ok",
     "policy": {
-      "min_active_posts": 3,
-      "positive_median_required": true,
-      "activity_weight": "log2(1 + active_posts)"
-    }
+      "version": "creation_80_15_5",
+      "min_original_posts": 3,
+      "weights": {
+        "originals": 80,
+        "comments": 15,
+        "shares": 5
+      },
+      "normalization": "maximum_among_eligible_authors",
+      "account_requirement": "person_by_verified_metadata_or_name_heuristic",
+      "counter_scope": "lifetime_for_posts_published_in_period"
+    },
+    "normalization_maxima": {
+      "originals": 5,
+      "comments": 24,
+      "shares": 9
+    },
+    "incomplete_authors": 0,
+    "unknown_account_types": 0,
+    "excluded_organizations": 0,
+    "below_minimum_authors": 1,
+    "missing_identity_posts": 0,
+    "status": "ok"
   },
   "period": 7
 }

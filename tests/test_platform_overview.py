@@ -10,6 +10,7 @@ class PlatformOverviewTests(unittest.TestCase):
     def make_post(self, id, author='member-0', actors=(), **changes):
         return post(id, actors, author_id=author, author_name=author, text='Originalus tekstas ' + id, is_demo=False, sourceUrl=None,
                     counter_scope='lifetime', comments_include_replies=True,
+                    author_classification={'type':'person','verified':True,'provenance':'exercise_administrator'},
                     counters={'comments': len(actors), 'likes': 0, 'shares': 0}, media=[], **changes)
 
     def report(self, posts, snapshots=None):
@@ -23,38 +24,12 @@ class PlatformOverviewTests(unittest.TestCase):
         self.assertEqual(self.report(self.active_posts(1, 100))['authors']['items'], [])
         self.assertEqual(self.report(self.active_posts(2, 100))['authors']['items'], [])
 
-    def test_all_originals_in_median_and_log_score(self):
-        posts = self.active_posts() + [self.make_post('zero-%s' % i) for i in range(3)]
-        author = self.report(posts)['authors']['items'][0]
-        self.assertEqual((author['authored_posts'], author['active_authored_posts']), (6, 3))
-        self.assertEqual(author['median_engagement_percent'], 5)
-        self.assertEqual(author['score'], 5 * math.log2(4))
-        self.assertEqual(len(author['posts']), 6)
-        # One more unengaged original makes the median zero, so quantity cannot win.
-        self.assertEqual(self.report(posts + [self.make_post('zero-extra')])['authors']['items'], [])
 
-    def test_unique_other_people_not_actions(self):
-        posts = self.active_posts(3, 1)
-        for p in posts:
-            p['interactions'] *= 10
-            p['interactions'] += [{'kind': 'like', 'account_id': 'member-1'}, {'kind': 'share', 'account_id': 'member-1'},
-                                  {'kind': 'comment', 'account_id': 'member-0'}]
-        author = self.report(posts)['authors']['items'][0]
-        self.assertEqual(author['median_engagement_percent'], 1)
 
     def test_comments_and_reshares_are_not_originals(self):
         posts = self.active_posts(1) + [self.make_post('c', kind='comment'), self.make_post('s', kind='reshare')]
         self.assertEqual(self.report(posts)['authors']['items'], [])
 
-    def test_restricted_visibility_and_missing_or_zero_membership(self):
-        posts = self.active_posts(3, 1, visibility='restricted', visible_account_ids=['member-0', 'member-1', 'member-2'])
-        self.assertEqual(self.report(posts)['authors']['items'][0]['median_engagement_percent'], 50)
-        for snapshots in ([], [membership(0)], [membership(101, 'other-exercise')]):
-            result = self.report(posts, snapshots)['authors']
-            self.assertEqual(result['status'], 'missing_data')
-            self.assertEqual(result['items'], [])
-        posts[0]['interactions_complete'] = False
-        self.assertEqual(self.report(posts)['authors']['status'], 'missing_data')
 
     def test_three_categories_all_content_and_replies(self):
         posts = [self.make_post(str(i), actors=['member-1'] * i) for i in range(1, 7)]
@@ -118,7 +93,7 @@ class PlatformOverviewTests(unittest.TestCase):
         self.assertEqual(c['kind'], 'comment')
 
     def test_policy_and_top_five_limit(self):
-        self.assertEqual(AUTHOR_POLICY['min_active_posts'], 3)
+        self.assertEqual(AUTHOR_POLICY['min_original_posts'], 3)
         posts = []
         for i in range(6):
             posts += self.active_posts(3, 3, author='author-%s' % i)
@@ -142,7 +117,7 @@ class PlatformOverviewTests(unittest.TestCase):
         for p in posts:
             p['media'] = original['media']
         after = self.report(posts)
-        for key in ('score', 'median_engagement_percent', 'active_authored_posts', 'authored_posts'):
+        for key in ('score', 'unique_original_posts', 'received_comments', 'received_shares', 'authored_posts'):
             self.assertEqual(before['authors']['items'][0][key], after['authors']['items'][0][key])
 
 

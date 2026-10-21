@@ -134,3 +134,26 @@ The user removed the sidebar explanatory subline and the entire real-data inform
 ## Vercel-only migration (latest user request)
 
 The authoritative app is https://signalas-ecru.vercel.app/. Do not restart local collectors or the paused hourly heartbeat. New source collection runs only through the authenticated sidebar button. Cloud API/repository use Neon for all persistent content, exercise context, selected dates, assessments and statuses. No browser localStorage/IndexedDB or server filesystem writes in the hosted request path. Legacy local files/commands are historical only; do not delete them without a separate request. Keep real data behind session authentication and CSRF-protected writes; never re-enable demo API rewrites, expose database/source credentials, or add a public source/media proxy. Source account coverage remains distinct from whole-platform access. AI is not triggered by collection.
+
+## Local approval workflow and weighted authors (latest user request)
+
+Make code changes and test locally; do not push, open PRs or deploy until explicitly approved by the user. Persistent database changes must use the existing Vercel Neon database, never a local application database. UI QA may use clearly synthetic in-memory fixtures without database writes.
+
+The author ranking now uses author_ranking.py AUTHOR_POLICY: 80 points unique original posts, 15 received comments, 5 received reshares; normalize each component by its maximum among eligible personal authors. Keep at least three distinct originals to avoid single-viral-post eligibility. Do not use likes or an audience denominator in this score. Counts are actions, never unique people shares. Exclude author self-actions and require complete per-kind event data; missing is not zero. Same-author duplicate text+own-media signatures count once; this is exact repeat detection, not AI originality/quality verification.
+
+Honor verified platform/admin account types first. Otherwise use transparent contextual display-name indicators (domains, media/business/institution/nonprofit/community terms, inflections and abbreviations); place names alone do not exclude a person or nickname. Exclude likely organizations and unclear/conflicting types. Mark name-based personal classification as heuristic, never verified identity. The example organization names are illustrative, not an exhaustive hard-coded list. Do not classify author affiliation or political views for scoring. Keep actual source text, thumbnails, links, date filters and the other platform categories unchanged.
+
+
+## Original-language evaluation
+
+Preserve original text, names and evidence. The text-analysis pilot understands narrative meaning across original languages and mixed-language content, while explanations stay Lithuanian. Linguistic ambiguity needs review; language is not an affiliation or direction signal. Name rules use multilingual organizational clues in name_indicators.py; unsupported scripts without trusted metadata stay unknown, never automatically personal. No new paid AI calls or automatic stream analysis are authorized by these code changes.
+
+
+## Map has individual catalog topics only
+
+In Naratyvų žemėlapis, omit the Visos temos aggregate option/view and the unassigned option. Keep all fixed catalog topics, including empty topics. Normalize map entry/reset/hash navigation to a valid individual topic; explicit narrative navigation selects its catalog topic. The map ignores priority scope so every catalog topic remains available. Other views retain their existing scope controls. Do not delete source content or catalog entries.
+
+
+## Timeline without the selected-narrative panel
+
+Raida laike no longer appends the selected narrative detail sidebar in demo or live mode. Keep Naratyvo dinamika and Pakeisti tiriamą naratyvą, chart interactions, filters and sorting. Use the available width without an empty sidebar column. Map narrative expansion and detail rendering remain unchanged.

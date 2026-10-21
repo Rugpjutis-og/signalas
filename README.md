@@ -12,6 +12,10 @@ Duomenų bazėje `signalas_fetches` saugo surinkimų kopijas, `signalas_content`
 
 Vercel funkcijos trukmė – iki 300 s. Viršijus šią vykdymo ribą ankstesnė sėkminga kopija lieka duomenų bazėje; blokavimas baigia galioti po 6 min. Bendras įrašų skaičiaus limitas netaikomas. Ilgalaikiams dideliems rinkimams vėliau gali reikėti užduočių eilės; atskiras mokamas worker ar planas dabar nekuriamas.
 
+## Autorių reitingas
+
+80 balų už skirtingus autorinius įrašus, 15 už kitų paskyrų komentarus ir 5 už persidalijimus. Kiekviena dalis normalizuojama pagal didžiausią tinkamų autorių kiekį pasirinktame laikotarpyje; reikia bent trijų skirtingų autorinių įrašų. Organizacinės paskyros atmetamos pagal patvirtintus metaduomenis arba išplėstus pavadinimo požymius (žiniasklaida, verslai, institucijos, politinės, ne pelno, bendruomeninės ir kitos įstaigos). Tai euristika, ne tapatybės patvirtinimas. Vien vietovardis nėra organizacijos įrodymas. Formulė ir apribojimai aprašyti `docs/METRICS.md`. Duomenų bazės schema nekeičiama.
+
 ## Ankstesnės vietinės versijos dokumentacija
 
 Žemiau pateiktos vietinės komandos išsaugotos ankstesnės versijos priežiūrai. Jos nėra dabartinės Vercel aplikacijos vykdymo ar saugojimo mechanizmas. Ankstesnės vietinės kopijos automatiškai netrinamos.

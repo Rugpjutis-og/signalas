@@ -971,7 +971,12 @@ const growthFor=ns=>window.SignalGrowth.aggregate(ns,state.period);
 const growthLabel=ns=>window.SignalGrowth.percentLabel(growthFor(ns));
 const growthBadge=n=>window.SignalGrowth.badge(n,state.period);
 const narrativeTags=n=>[n.subtopic,...(n.actors||[]),...(n.places||[])].filter(Boolean);
-const catalogThemes=()=>themes.filter(t=>state.themeScope!=='priority'||t.priority);
+const catalogThemes=()=>themes.filter(t=>state.view==='map'||state.themeScope!=='priority'||t.priority);
+function ensureMapTheme(){
+  if(state.view!=='map')return;
+  state.themeScope='all';
+  if(!themes.some(t=>t.id===state.theme))state.theme=themes[0].id;
+}
 const visibleNarratives=()=>narratives.filter(n=>(!live()||count(n)>0)&&(state.themeScope!=='priority'||themeOf(n.theme).priority)&&(state.theme==='all'||n.theme===state.theme)&&(state.status==='all'||n.status===state.status)&&(!state.quickTag||narrativeTags(n).includes(state.quickTag))&&(!state.query||`${n.title} ${n.description} ${themeOf(n.theme).name} ${narrativeTags(n).join(' ')} ${(n.secondaryThemes||[]).map(id=>themeOf(id).name).join(' ')}`.toLocaleLowerCase('lt').includes(state.query.toLocaleLowerCase('lt'))));
 const total=ns=>ns.reduce((a,n)=>a+count(n),0);
 const statusTag=n=>`<span class="tag ${n.status}">${n.status==='candidate'?'Naujas kandidatas':`${icon('check',10)} Registre`}</span>`;
@@ -980,7 +985,7 @@ const spark=(values,color='#8393d8',width=60,height=24)=>{const max=Math.max(...
 
 function ensureSelection(){const ns=visibleNarratives();if(ns.length&&!ns.some(n=>n.id===state.selected)){state.selected=[...ns].sort((a,b)=>count(b)-count(a))[0].id;state.relation=null;}if(!ns.some(n=>n.id===state.expanded))state.expanded=null;return ns;}
 function setView(view){state.view=view;history.replaceState(null,'',`#${view}`);render();}
-function selectNarrative(id,view=state.view){if(!nar(id))return;state.selected=id;state.expanded=id;state.tab='evidence';state.relation=null;state.day=null;setView(view);if(view==='map')revealNarrative(id);}
+function selectNarrative(id,view=state.view){if(!nar(id))return;if(view==='map'&&themes.some(t=>t.id===nar(id).theme))state.theme=nar(id).theme;state.selected=id;state.expanded=id;state.tab='evidence';state.relation=null;state.day=null;setView(view);if(view==='map')revealNarrative(id);}
 function selectTheme(id,view=state.view){if(id!=='all'&&!themeOf(id))return;if(state.themeScope==='priority'&&!themeOf(id)?.priority&&id!=='all')state.themeScope='all';state.theme=id;state.day=null;state.relation=null;state.expanded=null;state.quickTag='';setView(view);}
 function selectThemeScope(scope){if(!['all','priority'].includes(scope))return;state.themeScope=scope;if(state.theme!=='all'&&!catalogThemes().some(t=>t.id===state.theme))state.theme='all';state.expanded=null;state.relation=null;state.day=null;render();}
 function resetFilters(){Object.assign(state,{theme:'all',themeScope:'all',period:live()?state.period:7,status:'all',sort:'popular',query:'',day:null,expanded:null,mapMode:'all',zoom:1,quickTag:''});render();}
@@ -991,11 +996,12 @@ function renderNavigation(){
 }
 function renderFilters(){
   $('search').value=state.query;$('period').value=String(state.period);$('status').value=state.status;
-  $('theme').innerHTML='<option value="all">Visos temos</option>'+catalogThemes().map(t=>`<option value="${t.id}">${t.name}</option>`).join('')+(state.themeScope==='all'?'<option value="unassigned">Nepriskirti naratyvai</option>':'');$('theme').value=state.theme;
+  $('theme').innerHTML=(state.view==='map'?'':'<option value="all">Visos temos</option>')+catalogThemes().map(t=>`<option value="${t.id}">${t.name}</option>`).join('')+(state.view!=='map'&&state.themeScope==='all'?'<option value="unassigned">Nepriskirti naratyvai</option>':'');$('theme').value=state.theme;
   const chips=[];
   if(state.themeScope==='priority')chips.push('Prioritetinės temos');
   const queueButton=`<button class="shortcut-button queue-shortcut ${state.theme==='unassigned'?'active':''}" data-topic="unassigned" data-target="map">${icon('spark',11)} Nepriskirti naratyvai <span>${narratives.filter(n=>n.theme==='unassigned').length}</span></button>`;
   $('theme-scope').innerHTML=`<div class="theme-scope-toggle" role="group" aria-label="Temų aprėptis">${[['all','Visos temos',themes.length],['priority','Prioritetinės temos',themes.filter(t=>t.priority).length]].map(([scope,label,amount])=>`<button data-theme-scope="${scope}" class="${state.themeScope===scope?'active':''}" aria-pressed="${state.themeScope===scope}">${label}<span>${amount}</span></button>`).join('')}</div><div class="catalog-tools"><span class="catalog-note">${icon('trust',12)} Fiksuotas temų katalogas</span>${queueButton}</div>`;
+  if(state.view==='map')$('theme-scope').innerHTML='<div class="catalog-tools"><span class="catalog-note">'+icon('trust',12)+' Fiksuotas temų katalogas</span></div>';
   if(state.theme!=='all')chips.push(themeOf(state.theme).name);
   if(state.status!=='all')chips.push(state.status==='candidate'?'Nauji kandidatai':'Naratyvai registre');
   if(state.quickTag)chips.push(`Žyma: ${state.quickTag}`);
@@ -1017,7 +1023,7 @@ function emptyState(){
   const queue=state.theme==='unassigned';
   const title=unused?'Šioje temoje dar nėra naratyvų':queue?'Nepriskirtų naratyvų nėra':'Šiame pjūvyje naratyvų nerasta';
   const description=unused?'Tema yra fiksuotame kataloge. Jai priskirti naratyvai bus rodomi čia.':queue?'Visi dabartinio registro naratyvai priskirti esamoms bendrinėms temoms. Neaiškaus priskyrimo naratyvai čia lauks analitiko peržiūros.':'Pakeiskite temos ar būsenos filtrą arba įveskite platesnį paieškos žodį.';
-  return `<section class="panel empty-state">${icon(unused?t.icon:queue?'check':'search',28)}${t?`<span class="empty-theme-name">${esc(t.name)}</span>`:''}<h2>${title}</h2><p>${description}</p><button class="button" data-action="clear">Rodyti visas temas</button><small>Tuščias rezultatas nereiškia, kad tokio naratyvo nėra už stebimo srauto ribų.</small></section>`;
+  return `<section class="panel empty-state">${icon(unused?t.icon:queue?'check':'search',28)}${t?`<span class="empty-theme-name">${esc(t.name)}</span>`:''}<h2>${title}</h2><p>${description}</p>${state.view==='map'?'':'<button class="button" data-action="clear">Rodyti visas temas</button>'}<small>Tuščias rezultatas nereiškia, kad tokio naratyvo nėra už stebimo srauto ribų.</small></section>`;
 }
 function renderThemeQueue(ns){
   const pending=ns.filter(n=>n.theme==='unassigned');if(!pending.length)return '';
@@ -1136,17 +1142,18 @@ function renderTime(ns){
       <div class="panel-heading"><div><h2>Naratyvo dinamika</h2><p>Įrašų skaičius per dieną bendrame sraute · pasirinkite dieną</p></div><span class="tag fixed">${n.id}</span></div>
       <div class="chart-legend"><span><i class="support"></i>Palaiko</span><span><i class="oppose"></i>Prieštarauja</span><span><i class="quote"></i>Cituoja / klausia</span></div>
       <div class="time-chart">${timeChart(n)}</div>
-      <div class="chart-note">${icon('eye',12)}${state.day?`Spalio ${state.day} d. · ${fmt(n.days[state.day-(20-n.days.length)])} įrašų · pasirinkimas rodomas detalių skiltyje.`:'Įvykio žyma suteikia kontekstą; sutapimas laike neįrodo priežasties.'}</div>
+      <div class="chart-note">${icon('eye',12)}${state.day?`Spalio ${state.day} d. · ${fmt(n.days[state.day-(20-n.days.length)])} įrašų.`:'Įvykio žyma suteikia kontekstą; sutapimas laike neįrodo priežasties.'}</div>
       <div class="timeline-event"><span class="event-date">SPAL. 16</span><span class="event-dot"></span><div><strong>Paskelbtas viešas paaiškinimas</strong><span>Sintetinis kontekstinis įvykis, pažymėtas analitiko.</span></div></div>
       <div class="timeline-event"><span class="event-date">SPAL. 19</span><span class="event-dot" style="background:${t.color}"></span><div><strong>${fmt(n.days[n.days.length-1])} naratyvo paminėjimų per dieną</strong><span>Bendras stebimas srautas · demonstraciniai duomenys.</span></div></div>
     </section>
     <section class="panel"><div class="panel-heading"><div><h2>Pakeisti tiriamą naratyvą</h2><p>${narrativeSortHint()} · temos ir laikotarpio filtrai išliks</p></div>${narrativeSortControl()}</div><div class="topic-list">${sortNarratives(ns).filter(o=>o.id!==n.id).slice(0,4).map(o=>`<button class="topic-row" data-narrative="${o.id}" style="grid-template-columns:25px 1fr auto"><span class="theme-dot" style="background:${themeOf(o.theme).color};height:7px;width:7px"></span><span class="topic-name">${esc(o.title)}</span><span class="topic-count">${fmt(count(o))} ${icon('arrow',12)}</span></button>`).join('')||'<p class="detail-description" style="padding-bottom:15px">Šiame pjūvyje yra tik vienas naratyvas. Pasirinkite kitą temą viršuje.</p>'}</div></section>
-  </div>${detailPanel(n)}</div>`;
+  </div></div>`;
 }
 
 function render(){
   if(!liveDataInitialized)return;
   window.SignalGrowth.hide();
+  ensureMapTheme();
   const ns=ensureSelection();renderNavigation();renderFilters();renderAnalyzedCount(ns);
   const meta=viewMeta[state.view];$('page-title').textContent=meta.title;$('page-description').textContent=meta.description;$('breadcrumb').textContent=meta.title;
   if(live()&&state.view==='platform')$('page-description').textContent='Gauto turinio ir sąveikų apžvalga · duomenų aprėptis nurodyta žemiau.';
@@ -1192,7 +1199,7 @@ document.addEventListener('click',event=>{
   else if(d.view)setView(d.view);
   else if(d.topic)selectTheme(d.topic,d.target||state.view);
   else if(d.narrative){if(d.topicSwitch){if(state.themeScope==='priority'&&!themeOf(d.topicSwitch)?.priority)state.themeScope='all';state.theme=d.topicSwitch;state.status='all';state.query='';state.quickTag='';}selectNarrative(d.narrative,d.target||state.view);}
-  else if(d.quicktag){state.quickTag=state.quickTag===d.quicktag?'':d.quicktag;state.theme='all';state.expanded=null;state.day=null;render();}
+  else if(d.quicktag){state.quickTag=state.quickTag===d.quicktag?'':d.quicktag;if(state.view!=='map')state.theme='all';state.expanded=null;state.day=null;render();}
   else if(d.accordion){if(state.expanded===d.accordion){state.expanded=null;render();}else selectNarrative(d.accordion,'map');document.getElementById(`narrative-trigger-${d.accordion}`)?.focus({preventScroll:true});}
   else if(d.tab){state.tab=d.tab;render();document.querySelector(`[data-tab="${state.tab}"]`)?.focus({preventScroll:true});}
   else if(d.relation)selectRelation(d.relation,d.target);

@@ -28,6 +28,9 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert.equal((platform.innerHTML.match(/class="platform-category-body"/g)||[]).length,3);
  assert(!platform.innerHTML.includes('už pasirinkto laikotarpio ribų gautas sąveikas'));
  assert(platform.innerHTML.includes('Balas nėra auditorijos procentas'));
+ for(const label of ['80 %','15 %','5 %','/ 100 balų','Originalūs įrašai','Kaip skaičiuojama?'])assert(platform.innerHTML.includes(label));
+ assert(!platform.innerHTML.includes('Tipinis vieno įrašo įsitraukimas'));
+ assert(!platform.innerHTML.includes('undefined'));
  assert(!platform.innerHTML.includes('href="https://diaspora.sauliai.lt/'));
  const missing=structuredClone(report);
  missing.categories.forEach(c=>{c.items=[];c.status='missing_data';c.missing_posts=1});

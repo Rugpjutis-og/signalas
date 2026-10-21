@@ -224,11 +224,17 @@
     "items": [
       {
         "author_id": "demo-person-01",
+        "source": "platform-demo",
         "author_name": "Rasa · demonstracinė paskyra",
         "authored_posts": 3,
-        "active_authored_posts": 3,
-        "median_engagement_percent": 30.434782608695656,
-        "score": 60.86956521739131,
+        "unique_original_posts": 3,
+        "duplicate_posts": 0,
+        "account_classification": {
+          "type": "person",
+          "method": "verified_metadata"
+        },
+        "received_comments": 19,
+        "received_shares": 7,
         "posts": [
           {
             "id": "DEMO-P03",
@@ -274,17 +280,38 @@
             "sourceUrl": null,
             "parentSourceUrl": null
           }
-        ]
+        ],
+        "score_components": {
+          "originals": 80.0,
+          "comments": 15.0,
+          "shares": 5.0
+        },
+        "score": 100.0
       }
     ],
-    "incomplete_authors": 0,
-    "missing_identity_posts": 0,
-    "status": "ok",
     "policy": {
-      "min_active_posts": 3,
-      "positive_median_required": true,
-      "activity_weight": "log2(1 + active_posts)"
-    }
+      "version": "creation_80_15_5",
+      "min_original_posts": 3,
+      "weights": {
+        "originals": 80,
+        "comments": 15,
+        "shares": 5
+      },
+      "normalization": "maximum_among_eligible_authors",
+      "account_requirement": "person_by_verified_metadata_or_name_heuristic",
+      "counter_scope": "lifetime_for_posts_published_in_period"
+    },
+    "normalization_maxima": {
+      "originals": 3,
+      "comments": 19,
+      "shares": 7
+    },
+    "incomplete_authors": 0,
+    "unknown_account_types": 0,
+    "excluded_organizations": 0,
+    "below_minimum_authors": 3,
+    "missing_identity_posts": 0,
+    "status": "ok"
   },
   "period": 1
 }

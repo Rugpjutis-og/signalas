@@ -28,6 +28,26 @@ async function runtime(){
 const plain=x=>JSON.parse(JSON.stringify(x));
 (async()=>{
  const first=await runtime(),api=first.window.SignalExerciseContext,form=first.node('exercise-context-root');
+ const demo=first.window.SignalDemo;
+ demo.setView('map');
+ assert.equal((first.node('theme').innerHTML.match(/<option /g)||[]).length,demo.themes.length);
+ assert(!first.node('theme').innerHTML.includes('value="all"'));
+ assert(!first.node('theme').innerHTML.includes('unassigned'));
+ assert(!first.node('theme-scope').innerHTML.includes('Visos temos'));
+ assert(demo.themes.some(t=>t.id===demo.state.theme));
+ assert(demo.visibleNarratives().every(n=>n.theme===demo.state.theme));
+ const emptyTopic=demo.themes.find(t=>!demo.narratives.some(n=>n.theme===t.id));
+ if(emptyTopic){demo.selectTheme(emptyTopic.id);assert(!first.node('view').innerHTML.includes('Rodyti visas temas'));}
+ demo.state.sort='oldest';demo.resetFilters();assert.notEqual(demo.state.theme,'all');
+ demo.selectTheme(demo.themes.at(-1).id);assert.equal(demo.state.theme,demo.themes.at(-1).id);
+ assert(demo.visibleNarratives().every(n=>n.theme===demo.state.theme));
+ const evidenceNarrative=demo.narratives.find(n=>demo.themes.some(t=>t.id===n.theme));
+ demo.selectNarrative(evidenceNarrative.id,'map');
+ assert.equal(demo.state.theme,evidenceNarrative.theme);assert.equal(demo.state.expanded,evidenceNarrative.id);
+ demo.selectThemeScope('priority');assert.equal(demo.state.themeScope,'all');
+ assert.equal((first.node('theme').innerHTML.match(/<option /g)||[]).length,demo.themes.length);
+ demo.setView('overview');demo.resetFilters();assert(first.node('theme').innerHTML.includes('value="all"'));
+ demo.setView('context');
  assert.equal(api.get(),null);assert.equal((form.innerHTML.match(/<textarea /g)||[]).length,2);
  await assert.rejects(api.save({initialSituation:' ',confirmedFacts:'Fact'}));assert.equal(stored,null);
  const input={initialSituation:'Pratybos <script>test</script>',confirmedFacts:'Patvirtinti faktai',nameMappings:[{id:'stable',realName:'Lietuva',exerciseName:'Litanija'}]};
