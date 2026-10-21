@@ -284,3 +284,11 @@ Python adapteris perskaito tik nuosavą `photos` masyvą. [Diasporos PhotoPresen
 Tikras Diasporos duomenų gavimas tebėra neprijungtas. Reikia realių įrašų medijos URL, originalo nuorodų ir, jei nuotraukos apsaugotos, veikiančios autorizuotos šaltinio prieigos. Pateikti URL naudojami tiesiogiai su įprastais naršyklės prieigos apribojimais; neįdiegta vieša nuotraukų kopija, proxy ar privatumo apribojimų apėjimas. Neprieinama autorizuota nuotrauka tiesiog paslepiama. Demonstraciniai SVG aiškiai pažymėti kaip iliustracijos, ne tikros Diasporos nuotraukos, ir neturi fiktyvių originalo nuorodų.
 
 Patikra: `node tests/test_thumbnails.cjs`, esami JS rinkiniai ir Python `unittest`. Atskira vietinė bandomoji peržiūra patikrino be nuotraukos / vieną / kelias nuotraukas, originalo URL sumažinimą, 404 paveikslėlį, komentaro medijos atskyrimą, paspaudimą ir klaviatūros „Enter“ su nauju skirtuku bei nepakeistu kortelės išskleidimų skaičiumi. Aplikacijoje naršyklėje patikrintos visos keturios vietos ir 1280 / 390 px išdėstymai. Autorių reitingo, naratyvų analizės ir termometro skaičiavimo formulės nepakeistos.
+
+## Privati debesijos duomenų bazė
+
+Vercel projektui prijungta Neon Postgres `signalas-data` (Free, Frankfurt). Vietinis Python rinkiklis po sėkmingo `collect-sample` automatiškai įrašo imtį, kai serverio `.env` nustatytas `SIGNALAS_DATABASE_URL`. Prisijungimas laikomas tik ignoruojamame `.env`, niekada `dist/` ar Git. Vercel integracija projekto aplinkoje valdo `DATABASE_URL`.
+
+`signalas_fetches` saugo surinkimų JSON kopijas, `signalas_content` – naujausius įrašus ir komentarus su medijos metaduomenimis bei sąveikomis. Nuotraukų failai nekopijuojami. Šaltinio/paskyros sritis atskirta; pakartotinis siuntimas nedubliuoja turinio. Debesijos klaida nepašalina vietinės kopijos ir grąžinama atskirai `cloud_storage` rezultate. Pakartoti paskutinės kopijos siuntimą: `python3 cloud_storage.py`.
+
+Duomenų bazė nėra viešas API. Vercel sąsaja lieka demonstracinė iki atskiros autentifikuotos skaitymo integracijos. Automatinis rinkimas vis dar vyksta vietiniame kompiuteryje per esamą kasvalandinę užduotį. Duomenų kopijų kaupimą riboja pasirinkto nemokamo plano talpa; automatinio privataus turinio trynimo ar mokamo plano įjungimo nėra.

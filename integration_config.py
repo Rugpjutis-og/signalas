@@ -26,7 +26,7 @@ def settings(root=ROOT):
                 value = value[1:-1]
             values[name.strip()] = value
     for name in ("OPENAI_API_KEY", "OPENAI_MODEL", "DIASPORA_BASE_URL",
-                 "DIASPORA_USERNAME", "DIASPORA_PASSWORD"):
+                 "DIASPORA_USERNAME", "DIASPORA_PASSWORD", "SIGNALAS_DATABASE_URL"):
         if name in os.environ:
             values[name] = os.environ[name]
     return values

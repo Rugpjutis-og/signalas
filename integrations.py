@@ -12,6 +12,7 @@ from integration_config import ROOT, settings
 from openai_analysis import analyze
 from openai_check import check
 import monitoring
+import cloud_storage
 
 
 def private_json(path, value):
@@ -43,7 +44,14 @@ def collect_sample(db_path=DEFAULT_DB):
             client = DiasporaClient(config.get("DIASPORA_BASE_URL", "https://diaspora.sauliai.lt"),
                                     config.get("DIASPORA_USERNAME"), config.get("DIASPORA_PASSWORD"))
             client.login()
-            return save_packet(client.collect(), db_path)
+            packet = client.collect()
+            result = save_packet(packet, db_path)
+            if config.get("SIGNALAS_DATABASE_URL"):
+                try:
+                    result["cloud_storage"] = cloud_storage.sync(packet, config["SIGNALAS_DATABASE_URL"], cloud_storage.account_scope(config))
+                except cloud_storage.CloudStorageError as error:
+                    result["cloud_storage"] = {"status": "error", "message": str(error)}
+            return result
         except (ValueError, OSError):
             monitoring.record("collection", "collection_failed", ROOT)
             raise
