@@ -1,0 +1,1931 @@
+{
+  "exercise_id": "demo-platform",
+  "end": "2026-10-20T00:00:00+03:00",
+  "membership_snapshots": [
+    {
+      "exercise_id": "demo-platform",
+      "complete": true,
+      "assigned_account_ids": [
+        "demo-person-01",
+        "demo-person-02",
+        "demo-person-03",
+        "demo-person-04",
+        "demo-person-05",
+        "demo-person-06",
+        "demo-person-07",
+        "demo-person-08",
+        "demo-person-09",
+        "demo-person-10",
+        "demo-person-11",
+        "demo-person-12",
+        "demo-person-13",
+        "demo-person-14",
+        "demo-person-15",
+        "demo-person-16",
+        "demo-person-17",
+        "demo-person-18",
+        "demo-person-19",
+        "demo-person-20",
+        "demo-person-21",
+        "demo-person-22",
+        "demo-person-23",
+        "demo-person-24"
+      ],
+      "valid_from": "2026-10-13T00:00:00+03:00",
+      "valid_until": "2026-10-20T00:00:00+03:00"
+    }
+  ],
+  "posts": [
+    {
+      "id": "DEMO-P01",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-01",
+      "author_name": "Rasa · demonstracinė paskyra",
+      "published_at": "2026-10-19T08:15:00+03:00",
+      "text": "Susitarkime dėl pagalbos punkto darbo laiko. Šiandien budime iki 18 valandos. Parašykite komentaruose, kuriuo metu patogiausia užsukti.\n\nŠi schema – demonstracinė iliustracija.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [
+        {
+          "kind": "image",
+          "url": "demo/help-frame.svg",
+          "alt": "Demonstracinė pagalbos punkto iliustracija",
+          "caption": "Demonstracinė iliustracija"
+        }
+      ],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P01-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment4",
+          "kind": "comment",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment5",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment6",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment7",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment8",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment9",
+          "kind": "comment",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment10",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-comment11",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P01-comment0"
+        },
+        {
+          "id": "DEMO-P01-like0",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like4",
+          "kind": "like",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like5",
+          "kind": "like",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like6",
+          "kind": "like",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-like7",
+          "kind": "like",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-share0",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-share1",
+          "kind": "share",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-share2",
+          "kind": "share",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P01-share3",
+          "kind": "share",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 12,
+        "likes": 8,
+        "shares": 4
+      }
+    },
+    {
+      "id": "DEMO-P02",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-01",
+      "author_name": "Rasa · demonstracinė paskyra",
+      "published_at": "2026-10-19T09:15:00+03:00",
+      "text": "Ačiū atėjusiems į susitikimą. Pasidalinkite, kuriuos klausimus turėtume aptarti kitą kartą.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P02-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P02-comment0"
+        },
+        {
+          "id": "DEMO-P02-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P02-comment0"
+        },
+        {
+          "id": "DEMO-P02-like0",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like4",
+          "kind": "like",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like5",
+          "kind": "like",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-like6",
+          "kind": "like",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-share0",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P02-share1",
+          "kind": "share",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 4,
+        "likes": 7,
+        "shares": 2
+      }
+    },
+    {
+      "id": "DEMO-P03",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-01",
+      "author_name": "Rasa · demonstracinė paskyra",
+      "published_at": "2026-10-19T10:15:00+03:00",
+      "text": "Kaimynų mainų lentyna jau paruošta. Galima atnešti perskaitytą knygą ir pasiimti kitą.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P03-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P03-comment0"
+        },
+        {
+          "id": "DEMO-P03-like0",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P03-share0",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 4,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P04",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-01",
+      "author_name": "Rasa · demonstracinė paskyra",
+      "published_at": "2026-10-17T11:15:00+03:00",
+      "text": "Surinkome klausimus apie transporto tvarkaraštį. Kiekvieną klausimą pateiksime atskirai, kad atsakymai būtų aiškiai matomi.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P04-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P04-comment0"
+        },
+        {
+          "id": "DEMO-P04-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P04-comment0"
+        },
+        {
+          "id": "DEMO-P04-comment4",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P04-comment0"
+        },
+        {
+          "id": "DEMO-P04-like0",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-share0",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P04-share1",
+          "kind": "share",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 5,
+        "likes": 3,
+        "shares": 2
+      }
+    },
+    {
+      "id": "DEMO-P05",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-01",
+      "author_name": "Rasa · demonstracinė paskyra",
+      "published_at": "2026-10-14T12:15:00+03:00",
+      "text": "Ryte paskelbsiu susitikimo vietą.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 0,
+        "likes": 0,
+        "shares": 0
+      }
+    },
+    {
+      "id": "DEMO-P06",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-02",
+      "author_name": "Mantas · demonstracinė paskyra",
+      "published_at": "2026-10-19T13:15:00+03:00",
+      "text": "Kurią savaitės dieną galėtumėte prisidėti prie bendro kiemo tvarkymo? Ieškome laiko, tinkamo daugiau kaimynų.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P06-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P06-comment0"
+        },
+        {
+          "id": "DEMO-P06-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like4",
+          "kind": "like",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like5",
+          "kind": "like",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like6",
+          "kind": "like",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like7",
+          "kind": "like",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-like8",
+          "kind": "like",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P06-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 9,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P07",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-02",
+      "author_name": "Mantas · demonstracinė paskyra",
+      "published_at": "2026-10-18T14:15:00+03:00",
+      "text": "Siūlau kitą susitikimą pradėti nuo ankstesnių klausimų aptarimo.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P07-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P07-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P07-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P07-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P07-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P07-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 2,
+        "likes": 3,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P08",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-02",
+      "author_name": "Mantas · demonstracinė paskyra",
+      "published_at": "2026-10-17T15:15:00+03:00",
+      "text": "Sudėjau viešai paskelbtą informaciją į vieną tekstą. Jei pastebėsite netikslumą, parašykite.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P08-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P08-comment0"
+        },
+        {
+          "id": "DEMO-P08-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P08-comment0"
+        },
+        {
+          "id": "DEMO-P08-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-like1",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-like4",
+          "kind": "like",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-share1",
+          "kind": "share",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-share2",
+          "kind": "share",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-share3",
+          "kind": "share",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P08-share4",
+          "kind": "share",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 4,
+        "likes": 5,
+        "shares": 5
+      }
+    },
+    {
+      "id": "DEMO-P09",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-02",
+      "author_name": "Mantas · demonstracinė paskyra",
+      "published_at": "2026-10-16T16:15:00+03:00",
+      "text": "Šiandien per pietus skaitysiu parke.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 0,
+        "likes": 0,
+        "shares": 0
+      }
+    },
+    {
+      "id": "DEMO-P10",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-02",
+      "author_name": "Mantas · demonstracinė paskyra",
+      "published_at": "2026-10-15T08:15:00+03:00",
+      "text": "Primenu rytojaus susitikimą.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 0,
+        "likes": 0,
+        "shares": 0
+      }
+    },
+    {
+      "id": "DEMO-P11",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-03",
+      "author_name": "Ieva · demonstracinė paskyra",
+      "published_at": "2026-10-19T09:15:00+03:00",
+      "text": "Ką manote apie šį pasiūlymą?\n\nNorėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. Norėčiau išgirsti skirtingų nuomonių ir suprasti, kokių aplinkybių dar neaptarėme. ",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [
+        {
+          "kind": "image",
+          "thumbnailUrl": "demo/help-card.svg",
+          "originalUrl": "demo/help-card.svg",
+          "alt": "Demonstracinė informacinės kortelės iliustracija"
+        },
+        {
+          "kind": "image",
+          "thumbnailUrl": "demo/help-frame.svg",
+          "originalUrl": "demo/help-frame.svg",
+          "alt": "Demonstracinė pagalbos punkto iliustracija"
+        },
+        {
+          "kind": "image",
+          "thumbnailUrl": "demo/demo-invoice.svg",
+          "originalUrl": "demo/demo-invoice.svg",
+          "alt": "Demonstracinė dokumento iliustracija"
+        }
+      ],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P11-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment4",
+          "kind": "comment",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment5",
+          "kind": "comment",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment6",
+          "kind": "comment",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment7",
+          "kind": "comment",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment8",
+          "kind": "comment",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment9",
+          "kind": "comment",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment10",
+          "kind": "comment",
+          "account_id": "demo-person-12",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment11",
+          "kind": "comment",
+          "account_id": "demo-person-13",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment12",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment13",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment14",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment15",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment16",
+          "kind": "comment",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment17",
+          "kind": "comment",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment18",
+          "kind": "comment",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment19",
+          "kind": "comment",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment20",
+          "kind": "comment",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment21",
+          "kind": "comment",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment22",
+          "kind": "comment",
+          "account_id": "demo-person-12",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment23",
+          "kind": "comment",
+          "account_id": "demo-person-13",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment24",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment25",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment26",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment27",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment28",
+          "kind": "comment",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment29",
+          "kind": "comment",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment30",
+          "kind": "comment",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment31",
+          "kind": "comment",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment32",
+          "kind": "comment",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment33",
+          "kind": "comment",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment34",
+          "kind": "comment",
+          "account_id": "demo-person-12",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment35",
+          "kind": "comment",
+          "account_id": "demo-person-13",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment36",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-comment37",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P11-comment0"
+        },
+        {
+          "id": "DEMO-P11-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like2",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like3",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like4",
+          "kind": "like",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like5",
+          "kind": "like",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like6",
+          "kind": "like",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like7",
+          "kind": "like",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like8",
+          "kind": "like",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like9",
+          "kind": "like",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like10",
+          "kind": "like",
+          "account_id": "demo-person-12",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like11",
+          "kind": "like",
+          "account_id": "demo-person-13",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like12",
+          "kind": "like",
+          "account_id": "demo-person-14",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like13",
+          "kind": "like",
+          "account_id": "demo-person-15",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like14",
+          "kind": "like",
+          "account_id": "demo-person-16",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like15",
+          "kind": "like",
+          "account_id": "demo-person-17",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like16",
+          "kind": "like",
+          "account_id": "demo-person-18",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like17",
+          "kind": "like",
+          "account_id": "demo-person-19",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like18",
+          "kind": "like",
+          "account_id": "demo-person-20",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like19",
+          "kind": "like",
+          "account_id": "demo-person-21",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like20",
+          "kind": "like",
+          "account_id": "demo-person-22",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like21",
+          "kind": "like",
+          "account_id": "demo-person-23",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-like22",
+          "kind": "like",
+          "account_id": "demo-person-24",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share1",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share2",
+          "kind": "share",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share3",
+          "kind": "share",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share4",
+          "kind": "share",
+          "account_id": "demo-person-06",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share5",
+          "kind": "share",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share6",
+          "kind": "share",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share7",
+          "kind": "share",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share8",
+          "kind": "share",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share9",
+          "kind": "share",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P11-share10",
+          "kind": "share",
+          "account_id": "demo-person-12",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 38,
+        "likes": 23,
+        "shares": 11
+      }
+    },
+    {
+      "id": "DEMO-P12",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-04",
+      "author_name": "Gabija · demonstracinė paskyra",
+      "published_at": "2026-10-19T10:15:00+03:00",
+      "text": "Mažos grupės susitikimas vyks bibliotekoje. Kas galėtų ateiti anksčiau padėti paruošti erdvę?",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "restricted",
+      "visible_account_ids": [
+        "demo-person-04",
+        "demo-person-01",
+        "demo-person-02",
+        "demo-person-03",
+        "demo-person-05",
+        "demo-person-06",
+        "demo-person-07",
+        "demo-person-08"
+      ],
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P12-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P12-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P12-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P12-comment0"
+        },
+        {
+          "id": "DEMO-P12-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P12-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P12-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 2,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P13",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-04",
+      "author_name": "Gabija · demonstracinė paskyra",
+      "published_at": "2026-10-18T11:15:00+03:00",
+      "text": "Pasiūlykite kitam susitikimui tinkamą temą.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "restricted",
+      "visible_account_ids": [
+        "demo-person-04",
+        "demo-person-01",
+        "demo-person-02",
+        "demo-person-03",
+        "demo-person-05",
+        "demo-person-06",
+        "demo-person-07",
+        "demo-person-08"
+      ],
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P13-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P13-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P13-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00",
+          "parent_id": "DEMO-P13-comment0"
+        },
+        {
+          "id": "DEMO-P13-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P13-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P13-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-18T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 2,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P14",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-04",
+      "author_name": "Gabija · demonstracinė paskyra",
+      "published_at": "2026-10-17T12:15:00+03:00",
+      "text": "Pasidalinkime, kuri pagalba šiandien labiausiai praverstų.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "restricted",
+      "visible_account_ids": [
+        "demo-person-04",
+        "demo-person-01",
+        "demo-person-02",
+        "demo-person-03",
+        "demo-person-05",
+        "demo-person-06",
+        "demo-person-07",
+        "demo-person-08"
+      ],
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P14-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P14-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P14-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00",
+          "parent_id": "DEMO-P14-comment0"
+        },
+        {
+          "id": "DEMO-P14-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P14-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P14-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-17T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 2,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P15",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-05",
+      "author_name": "Jonas · demonstracinė paskyra",
+      "published_at": "2026-10-13T13:15:00+03:00",
+      "text": "Savaitės pradžios klausimas diskusijai.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P15-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-13T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P15-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-13T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P15-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-13T18:00:00+03:00",
+          "parent_id": "DEMO-P15-comment0"
+        },
+        {
+          "id": "DEMO-P15-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-13T18:00:00+03:00",
+          "parent_id": "DEMO-P15-comment0"
+        },
+        {
+          "id": "DEMO-P15-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-13T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P15-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-13T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P15-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-13T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 4,
+        "likes": 2,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P16",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-05",
+      "author_name": "Jonas · demonstracinė paskyra",
+      "published_at": "2026-10-15T14:15:00+03:00",
+      "text": "Kokios informacijos trūksta?",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P16-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P16-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P16-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-15T18:00:00+03:00",
+          "parent_id": "DEMO-P16-comment0"
+        },
+        {
+          "id": "DEMO-P16-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P16-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P16-like2",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P16-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-15T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 3,
+        "likes": 3,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P17",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "post",
+      "author_id": "demo-person-05",
+      "author_name": "Jonas · demonstracinė paskyra",
+      "published_at": "2026-10-16T15:15:00+03:00",
+      "text": "Kurią vietą patogiausia pasiekti?",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P17-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-16T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P17-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-16T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P17-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-16T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P17-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-16T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P17-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-16T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 2,
+        "likes": 2,
+        "shares": 1
+      }
+    },
+    {
+      "id": "DEMO-P18",
+      "source": "platform-demo",
+      "exercise_id": "demo-platform",
+      "kind": "reshare",
+      "author_id": "demo-person-06",
+      "author_name": "Lina · demonstracinė paskyra",
+      "published_at": "2026-10-19T16:15:00+03:00",
+      "text": "Persidaliju bendruomenės pranešimu.",
+      "is_demo": true,
+      "sourceUrl": null,
+      "parentSourceUrl": null,
+      "media": [],
+      "visibility": "all_assigned",
+      "visible_account_ids": null,
+      "interactions_complete": true,
+      "interactions": [
+        {
+          "id": "DEMO-P18-comment0",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-comment1",
+          "kind": "comment",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-comment2",
+          "kind": "comment",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P18-comment0"
+        },
+        {
+          "id": "DEMO-P18-comment3",
+          "kind": "comment",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P18-comment0"
+        },
+        {
+          "id": "DEMO-P18-comment4",
+          "kind": "comment",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P18-comment0"
+        },
+        {
+          "id": "DEMO-P18-comment5",
+          "kind": "comment",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00",
+          "parent_id": "DEMO-P18-comment0"
+        },
+        {
+          "id": "DEMO-P18-like0",
+          "kind": "like",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like1",
+          "kind": "like",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like2",
+          "kind": "like",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like3",
+          "kind": "like",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like4",
+          "kind": "like",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like5",
+          "kind": "like",
+          "account_id": "demo-person-07",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like6",
+          "kind": "like",
+          "account_id": "demo-person-08",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like7",
+          "kind": "like",
+          "account_id": "demo-person-09",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like8",
+          "kind": "like",
+          "account_id": "demo-person-10",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-like9",
+          "kind": "like",
+          "account_id": "demo-person-11",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-share0",
+          "kind": "share",
+          "account_id": "demo-person-01",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-share1",
+          "kind": "share",
+          "account_id": "demo-person-02",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-share2",
+          "kind": "share",
+          "account_id": "demo-person-03",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-share3",
+          "kind": "share",
+          "account_id": "demo-person-04",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        },
+        {
+          "id": "DEMO-P18-share4",
+          "kind": "share",
+          "account_id": "demo-person-05",
+          "published_at": "2026-10-19T18:00:00+03:00"
+        }
+      ],
+      "counter_scope": "lifetime",
+      "comments_include_replies": true,
+      "counters": {
+        "comments": 6,
+        "likes": 10,
+        "shares": 5
+      }
+    }
+  ]
+}
