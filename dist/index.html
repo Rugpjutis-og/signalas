@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111d32">
+  <meta name="description" content="Naratyvų observatorija – interaktyvus temų, naratyvų ryšių ir raidos laike analizės prototipas su demonstraciniais duomenimis.">
+  <title>Signalas · Naratyvų observatorija</title>
+  <link rel="stylesheet" href="styles.css?v=count-14">
+  <link rel="stylesheet" href="thermometer.css?v=percent-6">
+  <link rel="stylesheet" href="exercise-context.css?v=mappings-9">
+  <link rel="stylesheet" href="platform-overview.css?v=scope-21">
+  <link rel="stylesheet" href="live-data.css?v=status-24">
+  <script src="source-content.js?v=photos-20" defer></script>
+  <script src="exercise-context.js?v=live-16" defer></script>
+  <script src="thermometer.js?v=range-23" defer></script>
+  <script src="demo/narrative-history.js?v=1" defer></script>
+  <script src="metrics-context.js?v=audience-10" defer></script>
+  <script src="counts.js?v=audience-10" defer></script>
+  <script src="growth.js?v=live-16" defer></script>
+  <script src="platform-overview.js?v=range-23" defer></script>
+  <script src="live-data.js?v=status-24" defer></script>
+  <script src="app.js?v=menu-25" defer></script>
+  <script src="local.js?v=live-16" defer></script>
+  <script src="monitoring.js?v=status-24" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Pereiti prie turinio</a>
+  <aside class="sidebar" aria-label="Pagrindinis meniu">
+    <a class="brand" href="#overview" aria-label="Signalas, pradžia"><span class="brand-mark"><i></i><i></i><i></i></span><span>signalas<span class="brand-dot">.</span></span></a>
+    <div class="workspace"><span class="workspace-icon">N</span><div>Naratyvų observatorija<small>Analitiko darbo erdvė</small></div><span class="workspace-chevron">⌄</span></div>
+    <div class="nav-label">STEBĖSENA</div>
+    <nav id="navigation"></nav>
+    <div id="stream-status" class="sidebar-note stream-status stopped" role="status" aria-live="polite"><span class="pulse-dot" aria-hidden="true"></span><span id="stream-status-label">Srauto stebėjimas sustabdytas</span></div>
+    <div class="sidebar-bottom"><div class="profile"><span class="avatar">AN</span><div>Analitiko peržiūra<small>Privati darbo erdvė</small></div><span class="profile-dot"></span></div></div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar"><div class="breadcrumb"><span>Stebėsena</span><span class="crumb-divider">/</span><strong id="breadcrumb">Temų apžvalga</strong></div><div class="topbar-right"><span id="local-status" class="local-status" role="status" hidden></span><span class="demo-indicator"><span></span> Demonstraciniai duomenys</span><button class="icon-button" id="help-button" aria-label="Kaip naudotis prototipu"></button><span class="top-avatar">AN</span></div></header>
+    <main id="main" tabindex="-1">
+      <section class="page-heading"><div><div class="eyebrow"><span class="tiny-line"></span> INFORMACINĖS APLINKOS PULSAS</div><h1 id="page-title">Temų apžvalga</h1><p id="page-description">Kas svarbu šiandien. Kas keičiasi. Kokie pasakojimai iškyla.</p></div><button class="button export-button" id="export-button"></button></section>
+      <section class="toolbar" aria-label="Analizės filtrai"><label class="search-field"><span id="search-icon"></span><input id="search" type="search" placeholder="Ieškoti temos, naratyvo ar žymos…" aria-label="Ieškoti temos, naratyvo ar žymos"><kbd>/</kbd></label><div class="filter-controls"><label class="select-wrap"><span id="calendar-icon"></span><select id="period" aria-label="Laikotarpis"><option value="10">Spalio 10–19 · 10 d.</option><option value="7" selected>Spalio 13–19 · 7 d.</option><option value="3">Spalio 17–19 · 3 d.</option><option value="1">Spalio 19 · 1 d.</option></select></label><button type="button" id="period-picker" class="select-wrap period-picker" aria-haspopup="dialog" aria-controls="period-dialog" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><span></span></button><label class="select-wrap"><select id="theme" aria-label="Pagrindinė tema"></select></label><label class="select-wrap status-select"><select id="status" aria-label="Naratyvo būsena"><option value="all">Visos būsenos</option><option value="confirmed">Registre</option><option value="candidate">Nauji kandidatai</option></select></label><button class="icon-button reset-button" id="reset-button" aria-label="Atkurti filtrus" title="Atkurti filtrus"></button></div></section>
+      <div id="theme-scope" class="theme-scope"></div>
+      <div id="active-filter" class="active-filter" aria-live="polite"></div>
+      <section id="kpis" class="analysis-summary" aria-label="Analizuojamų įrašų kiekis"></section>
+      <aside id="analysis-context-note" class="analysis-context-note" aria-label="Pradinio pratybų konteksto būsena"></aside>
+      <div id="view"></div>
+      <footer class="page-footer"><span><span class="footer-dot"></span>Duomenų pjūvis: 2026 m. spalio 19 d.</span><span>Stebimas srautas ≠ visa visuomenė <span class="footer-separator">·</span> Demonstraciniai rodikliai ir įrašai</span></footer>
+    </main>
+  </div>
+  <div id="growth-explanation" class="growth-explanation" role="tooltip" hidden></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="period-dialog" class="period-dialog" aria-labelledby="period-title"><form id="period-form"><h2 id="period-title">Pasirinkite laikotarpį</h2><div class="period-date-fields"><label for="period-from">Nuo<input type="date" id="period-from" required></label><label for="period-to">Iki<input type="date" id="period-to" required></label></div><p class="period-local-note">Filtruojami jau surinkti duomenys. Datos – Lietuvos laiku.</p><p id="period-error" role="alert"></p><div class="period-actions"><button type="button" class="button" id="period-cancel">Atšaukti</button><button type="submit" class="button primary" id="period-apply">Taikyti</button></div></form></dialog>
+  <dialog id="help-dialog"><button class="dialog-close icon-button" id="close-help" aria-label="Uždaryti">✕</button><span class="eyebrow">ANALIZĖS VAIZDAI</span><h2>Nuo temos iki jos raidos.</h2><p><strong>1. Temų apžvalga.</strong> Pasirinkite temą arba naratyvą. Temos pasirinkimas išlieka visuose vaizduose.</p><p><strong>2. Naratyvų žemėlapis.</strong> Viršuje matysite pasakojimų ryšius, o apačioje – naratyvus pagal įrašų skaičių. Prie kiekvieno rodomas palaikymas, prieštaravimas ir citavimas. Sąrašą rikiuokite pagal įrašų kiekį pasirinktame laikotarpyje arba pirmojo pastebėjimo datą. „Naujausi“ remiasi pirmuoju naratyvo pasirodymu stebimame sraute; datos ir laikai šiame prototipe demonstraciniai, rodomi Lietuvos laiku. Pasirinkite eilutę ar žemėlapio mazgą, kad išskleistumėte įrašus, ryšius ir istoriją.</p><p><strong>Temų struktūra.</strong> 15 fiksuotų bendrinių temų, iš jų 8 prioritetinės. Katalogą keičia administratorius; AI gali tik aptikti ir pildyti naratyvus bei priskirti juos esamoms temoms. Jei priskyrimas neaiškus, naratyvas lieka „Nepriskirtų naratyvų“ eilėje. Vietovės, organizacijos ir potemės yra konteksto žymos. Jos pateikiamos išskleisto naratyvo detalėse ir pasiekiamos per paiešką. „Registre“ žymi apibrėžimo būseną. Temos prioritetas savaime nereiškia priešiško turinio ar veikėjo.</p><p><strong>3. Raida laike.</strong> Sekite pasirinkto naratyvo palaikymą, prieštaravimą ir citavimą bendrame sraute. Pasirinkite dieną jos įrašams peržiūrėti.</p><p><strong>Pratybų kontekstas.</strong> Pratybų pradžioje užpildykite „Pradinė situacija“ ir „Patvirtinti scenarijaus faktai“, tada paspauskite „Išsaugoti kontekstą“. Vienas pradinis kontekstas išlieka šioje naršyklėje atnaujinus puslapį ir pratybų metu nekeičiamas. Jis prieinamas abiem analizės moduliams; AI analizė dar neprijungta.</p><p><strong>Nuotaikų termometras.</strong> Atskira demonstracinė sekcija rodo turinio komunikacinę kryptį pagal pratybų kontekstą. Galioja tik laikotarpio filtras; temos, paieška ir naratyvų būsena bendro srauto neapriboja. Įrašai pagal nutylėjimą suskleisti po mygtuku „Termometro turinys“. Išskleidus matomos visų kategorijų žinutės; pasirinkite filtrą konkrečios kategorijos įrašams ir paaiškinimams peržiūrėti. Neįvertinti vienetai rodomi atskirai nuo procentų. Tai iš anksto parengtos žymos, o ne AI analizė.</p><p><strong>Vietinė Python versija.</strong> Importuoti įrašai saugomi atskirai „SQLite“ duomenų bazėje ir pasiekiami per vietinį API. Šie trys analitiniai vaizdai kol kas rodo originalius demonstracinius duomenis. Importo komandos pateiktos projekto README.md.</p><div class="help-note">Tai UI/UX prototipas. Registre yra jūsų pateikti naratyvai ir ankstesni demonstraciniai pavyzdžiai. Rodikliai, įrašai ir ryšiai demonstraciniai; gyvas srautas neprijungtas. Padėtys žemėlapyje scheminės, ryšiai neįrodo koordinavimo.</div><button class="button primary" id="start-demo">Pradėti tyrinėti</button></dialog>
+</body>
+</html>
