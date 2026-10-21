@@ -1,0 +1,20 @@
+[
+  {
+    "source": "manual-demo",
+    "external_id": "example-001",
+    "published_at": "2026-10-19T12:00:00+03:00",
+    "text": "Sintetinis pavyzdys: vieši duomenys padeda tikrinti teiginius.",
+    "narrative_id": "N-005",
+    "stance": "support",
+    "is_demo": true
+  },
+  {
+    "source": "manual-demo",
+    "external_id": "example-002",
+    "published_at": "2026-10-19T13:00:00+03:00",
+    "text": "Sintetinis pavyzdys: įrašas laukia analitiko priskyrimo.",
+    "narrative_id": null,
+    "stance": "unknown",
+    "is_demo": true
+  }
+]
