@@ -10,6 +10,7 @@ window.SignalMonitoring=(()=>{
   }
   async function refresh(){
     if(busy||document.visibilityState==='hidden')return;
+    await window.SignalSession?.ready;
     if(navigator.onLine===false){paint(false,'Nėra interneto ryšio.');return;}
     busy=true;
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);

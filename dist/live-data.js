@@ -42,10 +42,9 @@ window.SignalLiveData=(()=>{
   function inPeriod(unit,period){const day=dateKey(unit.published_at),range=periodBounds(period);return day>=range.start&&day<=range.end;}
   async function syncContext(){
     if(!active())return data;
-    const response=await fetch('/api/dashboard/context',{method:'POST',headers:{'Content-Type':'application/json','X-Signalas-CSRF':token},
-      body:JSON.stringify({context:window.SignalExerciseContext.get()})});
-    if(!response.ok)throw Error('Pradinio konteksto nepavyko perduoti vietinei analizei.');
-    data=await response.json();return data;
+    const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
+    if(!response.ok)throw Error('Konteksto būsenos įkelti nepavyko.');
+    data=await response.json();token=data.csrf;return data;
   }
   async function setPeriod(start,end){
     ++selectionRevision;
@@ -60,16 +59,12 @@ window.SignalLiveData=(()=>{
     data=await response.json();return data;
   }
   async function initialize(){
+    await window.SignalSession?.ready;
+    await window.SignalExerciseContext?.ready;
     const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
     if(!response.ok)throw Error('Nepavyko patikrinti pasirinkto duomenų šaltinio. Demonstraciniai duomenys neįjungiami automatiškai.');
     data=await response.json();token=data.csrf;
     if(active())await syncContext();
-    if(active()&&!data.range_saved){
-      // Migrate the old duration/end pair once, preserving the user's choice.
-      let duration=data.days.length;
-      try{const saved=Number(window.localStorage.getItem('signalas.periodDays'));if([10,7,3,1].includes(saved))duration=saved;}catch(_){}
-      const previous=periodBounds(duration);await setPeriod(previous.start,previous.end);
-    }
     return data;
   }
   const ready=initialize();
@@ -145,8 +140,8 @@ window.SignalLiveData=(()=>{
       finally{submit.disabled=false;}
     };
   }
-  // The scheduled collector runs hourly. This only checks the local snapshot;
-  // it never logs into Diaspora or calls AI from the browser.
+  // This reads the database snapshot; collection only runs on a button click.
+  // No source login or paid AI analysis is triggered by these reads.
   let refreshing=false;
   async function checkSnapshot(){
     if(refreshing||document.visibilityState==='hidden')return;

@@ -11,6 +11,7 @@ window.SignalMetricsContext=(()=>{
     window.dispatchEvent(new Event('signalas:metrics-context'));
   }
   const ready=(async()=>{
+    await window.SignalSession?.ready;
     for(const url of ['/api/metrics/context','metrics-context.json']){
       try{const response=await fetch(url,{cache:'no-store'});if(!response.ok)continue;apply(await response.json());return;}catch(_){}
     }

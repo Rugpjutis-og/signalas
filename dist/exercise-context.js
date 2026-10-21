@@ -55,25 +55,24 @@ window.SignalExerciseContext = (() => {
     return Object.freeze({initialSituation:value.initialSituation.trim(),confirmedFacts:value.confirmedFacts.trim(),
       nameMappings:Object.freeze(nameMappings.map(row=>Object.freeze(row)))});
   }
-  function get() {
-    let raw;
-    try { raw = window.localStorage.getItem(KEY); }
-    catch (_) { throw Error('Naršyklė neleidžia pasiekti vietinės saugyklos. Patikrinkite šios svetainės duomenų saugojimo leidimus.'); }
-    if (raw === null) return null;
-    try { return clean(JSON.parse(raw)); }
-    catch (error) { throw Error('Išsaugoto konteksto nepavyko perskaityti. Esami duomenys nebus perrašyti.'); }
-  }
-  function save(value) {
-    if (get()) throw Error('Pradinis kontekstas jau išsaugotas. Pratybų metu jo keisti negalima.');
+  let current=null,loadError=null;
+  const ready=(async()=>{
+    await window.SignalSession?.ready;
+    try{
+      const response=await fetch('/api/dashboard/context',{cache:'no-store'});
+      if(!response.ok)throw Error('Pratybų konteksto įkelti iš duomenų bazės nepavyko.');
+      const data=await response.json();current=data.context?clean(data.context):null;
+    }catch(error){loadError=error;}
+  })();
+  function get(){if(loadError)throw loadError;return current;}
+  async function save(value){
+    await ready;
+    if(get())throw Error('Pradinis kontekstas jau išsaugotas. Pratybų metu jo keisti negalima.');
     const context=clean(value);
-    try { window.localStorage.setItem(KEY,JSON.stringify(context)); }
-    catch (_) { throw Error('Konteksto išsaugoti nepavyko. Naršyklės saugykla neprieinama arba užpildyta. Įvestas tekstas paliktas laukuose.'); }
-    const stored=get();
-    if (!stored || stored.initialSituation!==context.initialSituation || stored.confirmedFacts!==context.confirmedFacts || JSON.stringify(stored.nameMappings)!==JSON.stringify(context.nameMappings)) {
-      throw Error('Naršyklė nepatvirtino duomenų išsaugojimo.');
-    }
-    window.dispatchEvent(new Event('signalas:context-saved'));
-    return stored;
+    const response=await fetch('/api/dashboard/context',{method:'POST',headers:{'Content-Type':'application/json','X-Signalas-CSRF':window.SignalSession?.csrf()||''},body:JSON.stringify({context})});
+    const result=await response.json();if(!response.ok)throw Error(result.error||'Konteksto išsaugoti nepavyko.');
+    current=clean(result.context);
+    window.dispatchEvent(new Event('signalas:context-saved'));return current;
   }
   function prepareContent(unit) {
     if (!unit || !Number.isFinite(Date.parse(unit.published_at))) throw Error('Turinio vienetui reikia paskelbimo datos su laiko juosta.');
@@ -125,7 +124,7 @@ window.SignalExerciseContext = (() => {
   }
   function paint(root, context, error='') {
     const locked=Boolean(context||error);
-    root.innerHTML=`<section class="panel exercise-context-panel" aria-labelledby="exercise-context-title"><div class="panel-heading"><div><h2 id="exercise-context-title">Pradinis pratybų kontekstas</h2><p>Viena situacija aktyvioms pratyboms. Kontekstas įvedamas ir išsaugomas tik pradžioje.</p></div></div><form class="exercise-context-form"><label for="exercise-initial-situation">Pradinė situacija</label><p id="exercise-situation-help">Kur, kada ir kas vyksta.</p><textarea id="exercise-initial-situation" name="initialSituation" rows="5" required aria-describedby="exercise-situation-help" ${context?'readonly':''} placeholder="Aprašykite pratybų vietą, laiką ir pradinę situaciją.">${escape(context?.initialSituation||'')}</textarea><label for="exercise-confirmed-facts">Patvirtinti scenarijaus faktai</label><p id="exercise-facts-help">Kas pratybų pradžioje yra įvykę, paskelbta ir kas dar nežinoma.</p><textarea id="exercise-confirmed-facts" name="confirmedFacts" rows="7" required aria-describedby="exercise-facts-help" ${context?'readonly':''} placeholder="Atskirkite patvirtintus faktus nuo to, kas dar nežinoma.">${escape(context?.confirmedFacts||'')}</textarea><section class="exercise-name-mappings" aria-labelledby="mapping-title"><h3 id="mapping-title">Pavadinimų atitikmenys</h3><p id="mapping-help">Neprivaloma. Prieš pratybas susiekite tikrus pavadinimus su pratybose naudojamais išgalvotais pavadinimais.</p><table class="name-mappings-table" aria-label="Pavadinimų atitikmenys" aria-describedby="mapping-help"><thead><tr><th scope="col">Tikras pavadinimas</th><th scope="col">Pavadinimas pratybose</th></tr></thead><tbody id="exercise-mapping-rows"></tbody></table>${locked?'':'<button type="button" class="button mapping-add" id="exercise-add-mapping">Pridėti atitikmenį</button>'}</section><p class="exercise-context-note">Išsaugotas pradinis kontekstas ir atitikmenys pratybų metu nekeičiami. Vėlesni įrašai ir komentarai savaime netampa patvirtintais scenarijaus faktais.</p><div class="exercise-context-actions"><button class="button primary" type="submit" ${locked?'disabled':''}>Išsaugoti kontekstą</button><p id="exercise-save-status" role="status" aria-live="polite">${context?'Kontekstas ir atitikmenys išsaugoti šioje naršyklėje. Laukai skirti tik skaityti.':''}</p></div><p id="exercise-save-error" role="alert">${escape(error)}</p><p class="exercise-context-integration">Kontekstas ir atitikmenys prieinami naratyvų analizei ir „Nuotaikų termometrui“. ${window.SignalLiveData?.active()?'Pradinis kontekstas ir atitikmenys perduodami vietiniam AI teksto bandymui; analizė automatiškai neperleidžiama.':'AI analizė dar neprijungta; automatinis pavadinimų atpažinimas nevykdomas.'}</p></form></section>`;
+    root.innerHTML=`<section class="panel exercise-context-panel" aria-labelledby="exercise-context-title"><div class="panel-heading"><div><h2 id="exercise-context-title">Pradinis pratybų kontekstas</h2><p>Viena situacija aktyvioms pratyboms. Kontekstas įvedamas ir išsaugomas tik pradžioje.</p></div></div><form class="exercise-context-form"><label for="exercise-initial-situation">Pradinė situacija</label><p id="exercise-situation-help">Kur, kada ir kas vyksta.</p><textarea id="exercise-initial-situation" name="initialSituation" rows="5" required aria-describedby="exercise-situation-help" ${context?'readonly':''} placeholder="Aprašykite pratybų vietą, laiką ir pradinę situaciją.">${escape(context?.initialSituation||'')}</textarea><label for="exercise-confirmed-facts">Patvirtinti scenarijaus faktai</label><p id="exercise-facts-help">Kas pratybų pradžioje yra įvykę, paskelbta ir kas dar nežinoma.</p><textarea id="exercise-confirmed-facts" name="confirmedFacts" rows="7" required aria-describedby="exercise-facts-help" ${context?'readonly':''} placeholder="Atskirkite patvirtintus faktus nuo to, kas dar nežinoma.">${escape(context?.confirmedFacts||'')}</textarea><section class="exercise-name-mappings" aria-labelledby="mapping-title"><h3 id="mapping-title">Pavadinimų atitikmenys</h3><p id="mapping-help">Neprivaloma. Prieš pratybas susiekite tikrus pavadinimus su pratybose naudojamais išgalvotais pavadinimais.</p><table class="name-mappings-table" aria-label="Pavadinimų atitikmenys" aria-describedby="mapping-help"><thead><tr><th scope="col">Tikras pavadinimas</th><th scope="col">Pavadinimas pratybose</th></tr></thead><tbody id="exercise-mapping-rows"></tbody></table>${locked?'':'<button type="button" class="button mapping-add" id="exercise-add-mapping">Pridėti atitikmenį</button>'}</section><p class="exercise-context-note">Išsaugotas pradinis kontekstas ir atitikmenys pratybų metu nekeičiami. Vėlesni įrašai ir komentarai savaime netampa patvirtintais scenarijaus faktais.</p><div class="exercise-context-actions"><button class="button primary" type="submit" ${locked?'disabled':''}>Išsaugoti kontekstą</button><p id="exercise-save-status" role="status" aria-live="polite">${context?'Kontekstas ir atitikmenys išsaugoti duomenų bazėje. Laukai skirti tik skaityti.':''}</p></div><p id="exercise-save-error" role="alert">${escape(error)}</p><p class="exercise-context-integration">Kontekstas ir atitikmenys prieinami naratyvų analizei ir „Nuotaikų termometrui“. ${window.SignalLiveData?.active()?'Pradinis kontekstas ir atitikmenys perduodami analizės moduliams; analizė automatiškai neperleidžiama.':'AI analizė dar neprijungta; automatinis pavadinimų atpažinimas nevykdomas.'}</p></form></section>`;
     renderMappings(root,context?.nameMappings||[],locked);
     if(!locked){
       root.querySelector('#exercise-add-mapping').onclick=()=>{
@@ -143,7 +142,7 @@ window.SignalExerciseContext = (() => {
       };
       tbody.oninput=()=>{const validation=validateMappings(collectRows(root));showMappingIssues(root,validation.issues);if(!validation.issues.length)root.querySelector('#exercise-save-error').textContent='';};
     }
-    root.querySelector('form').onsubmit=event=>{
+    root.querySelector('form').onsubmit=async event=>{
       event.preventDefault();
       const initial=root.querySelector('#exercise-initial-situation'),facts=root.querySelector('#exercise-confirmed-facts'),problem=root.querySelector('#exercise-save-error');
       problem.textContent='';
@@ -151,7 +150,7 @@ window.SignalExerciseContext = (() => {
       const rows=collectRows(root),validation=validateMappings(rows);
       showMappingIssues(root,validation.issues);
       if(validation.issues.length){problem.textContent='Patikslinkite pažymėtas pavadinimų poras. Kontekstas dar neišsaugotas.';focusMapping(root,validation.issues[0].id);return;}
-      try { const stored=save({initialSituation:initial.value,confirmedFacts:facts.value,nameMappings:rows});paint(root,stored); }
+      try { const stored=await save({initialSituation:initial.value,confirmedFacts:facts.value,nameMappings:rows});paint(root,stored); }
       catch(error){problem.textContent=error.message;try{const stored=get();if(stored)paint(root,stored,error.message);}catch(_) {}}
     };
   }
@@ -159,12 +158,5 @@ window.SignalExerciseContext = (() => {
     try { paint(root,get()); }
     catch(error) { paint(root,null,error.message); }
   }
-  // Reflect a save from another tab without introducing edit/history controls.
-  window.addEventListener('storage',event=>{
-    if(event.key!==KEY&&event.key!==null)return;
-    window.dispatchEvent(new Event('signalas:context-saved'));
-    const root=document.getElementById('exercise-context-root');
-    if(root)mount(root);
-  });
-  return Object.freeze({get,save,validateMappings,analysisInput,statusMarkup,mount});
+  return Object.freeze({ready,get,save,validateMappings,analysisInput,statusMarkup,mount});
 })();

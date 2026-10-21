@@ -1217,7 +1217,7 @@ document.addEventListener('keydown',event=>{
   if(!['thermometer','context','platform'].includes(state.view)&&event.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){event.preventDefault();$('search').focus();}
 });
 $('search').addEventListener('input',event=>{state.query=event.target.value;render();});
-$('period').addEventListener('change',event=>{state.period=Number(event.target.value);state.day=null;if(live())try{window.localStorage.setItem('signalas.periodDays',String(state.period));}catch(_){}render();});
+$('period').addEventListener('change',event=>{state.period=Number(event.target.value);state.day=null;render();});
 $('theme').addEventListener('change',event=>selectTheme(event.target.value));
 $('status').addEventListener('change',event=>{state.status=event.target.value;state.day=null;render();});
 $('reset-button').addEventListener('click',resetFilters);
