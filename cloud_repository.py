@@ -71,8 +71,17 @@ class Repository:
         packet = self.latest()
         failure = self.read('collection-status.json', {}) or {}
         reason = 'collection_failed' if failure.get('status') == 'error' else None
-        if not packet.get('collected_at'):
+        collected_at = packet.get('collected_at')
+        if not collected_at:
             reason = reason or 'missing_collection'
+        else:
+            from monitoring import MAX_COLLECTION_AGE, _instant
+            try:
+                current = kwargs.get('now') or datetime.now(timezone.utc)
+                if current - _instant(collected_at) > MAX_COLLECTION_AGE:
+                    reason = reason or 'stale_collection'
+            except (ValueError, TypeError, AttributeError):
+                reason = reason or 'status_unavailable'
         ai = self.read('openai-status.json', {}) or {}
         job = self.read('analysis-job.json', {}) or {}
         if ai.get('status') == 'error':
@@ -82,9 +91,9 @@ class Repository:
         from monitoring import REASONS
         return {'state': 'stopped' if reason else 'watching',
                 'reason': reason, 'collected_at': packet.get('collected_at'),
-                'description': REASONS.get(reason, 'Duomenys surenkami ir analizuojami paspaudus mygtuką.')}
+                'description': REASONS.get(reason, 'Duomenys renkami ir analizuojami Vercel fone.')}
 
-    def collect(self):
+    def collect(self, *, reset_analysis_error=True):
         from diaspora_client import DiasporaClient
         owner = uuid.uuid4().hex
         acquired = self.sql('''INSERT INTO signalas_jobs(scope,owner,expires_at)
@@ -102,7 +111,7 @@ class Repository:
             self.write('collection-status.json', {'status': 'ok', 'checked_at': packet['collected_at']})
             self.packet = packet
             from cloud_analysis import enqueue
-            analysis = enqueue(self)
+            analysis = enqueue(self, reset_error=reset_analysis_error)
             return {'status': 'ok', 'posts': packet['post_count'], 'comments': packet['comment_count'],
                     'collected_at': packet['collected_at'], 'cloud_storage': saved, 'analysis': analysis}
         except Exception:

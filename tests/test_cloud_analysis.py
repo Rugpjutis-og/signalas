@@ -67,6 +67,15 @@ class CloudAnalysisTests(unittest.TestCase):
         self.repo.latest=lambda:{'collected_at':'2026-10-23T09:00:00Z'}
         self.assertEqual(self.repo.monitoring_status()['reason'],'api_quota')
 
+    def test_missing_provider_key_stops_without_paid_call(self):
+        self.repo.config.pop('OPENAI_API_KEY')
+        ca.enqueue(self.repo)
+        with patch.object(ca, 'analyze') as paid:
+            result=ca.step(self.repo)
+        paid.assert_not_called()
+        self.assertEqual(result['status'],'error')
+        self.assertEqual(self.db['openai-status.json']['reason'],'api_access')
+
     def test_collection_enqueues_only_after_successful_save(self):
         packet={'records':self.units,'post_count':1,'comment_count':0,'collected_at':'2026-10-23T09:00:00Z'}
         with patch('diaspora_client.DiasporaClient') as client, patch('cloud_repository.sync') as sync:

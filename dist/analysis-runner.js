@@ -14,7 +14,7 @@ window.SignalAnalysis=(()=>{
     button.setAttribute('aria-busy','true');
     try{
       while(['pending','running','already_running'].includes(state.status)){
-        message.textContent=`Analizuojamas turinys… Liko ${state.remaining ?? '…'} vnt. Galite naudotis skiltimis; neuždarykite aplikacijos.`;
+        message.textContent=`Analizuojamas turinys… Liko ${state.remaining ?? '…'} vnt. Galite naudotis skiltimis arba uždaryti aplikaciją: foninis vykdymas tęsis.`;
         if(state.status==='already_running')await sleep(3000);
         state=await request('continue','POST');
         if(state.status!=='already_running')await window.SignalLiveData?.refresh();

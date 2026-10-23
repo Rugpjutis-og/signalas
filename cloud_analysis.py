@@ -31,10 +31,14 @@ def pending(repo):
                   key=lambda r: (r['published_at'], r['id'])), context
 
 
-def enqueue(repo):
+def enqueue(repo, *, reset_error=True):
     units, _ = pending(repo)
-    state = {'status': 'pending' if units else 'complete', 'remaining': len(units),
-             'completed': 0, 'updated_at': now()}
+    old = repo.read(STATE, {}) or {}
+    if old.get('status') == 'error' and not reset_error:
+        state = dict(old, remaining=len(units), updated_at=now())
+    else:
+        state = {'status': 'pending' if units else 'complete', 'remaining': len(units),
+                 'completed': 0, 'updated_at': now()}
     repo.write(STATE, state)
     return state
 
@@ -64,6 +68,12 @@ def step(repo):
             repo.write(STATE, state)
             return state
         unit = units[0]
+        if not repo.config.get('OPENAI_API_KEY'):
+            from monitoring import record
+            record('openai', 'api_access', repo)
+            state.update(status='error', reason='api_access', remaining=len(units), updated_at=now())
+            repo.write(STATE, state)
+            return state
         state.update(status='running', remaining=len(units), updated_at=now())
         repo.write(STATE, state)
         try:

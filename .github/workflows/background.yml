@@ -1,0 +1,37 @@
+name: Signalas background monitoring
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: signalas-background
+  cancel-in-progress: false
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Trigger protected Vercel background task
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+          url='https://signalas-ecru.vercel.app/api/background/tick'
+          request_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']
+          separator='&' if '?' in request_url else '?'
+          request=Request(request_url+separator+urlencode({'audience':url}),
+                          headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(request,timeout=20) as response:
+              token=json.load(response)['value']
+          request=Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
+          with urlopen(request,timeout=285) as response:
+              result=json.load(response)
+          print('Background task:',result.get('status'),'collection:',result.get('collection'),
+                'analysis:',result.get('analysis'),'remaining:',result.get('remaining'))
+          if result.get('status')=='error':
+              raise SystemExit('Signalas background task failed; check private Vercel status.')
+          PY

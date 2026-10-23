@@ -15,7 +15,7 @@ const code=fs.readFileSync(path.join(__dirname,'../dist/monitoring.js'),'utf8');
   assert.equal(label.textContent,'Srauto stebėjimas sustabdytas');assert(classes.has('stopped'));
   assert.equal(indicator.title,status.description);
   fail=true;await context.window.SignalMonitoring.refresh();assert(classes.has('stopped'));
-  assert(indicator.title.includes('vietiniu serveriu'));
+  assert(indicator.title.includes('serveriu'));
   fail=false;status={state:'watching'};await context.window.SignalMonitoring.refresh();assert(!classes.has('stopped'));
   context.navigator.onLine=false;events.offline();assert(classes.has('stopped'));
   const before=calls;await context.window.SignalMonitoring.refresh();assert.equal(calls,before);

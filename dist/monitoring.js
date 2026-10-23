@@ -19,7 +19,7 @@ window.SignalMonitoring=(()=>{
       if(!response.ok)throw Error('status');
       const status=await response.json();
       paint(status.state==='watching'&&navigator.onLine!==false,status.description);
-    }catch(_){paint(false,'Nepavyko patikrinti ryšio su vietiniu serveriu.');}
+    }catch(_){paint(false,'Nepavyko patikrinti ryšio su serveriu.');}
     finally{clearTimeout(timeout);busy=false;}
   }
   paint(false,'Tikrinama srauto būsena.');

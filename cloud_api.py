@@ -69,6 +69,22 @@ class Handler(BaseHTTPRequestHandler):
             self.send({'error': 'Vercel aplinkoje reikia nustatyti SIGNALAS_ACCESS_PASSWORD (bent 16 ženklų).', 'configured': False, 'reason': 'access_password_missing' if not password else 'access_password_too_short'}, 503)
             return
         route, args = self.route()
+        if route == '/api/background/tick':
+            if method != 'GET':
+                self.send({'error': 'Neleistinas metodas.'}, 405)
+                return
+            from background_auth import verified_claims
+            if not verified_claims(self.headers.get('Authorization', '')):
+                self.send({'error': 'Prieiga atmesta.'}, 401)
+                return
+            try:
+                from background_tick import tick
+                repository = Repository(dict(os.environ))
+                repository.initialize()
+                self.send(tick(repository))
+            except Exception:
+                self.send({'error': 'Foninis vykdymas nepavyko.'}, 502)
+            return
         cookies = SimpleCookie()
         try:
             cookies.load(self.headers.get('Cookie', ''))
