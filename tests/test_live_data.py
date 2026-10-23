@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 
 import narrative_registry
 import live_data
+import thermometer_review
 import app
 
 
@@ -63,6 +64,23 @@ class LiveDataTests(unittest.TestCase):
         self.assertEqual((report["total"], report["assessed"], report["unassessed"]), (2, 0, 2))
         self.assertTrue(all(c["percent"] is None for c in report["categories"]))
         self.assertEqual(live_data.thermometer(1, self.root)["total"], 1)
+
+    def test_saved_manual_review_counts_once_and_survives_reload(self):
+        unit = self.records[0]
+        self.write("thermometer-reviews.json", {thermometer_review.key(unit["source"], unit["id"]): {
+            "content_fingerprint": live_data.fingerprint(unit), "exercise_id": None,
+            "exercise_context": None, "rules_version": thermometer_review.VERSION,
+            "category": "neutral", "reason_code": "N1", "reason": "Taiki nuomonė apie situaciją.",
+            "evidence": "Tekstas"}})
+        first = live_data.thermometer(7, self.root)
+        self.assertEqual((first["total"], first["assessed"], first["unassessed"]), (2, 1, 1))
+        self.assertEqual(next(c for c in first["categories"] if c["id"] == "neutral")["percent"], 100)
+        self.assertEqual(first["days"][-1]["assessed"], 1)
+        self.assertEqual(live_data.thermometer(7, self.root)["assessed"], 1)
+        unit["text"] = "Pakeistas turinys"
+        self.write("diaspora-latest.json", {"collected_at": "2026-10-21T10:00:00Z",
+                   "source": "pod.test", "coverage": "account_visible_stream_first_page", "records": self.records})
+        self.assertEqual(live_data.thermometer(7, self.root)["assessed"], 0)
 
     def test_bound_analysis_counts_unknown_stances_and_dedup(self):
         self.write("openai-analysis-pilot.json", [self.analysis(), self.analysis()])

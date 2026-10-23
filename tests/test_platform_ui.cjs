@@ -54,6 +54,15 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  thermometer.onclick({target:{closest:selector=>selector==='#thermo-content-toggle'?{}:null}});
  assert(thermometer.querySelector('#thermo-evidence').innerHTML.includes('href="https://pod.test/p/from-api"'));
  assert(thermometer.querySelector('#thermo-evidence').innerHTML.includes('data-source-thumbnail'));
+ assert(!thermometer.querySelector('#thermo-evidence').innerHTML.includes('data-thermo-review'));
+ const liveThermo=structuredClone(thermo);liveThermo.mode='live';
+ const liveWindow=runtime(async()=>({ok:true,json:async()=>liveThermo}));
+ const liveRoot=node();await liveWindow.SignalThermometer.mount(liveRoot,7);
+ liveRoot.onclick({target:{closest:selector=>selector==='#thermo-content-toggle'?{}:null}});
+ const reviewMarkup=liveRoot.querySelector('#thermo-evidence').innerHTML;
+ assert(reviewMarkup.includes('data-thermo-review'));
+ assert(reviewMarkup.includes('Išsaugoti vertinimą'));
+ assert(reviewMarkup.includes('name="verified_claim_source"'));
  // Out-of-order period responses cannot replace the latest period's report.
  const pending=new Map();
  const racing=runtime(url=>new Promise(resolve=>pending.set(url,resolve)));

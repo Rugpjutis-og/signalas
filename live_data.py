@@ -173,6 +173,8 @@ def platform(period=None, root=ROOT, *, start_date=None, end_date=None):
 
 def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     packet, context, analyses = load(root)
+    from thermometer_review import applicable, key as review_key, saved as saved_reviews
+    manual_reviews = saved_reviews(root)
     start, end = bounds(packet, period, root, start_date=start_date, end_date=end_date)
     period = (end.date() - start.date()).days
     rows = []
@@ -191,6 +193,13 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
                       "reason_codes": result.get("reason_codes", []) if current_rules else [],
                       "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
                       "evidence": [{"kind": "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
+        manual = manual_reviews.get(review_key(record['source'], record['id']))
+        if applicable(manual, record, context):
+            assessment = {"category": manual['category'], "status": "assessed", "method": "manual_review",
+                          "reason": manual['reason'], "context_version": None,
+                          "reviewed_parts": ["analitiko peržiūra"],
+                          "reason_codes": [manual['reason_code']], "rules_version": manual['rules_version'],
+                          "evidence": [{"kind": "text", "quote": manual['evidence']}] if manual['evidence'] else []}
         rows.append({**record, "attachments": [], "conversation_context": record.get("conversation_context", []),
                      "assessment": assessment})
     rows.sort(key=lambda r: instant(r["published_at"]), reverse=True)

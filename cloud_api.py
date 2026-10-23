@@ -160,6 +160,9 @@ class Handler(BaseHTTPRequestHandler):
             elif route == '/api/analysis/continue' and method == 'POST':
                 from cloud_analysis import step
                 self.send(step(repository))
+            elif route == '/api/thermometer/review' and method == 'POST':
+                from thermometer_review import save
+                self.send(save(repository, payload))
             elif route == '/api/monitoring/status' and method == 'GET':
                 self.send(repository.monitoring_status())
             elif route == '/api/metrics/context' and method == 'GET':

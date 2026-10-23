@@ -7,7 +7,8 @@ window.SignalThermometer = (() => {
   const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = value => value === null ? '—' : value.toLocaleString('lt-LT',{maximumFractionDigits:1})+' %';
   const date = value => new Intl.DateTimeFormat('lt-LT',{timeZone:'Europe/Vilnius',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value));
-  let generation=0, active='all', expanded=false, current=null;
+  let generation=0, active='all', expanded=false, current=null, currentPeriod=null;
+  const reasonCodes={neutral:[['N0','Kasdienis arba nesusijęs turinys'],['N1','Taiki nuomonė ar kritika'],['N2','Krypties požymių nepakanka']],stabilizing:[['S1','Patikimais duomenimis pagrįstas paaiškinimas'],['S2','Praktiška ir patikima pagalba'],['S3','Įtampos mažinimas'],['S4','Teisės ir solidarumas']],destabilizing:[['D1','Patvirtintai klaidingas žalingas teiginys'],['D2','Smurto ar diskriminacijos kurstymas'],['D3','Kolektyvinis kaltinimas'],['D4','Saugumo ar dalyvavimo griovimas']]};
   const cache=new Map();
   const partLabel=part=>({text:'įrašo tekstas',conversation_context:'ankstesnė diskusija','image-1:illustration':'paveikslėlio iliustracija','image-1:ocr_text':'paveikslėlio tekstas','clip-1:transcript:10-18s':'transkripcija 10–18 s','clip-1:subtitles:10-18s':'subtitrai 10–18 s','clip-1:frames:10s,18s':'atrinkti kadrai: 10 ir 18 s'}[part]||part);
   async function acquire(period) {
@@ -56,6 +57,18 @@ window.SignalThermometer = (() => {
     }).join('');
     return `<article class="thermo-item"><div class="thermo-item-meta"><span>${kind} ${escape(unit.id)}${report.mode==='demo'?' · sintetinis':''}</span><time datetime="${escape(unit.published_at)}">${date(unit.published_at)}</time></div>${window.SignalSourceContent.body(unit,{quote:true})}${unit.conversation_context.length?`<div class="thermo-note">Diskusijos kontekstas:${unit.conversation_context.map(c=>`<div>${window.SignalSourceContent.body({...c,is_demo:unit.is_demo})}${window.SignalSourceContent.link({...c,kind:'comment',is_demo:unit.is_demo,parentSourceUrl:c.parentSourceUrl||(unit.kind==='post'?window.SignalSourceContent.reference(unit).sourceUrl:window.SignalSourceContent.reference(unit).parentSourceUrl)})}</div>`).join('')}</div>`:''}${media}<div class="source-actions">${window.SignalSourceContent.link(unit)}</div><p><strong>${a.status==='assessed'?'Vertinimo paaiškinimas':pendingLabels[a.status]||'Neįvertinta'}:</strong> ${escape(a.reason)}</p>${a.reason_codes?.length?`<p class="thermo-note">Pagrindo kodai: ${escape(a.reason_codes.join(', '))}</p>`:''}${evidence}<details class="thermo-context"><summary>${report.mode==='demo'?'Demonstracinio pavyzdžio pagrindas':'Vertinimo pagrindas'} · peržiūrėtos dalys</summary><p>${escape(report.mode==='live'?(report.exercise_context?.confirmedFacts||'Pradinis pratybų kontekstas nepateiktas.'):(context?.facts||'Nėra paskelbimo metu galiojusio konteksto.'))}</p><p>Peržiūrėta: ${escape(a.reviewed_parts.map(partLabel).join(', ')||'neįvertinta')}.</p><p>${report.mode==='demo'?'Iš anksto parengta demonstracinė žyma. Naratyvo pozicija nebuvo naudojama kategorijai išvesti.':'Vertintas tik tekstas. Medijos turinys neperžiūrėtas; kategorija nenustatoma pagal autoriaus tapatybę ar naratyvo poziciją.'}</p></details></article>`;
   }
+  function reviewForm(unit,report){
+    if(report.mode!=='live'||unit.assessment.status==='assessed')return '';
+    return `<form class="thermo-review" data-thermo-review data-source="${escape(unit.source)}" data-id="${escape(unit.id)}"><h3>Rankinis vertinimas</h3><p>Patikrinkite turinį ir jo originalą. Išsaugotas sprendimas bus įskaitytas į termometro statistiką.</p><div class="thermo-review-grid"><label>Kryptis<select name="category" required><option value="">Pasirinkite</option>${Object.entries(labels).map(([id,label])=>`<option value="${id}">${escape(label)}</option>`).join('')}</select></label><label>Pagrindo kodas<select name="reason_code" required disabled><option value="">Pirmiausia pasirinkite kryptį</option></select></label></div><label>Trumpas vertinimo pagrindas<textarea name="reason" required minlength="5" maxlength="2000" rows="2"></textarea></label><label>Turinio ištrauka arba peržiūrėtos medijos aprašymas<textarea name="evidence" maxlength="2000" rows="2"></textarea></label><label class="thermo-review-source" hidden>Patikrinto fakto šaltinis (D1)<input name="verified_claim_source" maxlength="2000"></label><p class="thermo-review-error" role="alert" aria-live="polite"></p><button type="submit" class="button">Išsaugoti vertinimą</button></form>`;
+  }
+  function reviewFields(form){
+    const category=form.elements.category.value,code=form.elements.reason_code;
+    code.innerHTML=`<option value="">Pasirinkite pagrindą</option>${(reasonCodes[category]||[]).map(([id,label])=>`<option value="${id}">${id} · ${escape(label)}</option>`).join('')}`;
+    code.disabled=!category;
+    form.elements.evidence.required=category==='stabilizing'||category==='destabilizing';
+    form.querySelector('.thermo-review-source').hidden=true;
+    form.elements.verified_claim_source.required=false;
+  }
   function updateEvidence(root, report) {
     const list=root.querySelector('#thermo-evidence');
     const toggle=root.querySelector('#thermo-content-toggle');
@@ -69,7 +82,7 @@ window.SignalThermometer = (() => {
     list.innerHTML=`<div class="thermo-content-filters" role="group" aria-label="Termometro turinio kategorijos">${filters.map(([id,label,count])=>`<button type="button" class="thermo-content-filter" data-thermo-category="${id}" aria-pressed="${active===id}">${escape(label)} <span>${count}</span></button>`).join('')}</div><div class="panel-heading"><div><h2>${escape(title)} <span class="compact-count">${items.length}</span></h2><p>Pasirinkto laikotarpio ${report.mode==='demo'?'sintetiniai ':''}turinio vienetai vidinei analizei</p></div></div><div class="thermo-items">${items.length?items.map(u=>{
       const category=u.assessment.status==='assessed'?u.assessment.category:'needs_review';
       const label=labels[category]||pendingLabels[u.assessment.status]||'Neįvertinta';
-      return `<div class="thermo-classified-item"><span class="thermo-content-badge ${category}">${escape(label)}</span>${evidenceCard(u,report)}</div>`;
+      return `<div class="thermo-classified-item"><span class="thermo-content-badge ${category}">${escape(label)}</span>${evidenceCard(u,report)}${reviewForm(u,report)}</div>`;
     }).join(''):'<p class="thermo-note">Šios kategorijos vienetų pasirinktu laikotarpiu nėra.</p>'}</div>`;
     root.querySelectorAll('[data-thermo-category]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.thermoCategory===active)));
   }
@@ -84,9 +97,33 @@ window.SignalThermometer = (() => {
       active=button.dataset.thermoCategory;expanded=true;updateEvidence(root,report);
       if(wasFilter)root.querySelector('#thermo-evidence').querySelector(`[data-thermo-category="${active}"]`)?.focus({preventScroll:true});
     };
+    root.onchange=event=>{
+      const form=event.target.closest?.('[data-thermo-review]');if(!form)return;
+      if(event.target.name==='category')reviewFields(form);
+      if(event.target.name==='reason_code'){
+        const needsSource=form.elements.reason_code.value==='D1';
+        form.querySelector('.thermo-review-source').hidden=!needsSource;
+        form.elements.verified_claim_source.required=needsSource;
+      }
+    };
+    root.onsubmit=async event=>{
+      const form=event.target.closest?.('[data-thermo-review]');if(!form)return;
+      event.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;
+      const values=Object.fromEntries(new FormData(form));
+      const payload={source:form.dataset.source,id:form.dataset.id,...values};
+      submit.disabled=true;form.querySelector('.thermo-review-error').textContent='';
+      try{
+        await window.SignalLiveData.saveThermometerReview(payload);
+        cache.delete(currentPeriod.key||currentPeriod);
+        const updated=await acquire(currentPeriod);
+        if(current!==root||!root.isConnected)return;
+        expanded=true;active=payload.category;paint(root,updated);
+        root.querySelector('#thermo-evidence')?.scrollIntoView?.({block:'nearest'});
+      }catch(error){form.querySelector('.thermo-review-error').textContent=error.message;submit.disabled=false;}
+    };
   }
   async function mount(root,period) {
-    const request=++generation;current=root;expanded=false;active='all';
+    const request=++generation;current=root;currentPeriod=period;expanded=false;active='all';
     root.innerHTML='<section class="panel thermo-body" role="status">Įkeliami turinio duomenys…</section>';
     try {
       const report=await acquire(period);

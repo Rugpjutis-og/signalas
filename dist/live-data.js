@@ -58,6 +58,20 @@ window.SignalLiveData=(()=>{
     if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Nepavyko išsaugoti pasirinkto laikotarpio.');}
     data=await response.json();return data;
   }
+  async function saveThermometerReview(value){
+    await ready;
+    if(!active())throw Error('Rankinis vertinimas galimas tik tikriems duomenims.');
+    const request=()=>fetch('/api/thermometer/review',{method:'POST',
+      headers:{'Content-Type':'application/json','X-Signalas-CSRF':token},body:JSON.stringify(value)});
+    let response=await request();
+    if(response.status===403){
+      const session=await fetch('/api/auth/session',{cache:'no-store'});
+      if(session.ok){const latest=await session.json();if(latest.authenticated&&latest.csrf){token=latest.csrf;response=await request();}}
+    }
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(result.error||'Vertinimo išsaugoti nepavyko.');
+    return result;
+  }
   async function initialize(){
     await window.SignalSession?.ready;
     await window.SignalExerciseContext?.ready;
@@ -177,5 +191,5 @@ window.SignalLiveData=(()=>{
   }
   setInterval(checkSnapshot,60000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkSnapshot();});
-  return Object.freeze({ready,active,get:()=>data,syncContext,setPeriod,range,refresh,image,units,note,empty,detail,time,decorate,registryPanel,candidatePanel,stanceCoverage,periodControl,inPeriod,periodBounds});
+  return Object.freeze({ready,active,get:()=>data,syncContext,setPeriod,saveThermometerReview,range,refresh,image,units,note,empty,detail,time,decorate,registryPanel,candidatePanel,stanceCoverage,periodControl,inPeriod,periodBounds});
 })();
