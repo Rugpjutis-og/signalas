@@ -23,7 +23,7 @@ BY_CATEGORY = {
 }
 
 
-def validate_assessment(value):
+def validate_assessment(value, *, require_evidence=True):
     """Reject unsupported classifications before they reach category denominators."""
     if not isinstance(value, dict) or value.get("status") not in STATUSES:
         raise ValueError("Netinkama termometro vertinimo būsena.")
@@ -39,7 +39,7 @@ def validate_assessment(value):
         raise ValueError("Termometro kategorija ir priežastis nesutampa.")
     if not str(value.get("reason") or "").strip():
         raise ValueError("Trūksta termometro vertinimo pagrindo.")
-    if category in ("stabilizing", "destabilizing") and not str(value.get("evidence") or "").strip():
+    if require_evidence and category in ("stabilizing", "destabilizing") and not str(value.get("evidence") or "").strip():
         raise ValueError("Kryptingam vertinimui trūksta turinio įrodymo.")
     if "D1" in codes and not value.get("verified_claim_source"):
         raise ValueError("D1 būtinas patikrinamo fakto šaltinis.")

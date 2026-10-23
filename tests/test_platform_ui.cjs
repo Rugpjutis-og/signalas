@@ -63,6 +63,8 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('data-thermo-review'));
  assert(reviewMarkup.includes('Išsaugoti vertinimą'));
  assert(reviewMarkup.includes('name="verified_claim_source"'));
+ assert(!reviewMarkup.includes('name="evidence"'));
+ assert(!reviewMarkup.includes('Turinio ištrauka arba peržiūrėtos medijos aprašymas'));
  assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
  for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
  assert(liveRoot.innerHTML.includes('Peržiūrėti ir priskirti kryptį'));

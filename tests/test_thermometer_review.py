@@ -36,6 +36,7 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(len(self.repo.written), 1)
         sql, params = self.repo.written[0]
         self.assertIn('ON CONFLICT', sql)
+        self.assertIn('jsonb_build_object($3::text,$4::jsonb)', sql)
         self.assertEqual(params[1:3], [review.NAME, review.key('pod.test', 'p1')])
         import json
         decision = json.loads(params[3])
@@ -44,9 +45,19 @@ class ReviewTests(unittest.TestCase):
         self.repo.unit['text'] = 'Pasikeitęs turinys'
         self.assertFalse(review.applicable(decision, self.repo.unit, None))
 
+    def test_all_manual_directions_save_without_separate_excerpt(self):
+        import json
+        for category, code in [('stabilizing', 'S2'), ('neutral', 'N1'), ('destabilizing', 'D2')]:
+            with self.subTest(category=category):
+                result = review.save(self.repo, {**self.payload, 'category': category, 'reason_code': code})
+                self.assertEqual(result['status'], 'saved')
+                decision = json.loads(self.repo.written[-1][1][3])
+                self.assertEqual(decision['evidence'], '')
+                self.assertEqual(decision['category'], category)
+                self.assertEqual(decision['method'], 'manual_review')
+
     def test_rejects_invalid_or_unverifiable_direction(self):
         for changes in ({'reason_code': 'D2'},
-                        {'category': 'stabilizing', 'reason_code': 'S1'},
                         {'category': 'destabilizing', 'reason_code': 'D1', 'evidence': 'Ištrauka'},
                         {'id': 'missing'}):
             with self.subTest(changes=changes), self.assertRaises(ValueError):

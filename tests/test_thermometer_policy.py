@@ -16,6 +16,16 @@ class ThermometerPolicyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_assessment({**base, "evidence": ""})
 
+    def test_manual_exemption_preserves_ai_evidence_requirement(self):
+        value = {"status": "classified", "category": "stabilizing", "reason_codes": ["S2"],
+                 "reason": "Analitiko patikrinta pagalba", "evidence": ""}
+        with self.assertRaises(ValueError):
+            validate_assessment(value)
+        self.assertEqual(validate_assessment(value, require_evidence=False), value)
+        with self.assertRaises(ValueError):
+            validate_assessment({**value, "category": "destabilizing", "reason_codes": ["D1"]},
+                                require_evidence=False)
+
     def test_uncertainty_never_becomes_neutral(self):
         for status in ("needs_review", "waiting_data", "error"):
             validate_assessment({"status": status, "category": None, "reason_codes": []})

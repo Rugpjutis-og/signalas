@@ -46,7 +46,7 @@ def save(repo, payload):
         raise ValueError('Netinkama patikrinto fakto nuoroda.')
     validate_assessment({'status': 'classified', 'category': category,
                          'reason_codes': [code], 'reason': reason.strip(),
-                         'evidence': evidence.strip(), 'verified_claim_source': verified})
+                         'evidence': evidence.strip(), 'verified_claim_source': verified}, require_evidence=False)
     unit = next((u for u in repo.latest()['records'] if u.get('source') == source and u.get('id') == unit_id), None)
     if unit is None:
         raise ValueError('Turinio vieneto nėra surinktoje imtyje.')
@@ -60,7 +60,7 @@ def save(repo, payload):
               'verified_claim_source': verified, 'reviewed_at': datetime.now(timezone.utc).isoformat(),
               'method': 'manual_review'}
     review_key = key(source, unit_id)
-    repo.sql('''INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,jsonb_build_object($3,$4::jsonb))
+    repo.sql('''INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,jsonb_build_object($3::text,$4::jsonb))
         ON CONFLICT(scope,name) DO UPDATE SET value=signalas_state.value || EXCLUDED.value''',
              [repo.scope, NAME, review_key, json.dumps(review, ensure_ascii=False)])
     repo.values.pop(NAME, None)
