@@ -12,7 +12,7 @@ from thermometer_policy import VERSION as THERMOMETER_RULES_VERSION, REASONS, va
 import monitoring
 import narrative_registry
 
-DEFAULT_ANALYSIS_MODEL = "gpt-6.1-sol"
+DEFAULT_ANALYSIS_MODEL = "gpt-6-luna"
 ANALYSIS_SERVICE_TIER = "default"
 
 
@@ -144,7 +144,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
         "text": {"format": {"type": "json_schema", "name": "signalas_content",
                             "strict": True, "schema": analysis_schema(catalog)}},
     }
-    if model == "gpt-6.1-sol":
+    if model in ("gpt-6.1-sol", "gpt-6-luna"):
         payload["reasoning"] = {"effort": "medium"}
         # Cache the shared registry/rules prefix, not each changing source unit.
         payload["input"] = [
