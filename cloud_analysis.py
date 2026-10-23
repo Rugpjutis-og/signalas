@@ -4,7 +4,7 @@ import uuid
 
 from live_data import fingerprint
 from content import source_reference
-from openai_analysis import analyze, context_data, DEFAULT_ANALYSIS_MODEL
+from openai_analysis import analyze, context_data, DEFAULT_ANALYSIS_MODEL, ANALYSIS_SERVICE_TIER
 from narrative_registry import load as registry
 from thermometer_policy import VERSION
 
@@ -132,7 +132,8 @@ def step(repo):
             state.update(status='error', reason='api_access', remaining=len(units), updated_at=now())
             repo.write(STATE, state)
             return state
-        state.update(status='running', remaining=len(units), updated_at=now())
+        state.update(status='running', remaining=len(units), updated_at=now(),
+                     processing_tier=ANALYSIS_SERVICE_TIER)
         repo.write(STATE, state)
         try:
             result = analyze(unit, context, root=repo)

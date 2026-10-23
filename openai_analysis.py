@@ -13,6 +13,7 @@ import monitoring
 import narrative_registry
 
 DEFAULT_ANALYSIS_MODEL = "gpt-6.1-sol"
+ANALYSIS_SERVICE_TIER = "default"
 
 
 def analysis_schema(catalog):
@@ -133,7 +134,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
         "evidence turi būti tiksli trumpa originalaus vertinamo teksto ištrauka arba tuščia. "
         + " ".join(RULES) + "\n" + narrative_registry.INSTRUCTIONS)
     payload = {
-        "model": model, "service_tier": "flex", "store": False, "max_output_tokens": 6000,
+        "model": model, "service_tier": ANALYSIS_SERVICE_TIER, "store": False, "max_output_tokens": 6000,
         "instructions": instructions,
         "input": json.dumps({"analysis_input": prepared, "narrative_registry": narrative_registry.prompt_registry(catalog),
                              "pending_claims": pending_claims(unit, root, catalog), "directions": DEFINITIONS,

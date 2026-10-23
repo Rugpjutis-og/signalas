@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from cloud_analysis import enqueue, recover_validation_failure, step
+from openai_analysis import ANALYSIS_SERVICE_TIER
 from thermometer import instant
 
 COLLECTION_INTERVAL = timedelta(hours=1)
@@ -51,9 +52,10 @@ def tick(repo, *, clock=None, monotonic=None):
     if state.get('status') == 'error' and state.get('reason') in ('api_capacity', 'api_rate_limit'):
         last_attempt = state.get('updated_at')
         interval = RATE_LIMIT_RETRY_INTERVAL if state['reason'] == 'api_rate_limit' else TRANSIENT_API_RETRY_INTERVAL
-        if not last_attempt or instant(last_attempt) + interval <= current:
-            # Back off transient capacity and request-rate failures before retrying.
-            # Keep Flex; never silently switch to more expensive Standard processing.
+        if (state.get('processing_tier') != ANALYSIS_SERVICE_TIER or
+                not last_attempt or instant(last_attempt) + interval <= current):
+            # A newly selected tier can resume immediately; repeated limits on
+            # the same tier retain their cooldown.
             state = enqueue(repo)
             retried = True
     if collection == 'ok' and state.get('status') == 'error' and state.get('reason') in RETRYABLE_ANALYSIS_REASONS:
