@@ -171,7 +171,7 @@ class IntegrationTests(unittest.TestCase):
             request = opener.return_value.open.call_args.args[0]
             sent = json.loads(request.data)
             self.assertFalse(sent["store"])
-            self.assertNotIn("test-secret", sent["input"])
+            self.assertNotIn("test-secret", json.dumps(sent["input"]))
         with self.assertRaises(ValueError):
             openai_analysis.validate_result({**valid, "theme_id": "invented-theme"}, catalog)
 
@@ -195,7 +195,12 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(sent['reasoning']['effort'], 'medium')
                 self.assertEqual(sent['max_output_tokens'], 6000)
                 self.assertEqual(sent['service_tier'], 'default')
-                self.assertEqual(json.loads(sent['input'])['analysis_input']['content']['text'],text)
+                self.assertEqual(json.loads(sent['input'][1]['content'][0]['text'])['analysis_input']['content']['text'],text)
+                stable=sent['input'][0]['content'][0]
+                self.assertNotIn(text,stable['text'])
+                self.assertEqual(stable['prompt_cache_breakpoint'],{'mode':'explicit'})
+                self.assertEqual(sent['prompt_cache_options'],{'mode':'explicit','ttl':'30m'})
+                self.assertEqual(result['requested_service_tier'],'default')
                 self.assertEqual(result['original_text'],text)
                 self.assertEqual(result['result']['evidence'],text)
                 self.assertIn('originalo kalba',sent['instructions'])

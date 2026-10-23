@@ -133,17 +133,27 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
         "Nežinomas teiginys nėra klaidingas. Pasirink needs_review, kai būtinas faktas nežinomas. "
         "evidence turi būti tiksli trumpa originalaus vertinamo teksto ištrauka arba tuščia. "
         + " ".join(RULES) + "\n" + narrative_registry.INSTRUCTIONS)
+    reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),
+                 "directions": DEFINITIONS, "reason_codes": REASONS,
+                 "rules_version": THERMOMETER_RULES_VERSION}
+    dynamic = {"analysis_input": prepared, "pending_claims": pending_claims(unit, root, catalog)}
     payload = {
         "model": model, "service_tier": ANALYSIS_SERVICE_TIER, "store": False, "max_output_tokens": 6000,
         "instructions": instructions,
-        "input": json.dumps({"analysis_input": prepared, "narrative_registry": narrative_registry.prompt_registry(catalog),
-                             "pending_claims": pending_claims(unit, root, catalog), "directions": DEFINITIONS,
-                             "reason_codes": REASONS, "rules_version": THERMOMETER_RULES_VERSION}, ensure_ascii=False),
+        "input": json.dumps({**reference, **dynamic}, ensure_ascii=False),
         "text": {"format": {"type": "json_schema", "name": "signalas_content",
                             "strict": True, "schema": analysis_schema(catalog)}},
     }
     if model == "gpt-6.1-sol":
         payload["reasoning"] = {"effort": "medium"}
+        # Cache the shared registry/rules prefix, not each changing source unit.
+        payload["input"] = [
+            {"role": "developer", "content": [{"type": "input_text",
+                "text": json.dumps(reference, ensure_ascii=False),
+                "prompt_cache_breakpoint": {"mode": "explicit"}}]},
+            {"role": "user", "content": [{"type": "input_text", "text": json.dumps(dynamic, ensure_ascii=False)}]},
+        ]
+        payload["prompt_cache_options"] = {"mode": "explicit", "ttl": "30m"}
     elif model.startswith("gpt-5"):
         payload["reasoning"] = {"effort": "low"}
     request = Request("https://api.openai.com/v1/responses", data=json.dumps(payload).encode("utf-8"),
@@ -200,6 +210,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
     cluster_ids = [candidate_id(unit.get("exercise_id"), p) for p in result["narrative_analysis"]["proposals"]]
     classified_at = datetime.now(timezone.utc).isoformat()
     return {"analysis_executed": True, "method": "openai_text_pilot", "model": raw.get("model", model),
+            "requested_service_tier": ANALYSIS_SERVICE_TIER, "service_tier": raw.get("service_tier"),
             "model_version": raw.get("model", model), "classified_at": classified_at,
             "candidate_cluster_id": cluster_ids[0] if len(cluster_ids) == 1 else None,
             "candidate_cluster_ids": cluster_ids,

@@ -167,7 +167,7 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(out['classified_at'],out['analyzed_at'])
         self.assertEqual(out['registry_version'],REG['version'])
         payload=json.loads(opener.return_value.open.call_args.args[0].data)
-        self.assertEqual(len(json.loads(payload['input'])['narrative_registry']['types']),35)
+        self.assertEqual(len(json.loads(payload['input'][0]['content'][0]['text'])['narrative_registry']['types']),35)
         schema=payload['text']['format']['schema']
         def objects(rule):
             if rule.get('type')=='object':
