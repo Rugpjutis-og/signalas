@@ -39,7 +39,7 @@ def project(records, analyses, registry, days, zone, context, exercise_id):
         result = valid_analysis(record, analysis, registry)
         reanalysis += bool(analysis and result is None)
         unit = {**record, 'analysis': analysis['result'] if analysis else None,
-                'analysis_executed': bool(analysis), 'narrative_analysis': result,
+                'analysis_executed': bool(analysis and analysis.get('analysis_executed')), 'narrative_analysis': result,
                 'match_status': result['match_status'] if result else 'requires_reanalysis' if analysis else 'not_analyzed',
                 'narrative_ids': [], 'stance': 'unknown'}
         units.append(unit)

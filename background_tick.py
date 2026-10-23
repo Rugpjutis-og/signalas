@@ -2,7 +2,7 @@
 import time
 from datetime import datetime, timedelta, timezone
 
-from cloud_analysis import enqueue, step
+from cloud_analysis import enqueue, recover_validation_failure, step
 from thermometer import instant
 
 COLLECTION_INTERVAL = timedelta(hours=1)
@@ -43,6 +43,9 @@ def tick(repo, *, clock=None, monotonic=None):
             collection = 'error'
     state = repo.read('analysis-job.json', {}) or {}
     retried = False
+    if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
+        # Legacy failed jobs can be advanced without another paid model call.
+        state = recover_validation_failure(repo)
     if collection == 'ok' and state.get('status') == 'error' and state.get('reason') in RETRYABLE_ANALYSIS_REASONS:
         # Retry provider failures only after the next hourly collection. This also
         # resumes analysis after the key or provider service has been restored.

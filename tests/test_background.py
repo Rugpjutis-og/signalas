@@ -46,7 +46,8 @@ class BackgroundAuthTests(unittest.TestCase):
         verify=lambda h:auth.verified_claims(h,now=1100,fetch=lambda:self.jwks)
         good=self.token()
         self.assertEqual(verify(good)['repository_id'],auth.REPOSITORY_ID)
-        self.assertIsNone(verify(good[:-1]+'A'))
+        tampered=good[:-1]+('B' if good[-1] != 'B' else 'A')
+        self.assertIsNone(verify(tampered))
         for changes in ({'repository_id':'1'},{'ref':'refs/heads/other'},
                         {'workflow_ref':'another'},{'aud':'another'},{'event_name':'pull_request'},
                         {'exp':1100},{'iat':500}):
@@ -123,5 +124,18 @@ class BackgroundTickTests(unittest.TestCase):
         self.assertEqual(outcome['analysis'],'complete')
         enqueue.assert_called_once_with(self.repo)
         step.assert_called_once_with(self.repo)
+
+    def test_legacy_validation_failure_advances_without_new_collection(self):
+        self.db['analysis-job.json']={'status':'error','reason':'analysis_validation','remaining':2}
+        self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(hours=1)).isoformat()}
+        def recover(_):
+            self.db['analysis-job.json']={'status':'pending','remaining':1}
+            return self.db['analysis-job.json']
+        with patch.object(background_tick,'recover_validation_failure',side_effect=recover) as fallback, patch.object(background_tick,'step',return_value={'status':'complete','remaining':0}) as paid:
+            result=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
+        self.assertEqual(result['status'],'ok')
+        fallback.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo)
+        self.repo.collect.assert_not_called()
 
 if __name__=='__main__':unittest.main()

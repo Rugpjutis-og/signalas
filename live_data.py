@@ -48,7 +48,9 @@ def load(root=ROOT):
         ref = analysis.get("source_reference", {})
         key = (ref.get("source"), ref.get("id"))
         unit = records.get(key)
-        if (unit and analysis.get("analysis_executed") is True and analysis.get("exercise_context") == context
+        if (unit and (analysis.get("analysis_executed") is True or
+                      analysis.get("processing_disposition") == "needs_review") and
+                analysis.get("exercise_context") == context
                 and analysis.get("content_fingerprint") == fingerprint(unit)):
             assessed[key] = analysis
     return packet, context, assessed
@@ -182,10 +184,10 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
         direction = result.get("thermometer_category") if current_rules else None
         assessed = status == "classified" and direction in CATEGORIES
         assessment = {"category": direction if assessed else None, "status": "assessed" if assessed else status,
-                      "method": "openai_text_pilot" if analysis else "not_analyzed",
+                      "method": analysis.get("method", "not_analyzed") if analysis else "not_analyzed",
                       "reason": ((result.get("reason") if assessed else result.get("missing_context") or result.get("reason"))
                                  if current_rules else "Vertinimas atliktas pagal ankstesnes taisykles; reikia pakartotinės peržiūros.") if result else "AI analizė šiam turiniui dar neatlikta.",
-                      "context_version": None, "reviewed_parts": ["text"] if analysis else [],
+                      "context_version": None, "reviewed_parts": ["text"] if analysis and analysis.get("analysis_executed") else [],
                       "reason_codes": result.get("reason_codes", []) if current_rules else [],
                       "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
                       "evidence": [{"kind": "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}

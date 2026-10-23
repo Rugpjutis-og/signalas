@@ -76,6 +76,32 @@ class CloudAnalysisTests(unittest.TestCase):
         self.assertEqual(result['status'],'error')
         self.assertEqual(self.db['openai-status.json']['reason'],'api_access')
 
+    def test_invalid_model_result_requires_review_and_does_not_block_queue(self):
+        self.units.append(dict(self.units[0], id='2', text='Another original'))
+        ca.enqueue(self.repo)
+        with patch.object(ca, 'analyze', side_effect=[ValueError('invalid output'), self.result(self.units[1])]) as paid:
+            first=ca.step(self.repo)
+            self.assertEqual(first['status'],'pending')
+            self.assertEqual(first['review_required'],1)
+            self.assertEqual(first['remaining'],1)
+            fallback=self.db[ca.RESULTS][0]
+            self.assertFalse(fallback['analysis_executed'])
+            self.assertEqual(fallback['result']['direction'],'needs_review')
+            self.assertEqual(fallback['result']['narrative_analysis']['match_status'],'uncertain')
+            self.assertNotIn('invalid output',str(fallback))
+            self.assertEqual(ca.step(self.repo)['status'],'complete')
+            self.assertEqual(ca.pending(self.repo)[0],[])
+            self.assertEqual(paid.call_count,2)
+
+    def test_recover_legacy_validation_error_without_paid_retry(self):
+        self.db[ca.STATE]={'status':'error','reason':'analysis_validation','remaining':1}
+        with patch.object(ca,'analyze') as paid:
+            state=ca.recover_validation_failure(self.repo)
+        paid.assert_not_called()
+        self.assertEqual(state['status'],'complete')
+        self.assertEqual(state['review_required'],1)
+        self.assertEqual(ca.pending(self.repo)[0],[])
+
     def test_collection_enqueues_only_after_successful_save(self):
         packet={'records':self.units,'post_count':1,'comment_count':0,'collected_at':'2026-10-23T09:00:00Z'}
         with patch('diaspora_client.DiasporaClient') as client, patch('cloud_repository.sync') as sync:
