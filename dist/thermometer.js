@@ -96,9 +96,9 @@ window.SignalThermometer = (() => {
     toggle.setAttribute('aria-expanded',String(expanded));
     root.querySelectorAll('[data-thermo-category]').forEach(button=>button.setAttribute('aria-pressed',String(expanded&&button.dataset.thermoCategory===active)));
     if(!expanded){list.innerHTML='';return;}
-    const items=report.units.filter(u=>active==='all'||(active==='needs_review'?u.assessment.status!=='assessed':u.assessment.status==='assessed'&&u.assessment.category===active));
-    const title=active==='all'?'Visas termometro turinys':active==='needs_review'?'Neįvertinta / reikia peržiūros':labels[active];
-    const filters=[['all','Visas turinys',report.total],...report.categories.map(c=>[c.id,c.label,c.count]),['needs_review','Reikia peržiūros',report.unassessed]];
+    const items=report.units.filter(u=>active==='all'||(active==='manual_review'?['needs_review','error'].includes(u.assessment.status):active==='needs_review'?u.assessment.status!=='assessed':u.assessment.status==='assessed'&&u.assessment.category===active));
+    const title=active==='all'?'Visas termometro turinys':active==='manual_review'?'Laukia rankinio patvirtinimo':active==='needs_review'?'Neįvertinta / reikia peržiūros':labels[active];
+    const filters=[['all','Visas turinys',report.total],...report.categories.map(c=>[c.id,c.label,c.count]),['needs_review','Neįvertinta',report.unassessed],['manual_review','Laukia rankinio patvirtinimo',report.units.filter(u=>['needs_review','error'].includes(u.assessment.status)).length]];
     list.innerHTML=`<div class="thermo-content-filters" role="group" aria-label="Termometro turinio kategorijos">${filters.map(([id,label,count])=>`<button type="button" class="thermo-content-filter" data-thermo-category="${id}" aria-pressed="${active===id}">${escape(label)} <span>${count}</span></button>`).join('')}</div><div class="panel-heading"><div><h2>${escape(title)} <span class="compact-count">${items.length}</span></h2><p>Pasirinkto laikotarpio ${report.mode==='demo'?'sintetiniai ':''}turinio vienetai vidinei analizei</p></div></div><div class="thermo-items">${items.length?items.map(u=>{
       const category=u.assessment.status==='assessed'?u.assessment.category:'needs_review';
       const label=labels[category]||pendingLabels[u.assessment.status]||'Neįvertinta';
@@ -108,18 +108,22 @@ window.SignalThermometer = (() => {
     bindDiscussions(list,report);
   }
   function paint(root,report) {
+    root.reviewEditing=false;
     const parts=report.categories.map(c=>`<button class="thermo-segment ${c.id}" style="flex-grow:${c.count};${c.count?'':'display:none'}" data-thermo-category="${c.id}" aria-label="${escape(c.label)}: ${c.count}, ${pct(c.percent)}" aria-controls="thermo-evidence" aria-pressed="${active===c.id}"></button>`).join('');
-    root.innerHTML=`<p class="thermo-review-confirmation" data-thermo-review-confirmation role="status" tabindex="-1"></p><section class="panel thermo-summary" aria-labelledby="thermo-title"><div class="panel-heading"><div><h2 id="thermo-title">Turinio komunikacinė kryptis</h2><p class="thermo-period-label">Laikotarpis: ${escape(report.start.slice(0,10))}–${escape(new Date(Date.parse(report.end)-1).toLocaleDateString("sv-SE",{timeZone:"Europe/Vilnius"}))} · ${report.period} d.</p></div></div><div class="thermo-body">${report.assessed?`<div class="thermo-bar" role="group" aria-label="Turinio kategorijų proporcijos">${parts}</div>`:'<p class="thermo-empty">Nėra įvertintų duomenų</p>'}<div class="thermo-legend">${report.categories.map(c=>`<button class="thermo-category ${c.id}" data-thermo-category="${c.id}" aria-controls="thermo-evidence" aria-pressed="${active===c.id}"><span class="thermo-dot"></span><span>${escape(c.label)}<strong>${pct(c.percent)}</strong></span></button>`).join('')}</div><div class="thermo-coverage"><p><strong>Aprėptis: ${report.assessed} iš ${report.total}</strong> turinio vienetų įvertinta${report.coverage_percent===null||report.coverage_percent===undefined?'':` (${pct(report.coverage_percent)})`}.</p><button class="text-button" data-thermo-category="needs_review" aria-controls="thermo-evidence" aria-pressed="${active==='needs_review'}">Neįvertinta: ${report.unassessed} · Peržiūrėti ir priskirti kryptį</button>${report.mode==='live'&&report.unassessed?`<p class="thermo-note">${Object.entries(report.pending||{}).filter(([,count])=>count).map(([status,count])=>`${pendingLabels[status]||status}: ${count}`).join(' · ')}</p>`:''}${report.assessed>0&&report.assessed<20?'<p class="thermo-note">Maža įvertinimo imtis.</p>':''}${report.total&&report.assessed/report.total<.8?'<p class="thermo-note">Dalis turinio dar neįvertinta; procentai apima tik įvertintus vienetus.</p>':''}</div></div></section><section class="panel thermo-trend" aria-labelledby="thermo-trend-title"><div class="panel-heading"><div><h2 id="thermo-trend-title">Proporcijų raida laike</h2><p>Kiekviena diena – 100 % tos dienos įvertinto turinio. Brūkšniuota – nėra įvertintų duomenų. Po data: įvertinta / gauta.</p></div></div>${chart(report)}</section><section class="panel thermo-content-panel"><button type="button" id="thermo-content-toggle" class="thermo-content-toggle" aria-expanded="false" aria-controls="thermo-evidence"><span>Termometro turinys</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><div id="thermo-evidence" hidden role="region" aria-label="Termometro turinys vidinei analizei" aria-live="polite"></div></section>`;
+    root.innerHTML=`<p class="thermo-review-confirmation" data-thermo-review-confirmation role="status" tabindex="-1"></p><section class="panel thermo-summary" aria-labelledby="thermo-title"><div class="panel-heading"><div><h2 id="thermo-title">Turinio komunikacinė kryptis</h2><p class="thermo-period-label">Laikotarpis: ${escape(report.start.slice(0,10))}–${escape(new Date(Date.parse(report.end)-1).toLocaleDateString("sv-SE",{timeZone:"Europe/Vilnius"}))} · ${report.period} d.</p></div></div><div class="thermo-body">${report.assessed?`<div class="thermo-bar" role="group" aria-label="Turinio kategorijų proporcijos">${parts}</div>`:'<p class="thermo-empty">Nėra įvertintų duomenų</p>'}<div class="thermo-legend">${report.categories.map(c=>`<button class="thermo-category ${c.id}" data-thermo-category="${c.id}" aria-controls="thermo-evidence" aria-pressed="${active===c.id}"><span class="thermo-dot"></span><span>${escape(c.label)}<strong>${pct(c.percent)}</strong></span></button>`).join('')}</div><div class="thermo-coverage"><p><strong>Aprėptis: ${report.assessed} iš ${report.total}</strong> turinio vienetų įvertinta${report.coverage_percent===null||report.coverage_percent===undefined?'':` (${pct(report.coverage_percent)})`}.</p><button class="text-button" data-thermo-category="needs_review" aria-controls="thermo-evidence" aria-pressed="${active==='needs_review'}">Neįvertinta: ${report.unassessed}</button>${report.mode==='live'?`<button type="button" class="text-button" data-thermo-category="manual_review" aria-controls="thermo-evidence" aria-pressed="${active==='manual_review'}">Peržiūrėti ir priskirti kryptį (${report.units.filter(u=>['needs_review','error'].includes(u.assessment.status)).length})</button>`:''}${report.mode==='live'&&report.unassessed?`<p class="thermo-note">${Object.entries(report.pending||{}).filter(([,count])=>count).map(([status,count])=>`${pendingLabels[status]||status}: ${count}`).join(' · ')}</p>`:''}${report.assessed>0&&report.assessed<20?'<p class="thermo-note">Maža įvertinimo imtis.</p>':''}${report.total&&report.assessed/report.total<.8?'<p class="thermo-note">Dalis turinio dar neįvertinta; procentai apima tik įvertintus vienetus.</p>':''}</div></div></section><section class="panel thermo-trend" aria-labelledby="thermo-trend-title"><div class="panel-heading"><div><h2 id="thermo-trend-title">Proporcijų raida laike</h2><p>Kiekviena diena – 100 % tos dienos įvertinto turinio. Brūkšniuota – nėra įvertintų duomenų. Po data: įvertinta / gauta.</p></div></div>${chart(report)}</section><section class="panel thermo-content-panel"><button type="button" id="thermo-content-toggle" class="thermo-content-toggle" aria-expanded="false" aria-controls="thermo-evidence"><span>Termometro turinys</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><div id="thermo-evidence" hidden role="region" aria-label="Termometro turinys vidinei analizei" aria-live="polite"></div></section>`;
     updateEvidence(root,report);
     root.onclick=event=>{
       if(event.target.closest('#thermo-content-toggle')){expanded=!expanded;if(expanded)active='all';updateEvidence(root,report);return;}
       const button=event.target.closest('[data-thermo-category]');if(!button)return;
       const wasFilter=Boolean(button.closest?.('.thermo-content-filters'));
       active=button.dataset.thermoCategory;expanded=true;updateEvidence(root,report);
+      if(!wasFilter){const list=root.querySelector('#thermo-evidence');list.setAttribute('tabindex','-1');list.focus({preventScroll:true});list.scrollIntoView({block:'start'});}
       if(wasFilter)root.querySelector('#thermo-evidence').querySelector(`[data-thermo-category="${active}"]`)?.focus({preventScroll:true});
     };
+    root.oninput=event=>{if(event.target.closest?.('[data-thermo-review]'))root.reviewEditing=true;};
     root.onchange=event=>{
       const form=event.target.closest?.('[data-thermo-review]');if(!form)return;
+      root.reviewEditing=true;
       if(event.target.name==='category')reviewFields(form);
       if(event.target.name==='reason_code'){
         const needsSource=form.elements.reason_code.value==='D1';
@@ -162,6 +166,17 @@ window.SignalThermometer = (() => {
       root.querySelector('#thermo-retry').onclick=()=>mount(root,period);
     }
   }
+  async function refresh(root,period){
+    if(current!==root||(currentPeriod.key||currentPeriod)!==(period.key||period))return mount(root,period);
+    // Keep the open list and typed review in place while background results arrive.
+    if(root.reviewEditing)return;
+    const request=++generation;
+    try{
+      const report=await acquire(period);
+      if(request!==generation||current!==root||!root.isConnected||root.reviewEditing)return;
+      paint(root,report);
+    }catch(_){/* Keep the last successful report and review controls available. */}
+  }
   function prepareAnalysisInput(unit){
     return {...window.SignalExerciseContext.analysisInput(unit),analysis_kind:'content_direction',
       categories:{stabilizing:'Stabilizuojantis turinys',neutral:'Neutralus arba nesusijęs turinys',destabilizing:'Destabilizuojantis turinys'},
@@ -169,5 +184,5 @@ window.SignalThermometer = (() => {
       review_policy:{status:'needs_review',category:null,reason_required:true},
       direction_policy:'Vertink turinio komunikacinę kryptį, ne emocinį toną ar naratyvo stance. Nežinomas būtinas faktas reikalauja peržiūros; jo nebuvimas pradiniame kontekste neįrodo klaidingumo.'};
   }
-  return {mount,prepareAnalysisInput,invalidate:()=>cache.clear()};
+  return {mount,refresh,prepareAnalysisInput,invalidate:()=>cache.clear()};
 })();

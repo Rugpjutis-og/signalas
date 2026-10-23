@@ -1249,7 +1249,7 @@ window.addEventListener('signalas:context-saved',async()=>{
 });
 window.addEventListener('signalas:metrics-context',()=>{if(state.view!=='context')render();});
 window.SignalDemo={prepareAnalysisInput:prepareNarrativeAnalysisInput,state,themes,narratives,relations,visibleNarratives,narrativeTags,count,sortNarratives,firstSeenTime,previousCount,growthFor,dayStances,stanceCounts,stancePercentages,evidenceCard,setView,selectTheme,selectThemeScope,selectNarrative,selectRelation,resetFilters,render};
-window.SignalDemo.refreshLive=(data,{preserveDay=false}={})=>{applyLiveData(data);window.SignalPlatformOverview.invalidate();window.SignalThermometer.invalidate();if(!preserveDay)state.day=null;if(state.view!=='context')render();};
+window.SignalDemo.refreshLive=(data,{preserveDay=false}={})=>{applyLiveData(data);window.SignalPlatformOverview.invalidate();window.SignalThermometer.invalidate();if(!preserveDay)state.day=null;if(state.view==='thermometer'&&$('thermometer-root')){window.SignalThermometer.refresh($('thermometer-root'),window.SignalLiveData.range());return;}if(state.view!=='context')render();};
 function applyLiveData(data){
   narratives.splice(0,narratives.length,...data.narratives);
   relations.splice(0,relations.length,...data.relations);

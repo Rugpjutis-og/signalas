@@ -66,6 +66,19 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
  for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
  assert(liveRoot.innerHTML.includes('Peržiūrėti ir priskirti kryptį'));
+ const manualButton={dataset:{thermoCategory:'manual_review'},closest:()=>null};
+ liveRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
+ const manualList=liveRoot.querySelector('#thermo-evidence');
+ assert(manualList.innerHTML.includes('Laukia rankinio patvirtinimo'));
+ assert(!manualList.innerHTML.includes('AI analizė šiam turiniui dar neatlikta.'));
+ const openedList=manualList.innerHTML;
+ liveWindow.SignalThermometer.invalidate();await liveWindow.SignalThermometer.refresh(liveRoot,7);
+ assert.equal(manualList.innerHTML,openedList,'background refresh preserves the selected review filter');
+ liveRoot.reviewEditing=true;
+ liveRoot.querySelector('#thermo-evidence').innerHTML='draft remains';
+ liveWindow.SignalThermometer.invalidate();await liveWindow.SignalThermometer.refresh(liveRoot,7);
+ assert.equal(manualList.innerHTML,'draft remains','background refresh must not discard an edited review');
+
  // Saving one decision refetches the report immediately and confirms the persisted category.
  let shown=structuredClone(liveThermo),savedPayload=null;
  const savingWindow=runtime(async()=>({ok:true,json:async()=>shown}));
