@@ -71,7 +71,7 @@ def review_required(repo, state, units, context, *, unit=None, reason_code='anal
         'result': {'narrative_analysis': {'match_status': 'uncertain', 'matches': [],
                                           'proposals': [], 'uncertainty_reason': reason},
                    'direction': 'needs_review', 'reason': reason, 'missing_context': reason,
-                   'evidence': '', 'reason_codes': [], 'verified_claim_source': None,
+                   'evidence': '', 'reason_codes': [],
                    'thermometer_status': 'needs_review', 'thermometer_category': None},
     }
     repo.append_analysis(result)

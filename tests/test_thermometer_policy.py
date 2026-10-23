@@ -11,8 +11,7 @@ class ThermometerPolicyTests(unittest.TestCase):
         self.assertEqual(validate_assessment(base), base)
         with self.assertRaises(ValueError):
             validate_assessment({**base, "reason_codes": ["N1"]})
-        with self.assertRaises(ValueError):
-            validate_assessment({**base, "reason_codes": ["D1"]})
+        self.assertEqual(validate_assessment({**base, "reason_codes": ["D1"]})["reason_codes"], ["D1"])
         with self.assertRaises(ValueError):
             validate_assessment({**base, "evidence": ""})
 
@@ -22,9 +21,8 @@ class ThermometerPolicyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_assessment(value)
         self.assertEqual(validate_assessment(value, require_evidence=False), value)
-        with self.assertRaises(ValueError):
-            validate_assessment({**value, "category": "destabilizing", "reason_codes": ["D1"]},
-                                require_evidence=False)
+        self.assertEqual(validate_assessment({**value, "category": "destabilizing", "reason_codes": ["D1"]},
+                                              require_evidence=False)["category"], "destabilizing")
 
     def test_uncertainty_never_becomes_neutral(self):
         for status in ("needs_review", "waiting_data", "error"):

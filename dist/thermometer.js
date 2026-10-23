@@ -79,14 +79,12 @@ window.SignalThermometer = (() => {
   }
   function reviewForm(unit,report){
     if(report.mode!=='live'||!['needs_review','error'].includes(unit.assessment.status))return '';
-    return `<form class="thermo-review" data-thermo-review data-source="${escape(unit.source)}" data-id="${escape(unit.id)}"><h3>Rankinis krypties patvirtinimas</h3><p>Patikrinkite turinį ir jo originalą. Išsaugotas sprendimas bus įskaitytas į termometro statistiką.</p><div class="thermo-review-grid"><label>Kryptis<select name="category" required><option value="">Pasirinkite</option>${Object.entries(labels).map(([id,label])=>`<option value="${id}">${escape({stabilizing:"Stabilizuojantis",neutral:"Neutralus",destabilizing:"Destabilizuojantis"}[id])}</option>`).join('')}</select></label><label>Pagrindo kodas<select name="reason_code" required disabled><option value="">Pirmiausia pasirinkite kryptį</option></select></label></div><label>Trumpas vertinimo pagrindas<textarea name="reason" required minlength="5" maxlength="2000" rows="2"></textarea></label><label class="thermo-review-source" hidden>Patikrinto fakto šaltinis (D1)<input name="verified_claim_source" maxlength="2000"></label><p class="thermo-review-error" role="alert" aria-live="polite"></p><button type="submit" class="button">Išsaugoti vertinimą</button></form>`;
+    return `<form class="thermo-review" data-thermo-review data-source="${escape(unit.source)}" data-id="${escape(unit.id)}"><h3>Rankinis krypties patvirtinimas</h3><p>Patikrinkite turinį ir jo originalą. Išsaugotas sprendimas bus įskaitytas į termometro statistiką.</p><div class="thermo-review-grid"><label>Kryptis<select name="category" required><option value="">Pasirinkite</option>${Object.entries(labels).map(([id,label])=>`<option value="${id}">${escape({stabilizing:"Stabilizuojantis",neutral:"Neutralus",destabilizing:"Destabilizuojantis"}[id])}</option>`).join('')}</select></label><label>Pagrindo kodas<select name="reason_code" required disabled><option value="">Pirmiausia pasirinkite kryptį</option></select></label></div><label>Trumpas vertinimo pagrindas<textarea name="reason" required minlength="5" maxlength="2000" rows="2"></textarea></label><p class="thermo-review-error" role="alert" aria-live="polite"></p><button type="submit" class="button">Išsaugoti vertinimą</button></form>`;
   }
   function reviewFields(form){
     const category=form.elements.category.value,code=form.elements.reason_code;
     code.innerHTML=`<option value="">Pasirinkite pagrindą</option>${(reasonCodes[category]||[]).map(([id,label])=>`<option value="${id}">${id} · ${escape(label)}</option>`).join('')}`;
     code.disabled=!category;
-    form.querySelector('.thermo-review-source').hidden=true;
-    form.elements.verified_claim_source.required=false;
   }
   function updateEvidence(root, report) {
     const list=root.querySelector('#thermo-evidence');
@@ -124,11 +122,6 @@ window.SignalThermometer = (() => {
       const form=event.target.closest?.('[data-thermo-review]');if(!form)return;
       root.reviewEditing=true;
       if(event.target.name==='category')reviewFields(form);
-      if(event.target.name==='reason_code'){
-        const needsSource=form.elements.reason_code.value==='D1';
-        form.querySelector('.thermo-review-source').hidden=!needsSource;
-        form.elements.verified_claim_source.required=needsSource;
-      }
     };
     root.onsubmit=async event=>{
       const form=event.target.closest?.('[data-thermo-review]');if(!form)return;

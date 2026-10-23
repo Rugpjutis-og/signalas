@@ -220,7 +220,7 @@ class IntegrationTests(unittest.TestCase):
     def test_model_result_validation_and_review_for_unread_media(self):
         catalog = app.catalog()
         valid = {"narrative_analysis": {"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},
-                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": '"text"', "reason_codes": ["N0"], "verified_claim_source": None}
+                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": '"text"', "reason_codes": ["N0"]}
         unit = {"id": "test", "source": "test", "kind": "post", "text": "text",
                 "published_at": "2026-10-21T10:00:00Z", "media": [{"kind": "image"}]}
         response = {"status": "completed", "model": "test", "output": [{"type": "message", "content": [
@@ -238,10 +238,38 @@ class IntegrationTests(unittest.TestCase):
             openai_analysis.validate_result({**valid, "theme_id": "invented-theme"}, catalog)
 
 
+    def test_context_supported_s1_and_d1_are_not_forced_to_review(self):
+        unit = {"id": "context-test", "source": "test", "kind": "post", "text": "Pagalbos punktas uždarytas.",
+                "published_at": "2026-10-21T10:00:00Z", "media": []}
+        context = {"initialSituation": "Veikia pagalbos punktas.", "confirmedFacts": "Pagalbos punktas atidarytas."}
+        for category, code in [("stabilizing", "S1"), ("destabilizing", "D1")]:
+            with self.subTest(code=code):
+                valid = {"narrative_analysis": {"match_status": "no_narrative", "matches": [],
+                         "proposals": [], "uncertainty_reason": ""}, "direction": category,
+                         "reason": "Pateiktu kontekstu pagrįstas vertinimas.", "missing_context": "",
+                         "evidence": unit["text"], "reason_codes": [code]}
+                response = {"status": "completed", "output": [{"type": "message", "content": [
+                    {"type": "output_text", "text": json.dumps(valid)}]}]}
+                with patch.object(openai_analysis, "api_key", return_value="test-secret"), patch.object(openai_analysis, "build_opener") as opener:
+                    opener.return_value.open.return_value.__enter__.return_value = io.BytesIO(json.dumps(response).encode())
+                    result = openai_analysis.analyze(unit, context)
+                    self.assertEqual(result["result"]["thermometer_status"], "classified")
+                    self.assertEqual(result["result"]["thermometer_category"], category)
+                    request = json.loads(opener.return_value.open.call_args.args[0].data)
+                    self.assertNotIn("verified_claim_source", request["text"]["format"]["schema"]["properties"])
+                    self.assertIn("pateiktą pratybų bei diskusijos kontekstą", request["instructions"])
+                    valid.update(direction="needs_review", reason_codes=[], missing_context="Trūksta būtino fakto.")
+                    opener.return_value.open.return_value.__enter__.return_value = io.BytesIO(json.dumps({
+                        "status": "completed", "output": [{"type": "message", "content": [
+                            {"type": "output_text", "text": json.dumps(valid)}]}]}).encode())
+                    pending = openai_analysis.analyze(unit, context)
+                    self.assertEqual(pending["result"]["thermometer_status"], "needs_review")
+                    self.assertIsNone(pending["result"]["thermometer_category"])
+
     def test_multilingual_analysis_preserves_original_evidence_and_names(self):
         text = 'Nie panikujcie. Не паникуйте. Stay calm. Šilo miestas.'
         valid = {"narrative_analysis": {"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},
-                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": text, "reason_codes": ["N0"], "verified_claim_source": None}
+                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": text, "reason_codes": ["N0"]}
         unit = {"id":"language-test", "source":"test", "kind":"comment", "text":text,
                 "published_at":"2026-10-21T10:00:00Z", "media":[]}
         response={"status":"completed","output":[{"type":"message","content":[

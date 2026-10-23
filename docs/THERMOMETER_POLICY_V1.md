@@ -2,7 +2,7 @@
 
 Šiame etape „Nuotaikų termometras“ vertina paskelbto turinio komunikacinę kryptį, ne autoriaus ketinimus, nuotaiką ar auditorijos pažiūras. Vienas įrašas su savo medija yra vienas vienetas, komentaras – atskiras vienetas. Naratyvo priskyrimas, autoriaus vardas, sekėjai ir sąveikų kiekis kategorijos nenulemia. Išplėstiniai naratyvai, kai bus pateikti, gali būti perduodami tik kaip papildomas kontekstas, o ne kaip patvirtinti faktai.
 
-`thermometer_policy.py` laiko vienoje vietoje taisyklių versiją ir pagrindo kodus. Neutralus turinys apima kasdienius įrašus, klausimus ir taikią kritiką. Stabilizuojančiai krypčiai būtinas S1–S4 mechanizmas, destabilizuojančiai – D1–D4. D1 klaidingumo teiginys šiame bandyme automatiškai netvirtinamas, nes nėra nepriklausomo faktų tikrinimo. Citata ar paneigimas nėra autoriaus palaikymas.
+`thermometer_policy.py` laiko vienoje vietoje taisyklių versiją ir pagrindo kodus. Neutralus turinys apima kasdienius įrašus, klausimus ir taikią kritiką. Stabilizuojančiai krypčiai būtinas S1–S4 mechanizmas, destabilizuojančiai – D1–D4. S1 ir D1 vertinami pagal turinį bei pateiktą kontekstą: atskira išorinio šaltinio nuoroda nereikalinga, vien šie kodai neperkelia įrašo peržiūrai. Trūkstant būtino fakto paliekama peržiūra; kontekste nepaminėtas teiginys savaime nėra klaidingas. Citata ar paneigimas nėra autoriaus palaikymas.
 
 Galutinės kategorijos turi tik `classified` rezultatai. `waiting_data`, `needs_review` ir `error` neturi kategorijos. Seno taisyklių formato rezultatai į naujus termometro procentus neįtraukiami. Procentų vardiklis – tik klasifikuoti vienetai; aprėptis rodoma atskirai. Kai klasifikuotų vienetų nėra, procentai nežinomi. Maža imtis ir maža aprėptis žymimos sąsajoje.
 

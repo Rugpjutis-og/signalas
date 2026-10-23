@@ -41,6 +41,4 @@ def validate_assessment(value, *, require_evidence=True):
         raise ValueError("Trūksta termometro vertinimo pagrindo.")
     if require_evidence and category in ("stabilizing", "destabilizing") and not str(value.get("evidence") or "").strip():
         raise ValueError("Kryptingam vertinimui trūksta turinio įrodymo.")
-    if "D1" in codes and not value.get("verified_claim_source"):
-        raise ValueError("D1 būtinas patikrinamo fakto šaltinis.")
     return value

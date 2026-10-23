@@ -153,7 +153,7 @@ class RegistryTests(unittest.TestCase):
         v={"narrative_analysis":result([match('N004','NATO neprovokuoja karo.','oppose'),
                                        match('N030','Parama atima išteklius.')]),
            "direction":"neutral","reason":"Politinių sprendimų kritika be žalingo mechanizmo.",
-           "missing_context":"","evidence":text,"reason_codes":["N1"],"verified_claim_source":None}
+           "missing_context":"","evidence":text,"reason_codes":["N1"]}
         raw={"status":"completed","model":"mock-model","output":[{"type":"message","content":[
             {"type":"output_text","text":json.dumps(v)}]}]}
         with patch.object(openai_analysis,'api_key',return_value='mock'), patch.object(openai_analysis,'settings',return_value={}), \

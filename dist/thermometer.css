@@ -47,7 +47,6 @@ body.thermometer-view .toolbar{justify-content:flex-end}
 .thermo-review h3,.thermo-review p{margin:0}.thermo-review h3{font-size:14px}.thermo-review p{font-size:11px;line-height:1.6}
 .thermo-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .thermo-review label{display:grid;gap:5px;font-size:11px;font-weight:600}
-.thermo-review-source[hidden]{display:none}
 .thermo-review input,.thermo-review select,.thermo-review textarea{width:100%;min-width:0;padding:9px;border:1px solid #cbd5e4;border-radius:6px;background:#fff;color:#243650;font:inherit;font-weight:400}
 .thermo-review .button{justify-self:start}.thermo-review-error{color:#a9133f;min-height:1em}
 @media(max-width:700px){.thermo-content-toggle{padding:18px 16px;font-size:15px}.thermo-content-filters{padding:14px 16px 0}.thermo-content-filter{font-size:10px}}

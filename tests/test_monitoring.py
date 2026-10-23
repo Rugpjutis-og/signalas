@@ -96,7 +96,7 @@ class MonitoringTests(unittest.TestCase):
                 "status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":json.dumps({
                     "narrative_analysis":{"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},"direction":"neutral",
                     "reason":"Kasdienis turinys","missing_context":"","evidence":"text",
-                    "reason_codes":["N0"],"verified_claim_source":None})}]}]}).encode())
+                    "reason_codes":["N0"]})}]}]}).encode())
             openai_analysis.analyze(unit,root=self.root)
             self.assertEqual(self.status()["state"],"watching")
         monitoring.record("openai","api_connection",self.root)

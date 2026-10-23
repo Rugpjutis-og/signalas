@@ -40,7 +40,6 @@ def analysis_schema(catalog):
         "missing_context": {"type": "string"},
         "evidence": {"type": "string"},
         "reason_codes": {"type": "array", "items": {"type": "string", "enum": list(REASONS)}},
-        "verified_claim_source": {"type": ["string", "null"]},
     }
     return {"type": "object", "properties": properties,
             "required": list(properties), "additionalProperties": False}
@@ -115,8 +114,7 @@ def validate_result(result, catalog):
     if result["direction"] in ("stabilizing", "neutral", "destabilizing"):
         validate_assessment({"status": "classified", "category": result["direction"],
                              "reason_codes": result["reason_codes"], "reason": result["reason"],
-                             "evidence": result["evidence"],
-                             "verified_claim_source": result["verified_claim_source"]})
+                             "evidence": result["evidence"]})
     elif result["reason_codes"]:
         raise ValueError("Neįvertintam turiniui negali būti galutinės priežasties kodo.")
     return result
@@ -145,7 +143,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         "Šis bandymas skaito tik tekstą: pateikti medijos URL nėra peržiūrėti paveikslėliai. "
         "Nedaryk išvadų apie neperžiūrėtos medijos turinį. Atsakyk trumpai lietuviškai; "
         "Kryptį pagrįsk vienu ar keliais N0–N2, S1–S4 arba D1–D4 priežasties kodais. "
-        "S ir D reikia tikslios turinio ištraukos; D1 reikia konkretaus patikimo šaltinio, patvirtinančio klaidingumą. "
+        "S ir D reikia tikslios turinio ištraukos. Vertink tik turinį ir pateiktą pratybų bei diskusijos kontekstą. S1 ir D1 nereikalauja atskiros išorinio šaltinio nuorodos; jiems turi pakakti pateiktų duomenų. Nevykdyk išorinės faktų paieškos ir nesiremk modelio atmintimi kaip fakto įrodymu. "
         "Nežinomas teiginys nėra klaidingas. Pasirink needs_review, kai būtinas faktas nežinomas. "
         "evidence turi būti tiksli trumpa originalaus vertinamo teksto ištrauka arba tuščia. "
         + " ".join(RULES) + "\n" + narrative_registry.INSTRUCTIONS)
@@ -211,9 +209,6 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             result["evidence"] = excerpt[1:-1]
     if result["evidence"] and result["evidence"] not in (unit.get("text") or ""):
         result.update(direction="needs_review", missing_context="AI pateikta ištrauka nerasta originaliame tekste.")
-    # A model-generated citation is not an independently checked source.
-    if "D1" in result["reason_codes"] or "S1" in result["reason_codes"]:
-        result.update(direction="needs_review", missing_context="Faktiniam paneigimui ar klaidingumo teiginiui būtina nepriklausomai patikrinti šaltinį.")
     has_media = bool(unit.get("media") or unit.get("attachments") or
                      (prepared["content"]["parent_post"] or {}).get("media") or
                      any(c.get("media") for c in prepared["content"]["conversation_context"]))

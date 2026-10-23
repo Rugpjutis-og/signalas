@@ -33,7 +33,6 @@ def save(repo, payload):
     source, unit_id = payload.get('source'), payload.get('id')
     category, code = payload.get('category'), payload.get('reason_code')
     reason, evidence = payload.get('reason'), payload.get('evidence', '')
-    verified = payload.get('verified_claim_source') or None
     if not all(isinstance(s, str) and 0 < len(s) <= 256 for s in (source, unit_id)):
         raise ValueError('Nenurodytas turinio vienetas.')
     if category not in BY_CATEGORY or code not in BY_CATEGORY[category]:
@@ -42,11 +41,9 @@ def save(repo, payload):
         raise ValueError('Trumpai pagrįskite pasirinktą kategoriją.')
     if not isinstance(evidence, str) or len(evidence) > 2000:
         raise ValueError('Netinkama pagrindžianti ištrauka.')
-    if verified is not None and (not isinstance(verified, str) or len(verified) > 2000):
-        raise ValueError('Netinkama patikrinto fakto nuoroda.')
     validate_assessment({'status': 'classified', 'category': category,
                          'reason_codes': [code], 'reason': reason.strip(),
-                         'evidence': evidence.strip(), 'verified_claim_source': verified}, require_evidence=False)
+                         'evidence': evidence.strip()}, require_evidence=False)
     unit = next((u for u in repo.latest()['records'] if u.get('source') == source and u.get('id') == unit_id), None)
     if unit is None:
         raise ValueError('Turinio vieneto nėra surinktoje imtyje.')
@@ -57,7 +54,7 @@ def save(repo, payload):
               'exercise_id': unit.get('exercise_id'), 'exercise_context': context,
               'rules_version': VERSION, 'category': category, 'reason_code': code,
               'reason': reason.strip(), 'evidence': evidence.strip(),
-              'verified_claim_source': verified, 'reviewed_at': datetime.now(timezone.utc).isoformat(),
+              'reviewed_at': datetime.now(timezone.utc).isoformat(),
               'method': 'manual_review'}
     review_key = key(source, unit_id)
     repo.sql('''INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,jsonb_build_object($3::text,$4::jsonb))
