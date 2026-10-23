@@ -63,6 +63,12 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('data-thermo-review'));
  assert(reviewMarkup.includes('Išsaugoti vertinimą'));
  assert(reviewMarkup.includes('name="verified_claim_source"'));
+ const notAnalyzed=structuredClone(liveThermo);
+ notAnalyzed.units.forEach(unit=>{unit.assessment.status='not_analyzed';});
+ const pendingWindow=runtime(async()=>({ok:true,json:async()=>notAnalyzed}));
+ const pendingRoot=node();await pendingWindow.SignalThermometer.mount(pendingRoot,7);
+ pendingRoot.onclick({target:{closest:selector=>selector==='#thermo-content-toggle'?{}:null}});
+ assert(!pendingRoot.querySelector('#thermo-evidence').innerHTML.includes('data-thermo-review'));
  // Out-of-order period responses cannot replace the latest period's report.
  const pending=new Map();
  const racing=runtime(url=>new Promise(resolve=>pending.set(url,resolve)));
