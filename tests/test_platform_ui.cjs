@@ -112,7 +112,7 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert.equal(retryForm.querySelector('[type=submit]').disabled,false);
  assert.equal(retryForm.querySelector('.thermo-review-error').textContent,'Išsaugoti nepavyko');
 
- // Only review-required and failed assessments allow a manual direction.
+ // Classified content can be corrected; pending-data and untouched queue items cannot.
  for(const status of ['needs_review','error','waiting_data','not_analyzed','assessed']){
    const scoped=structuredClone(liveThermo);
    scoped.units.forEach(unit=>{unit.assessment.status=status;});
@@ -120,7 +120,14 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
    const scopedRoot=node();await scopedWindow.SignalThermometer.mount(scopedRoot,7);
    scopedRoot.onclick({target:{closest:selector=>selector==='#thermo-content-toggle'?{}:null}});
    assert.equal(scopedRoot.querySelector('#thermo-evidence').innerHTML.includes('data-thermo-review'),
-     ['needs_review','error'].includes(status),status);
+     ['needs_review','error','assessed'].includes(status),status);
+   if(status==='assessed'){
+     const markup=scopedRoot.querySelector('#thermo-evidence').innerHTML;
+     assert(markup.includes('data-thermo-edit><summary>Keisti kryptį</summary>'));
+     assert(!markup.includes('data-thermo-edit open'));
+     assert(markup.includes('Išsaugoti pakeitimą'));
+     assert(markup.includes(' selected>'));
+   }
  }
  const notAnalyzed=structuredClone(liveThermo);
  notAnalyzed.units.forEach(unit=>{unit.assessment.status='not_analyzed';});

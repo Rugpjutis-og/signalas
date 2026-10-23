@@ -82,6 +82,28 @@ class LiveDataTests(unittest.TestCase):
                    "source": "pod.test", "coverage": "account_visible_stream_first_page", "records": self.records})
         self.assertEqual(live_data.thermometer(7, self.root)["assessed"], 0)
 
+    def test_correcting_an_assessed_direction_moves_category_without_increasing_coverage(self):
+        unit = self.records[0]
+        analysis = self.analysis(unit)
+        analysis['thermometer_rules_version'] = thermometer_review.VERSION
+        analysis['result'].update(thermometer_status='classified', thermometer_category='neutral',
+                                  reason_codes=['N1'])
+        self.write('openai-analysis-pilot.json', [analysis])
+        before = live_data.thermometer(7, self.root)
+        self.assertEqual((before['assessed'], before['total']), (1, 2))
+        for category, code in [('destabilizing', 'D2'), ('stabilizing', 'S2'), ('neutral', 'N1')]:
+            self.write('thermometer-reviews.json', {thermometer_review.key(unit['source'], unit['id']): {
+                'content_fingerprint': live_data.fingerprint(unit), 'exercise_id': None,
+                'exercise_context': None, 'rules_version': thermometer_review.VERSION,
+                'category': category, 'reason_code': code, 'reason': 'Patikslintas rankinis vertinimas.',
+                'evidence': ''}})
+            report = live_data.thermometer(7, self.root)
+            self.assertEqual((report['assessed'], report['total']), (1, 2))
+            for item in report['categories']:
+                self.assertEqual(item['count'], int(item['id'] == category))
+            self.assertEqual(report['days'][-1]['assessed'], 1)
+            self.assertEqual(live_data.thermometer(7, self.root)['categories'], report['categories'])
+
     def test_manual_directions_override_ai_for_posts_and_comments(self):
         for unit in self.records:
             for category, code in [('stabilizing', 'S2'), ('neutral', 'N1'), ('destabilizing', 'D2')]:
