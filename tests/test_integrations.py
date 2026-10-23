@@ -193,6 +193,8 @@ class IntegrationTests(unittest.TestCase):
                 sent=json.loads(opener.return_value.open.call_args.args[0].data)
                 self.assertEqual(sent['model'], 'gpt-6.1-sol')
                 self.assertEqual(sent['reasoning']['effort'], 'medium')
+                self.assertEqual(sent['max_output_tokens'], 6000)
+                self.assertEqual(sent['service_tier'], 'flex')
                 self.assertEqual(json.loads(sent['input'])['analysis_input']['content']['text'],text)
                 self.assertEqual(result['original_text'],text)
                 self.assertEqual(result['result']['evidence'],text)

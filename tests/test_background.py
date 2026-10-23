@@ -125,6 +125,19 @@ class BackgroundTickTests(unittest.TestCase):
         enqueue.assert_called_once_with(self.repo)
         step.assert_called_once_with(self.repo)
 
+    def test_flex_capacity_retries_after_cooldown_without_standard_fallback(self):
+        self.db['analysis-job.json']={'status':'error','reason':'api_capacity','remaining':2,
+                                      'updated_at':self.current.isoformat()}
+        self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(hours=1)).isoformat()}
+        with patch.object(background_tick,'enqueue',return_value={'status':'pending','remaining':2}) as enqueue, \
+             patch.object(background_tick,'step',return_value={'status':'complete','remaining':0}) as paid:
+            self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'paused')
+            self.current+=timedelta(minutes=15)
+            self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'ok')
+        enqueue.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo)
+        self.repo.collect.assert_not_called()
+
     def test_legacy_validation_failure_advances_without_new_collection(self):
         self.db['analysis-job.json']={'status':'error','reason':'analysis_validation','remaining':2}
         self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(hours=1)).isoformat()}

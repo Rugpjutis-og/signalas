@@ -64,6 +64,7 @@ class MonitoringTests(unittest.TestCase):
 
     def test_rate_limit_is_not_assumed_to_be_exhausted_credit(self):
         for code,kind,expected in [("rate_limit_exceeded","rate_limit_error","api_rate_limit"),
+                                   ("resource_unavailable",None,"api_capacity"),
                                    ("project_spend_limit_exceeded",None,"api_quota"),
                                    (None,"insufficient_quota","api_quota"),
                                    ({"untrusted":"value"},None,"api_rate_limit")]:

@@ -15,6 +15,7 @@ REASONS = {
     "api_connection": "Nutrūko ryšys su AI API.",
     "api_access": "AI API atmetė prieigą.",
     "api_rate_limit": "Pasiektas AI API užklausų dažnio limitas.",
+    "api_capacity": "AI API pigesnis apdorojimo režimas laikinai nepasiekiamas.",
     "api_error": "AI API užklausa nepavyko.",
     "status_unavailable": "Nepavyko patikrinti srauto būsenos.",
 }
@@ -48,6 +49,7 @@ def http_failure(error, root=ROOT):
              "project_spend_limit_exceeded", "organization_usage_limit_exceeded"}
     reason = ("api_quota" if isinstance(code, str) and code in quota or kind == "insufficient_quota" else
               "api_access" if error.code in (401, 403) else
+              "api_capacity" if error.code == 429 and code in ("resource_unavailable", "flex_resource_unavailable") else
               "api_rate_limit" if error.code == 429 else "api_error")
     record("openai", reason, root)
     return reason

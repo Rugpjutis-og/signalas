@@ -133,7 +133,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
         "evidence turi būti tiksli trumpa originalaus vertinamo teksto ištrauka arba tuščia. "
         + " ".join(RULES) + "\n" + narrative_registry.INSTRUCTIONS)
     payload = {
-        "model": model, "store": False, "max_output_tokens": 4000,
+        "model": model, "service_tier": "flex", "store": False, "max_output_tokens": 6000,
         "instructions": instructions,
         "input": json.dumps({"analysis_input": prepared, "narrative_registry": narrative_registry.prompt_registry(catalog),
                              "pending_claims": pending_claims(unit, root, catalog), "directions": DEFINITIONS,
@@ -148,7 +148,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
     request = Request("https://api.openai.com/v1/responses", data=json.dumps(payload).encode("utf-8"),
                       headers={"Authorization": "Bearer " + api_key(root), "Content-Type": "application/json"})
     try:
-        with build_opener(NoRedirect).open(request, timeout=60) as response:
+        with build_opener(NoRedirect).open(request, timeout=180) as response:
             raw = json.load(response)
     except HTTPError as error:
         monitoring.http_failure(error, root)

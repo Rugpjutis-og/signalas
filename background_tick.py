@@ -8,6 +8,7 @@ from thermometer import instant
 COLLECTION_INTERVAL = timedelta(hours=1)
 MAX_ANALYSIS_SECONDS = 235  # Room inside the Vercel 300 s invocation limit.
 RETRYABLE_ANALYSIS_REASONS = frozenset({'api_access', 'api_quota', 'api_connection'})
+FLEX_RETRY_INTERVAL = timedelta(minutes=15)
 
 
 def tick(repo, *, clock=None, monotonic=None):
@@ -46,6 +47,13 @@ def tick(repo, *, clock=None, monotonic=None):
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
         # Legacy failed jobs can be advanced without another paid model call.
         state = recover_validation_failure(repo)
+    if state.get('status') == 'error' and state.get('reason') == 'api_capacity':
+        last_attempt = state.get('updated_at')
+        if not last_attempt or instant(last_attempt) + FLEX_RETRY_INTERVAL <= current:
+            # Flex reports unavailable capacity without billing. Wait before trying
+            # again and keep the same tier; never silently switch to Standard.
+            state = enqueue(repo)
+            retried = True
     if collection == 'ok' and state.get('status') == 'error' and state.get('reason') in RETRYABLE_ANALYSIS_REASONS:
         # Retry provider failures only after the next hourly collection. This also
         # resumes analysis after the key or provider service has been restored.
