@@ -238,6 +238,24 @@ class IntegrationTests(unittest.TestCase):
             openai_analysis.validate_result({**valid, "theme_id": "invented-theme"}, catalog)
 
 
+    def test_sol_thermometer_only_request_has_no_narrative_workload(self):
+        unit = {"id": "recheck", "source": "test", "kind": "post", "text": "Rami diena.",
+                "published_at": "2026-10-21T10:00:00Z", "media": []}
+        valid = {"direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "",
+                 "evidence": unit["text"], "reason_codes": ["N0"]}
+        response = {"status": "completed", "model": "gpt-6.1-sol", "output": [{"type": "message", "content": [
+            {"type": "output_text", "text": json.dumps(valid)}]}]}
+        with patch.object(openai_analysis, "api_key", return_value="test"), patch.object(openai_analysis, "build_opener") as opener:
+            opener.return_value.open.return_value.__enter__.return_value = io.BytesIO(json.dumps(response).encode())
+            result = openai_analysis.analyze(unit, model_override="gpt-6.1-sol", thermometer_only=True)
+            sent = json.loads(opener.return_value.open.call_args.args[0].data)
+            self.assertEqual(sent["model"], "gpt-6.1-sol")
+            self.assertNotIn("narrative_analysis", sent["text"]["format"]["schema"]["properties"])
+            self.assertNotIn("narrative_registry", json.loads(sent["input"][0]["content"][0]["text"]))
+            self.assertNotIn("pending_claims", json.loads(sent["input"][1]["content"][0]["text"]))
+            self.assertEqual(result["result"]["thermometer_category"], "neutral")
+            self.assertEqual(result["model"], "gpt-6.1-sol")
+
     def test_context_supported_s1_and_d1_are_not_forced_to_review(self):
         unit = {"id": "context-test", "source": "test", "kind": "post", "text": "Pagalbos punktas uždarytas.",
                 "published_at": "2026-10-21T10:00:00Z", "media": []}

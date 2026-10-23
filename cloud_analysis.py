@@ -118,6 +118,9 @@ def receipt(unit, context, repo):
 
 def step(repo, *, deadline=None, monotonic=None):
     """At most one paid call per request, no hidden retries after provider failure."""
+    import thermometer_recheck
+    if thermometer_recheck.active(repo):
+        return thermometer_recheck.step(repo, deadline=deadline, monotonic=monotonic)
     state = repo.read(STATE, {}) or {}
     if state.get('status') not in ('pending', 'running'):
         return state or {'status': 'idle', 'remaining': 0}
@@ -206,7 +209,9 @@ def drain(repo, *, seconds=235, monotonic=None):
     """Reuse one private snapshot across a bounded Vercel batch."""
     clock = monotonic or time.monotonic
     deadline = clock() + seconds
-    state = repo.read(STATE, {}) or {'status': 'idle', 'remaining': 0}
+    import thermometer_recheck
+    state = (thermometer_recheck.status(repo) if thermometer_recheck.active(repo) else
+             repo.read(STATE, {}) or {'status': 'idle', 'remaining': 0})
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
         state = recover_validation_failure(repo)
     while state.get('status') in ('pending', 'running') and clock() + 60 < deadline:

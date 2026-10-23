@@ -34,6 +34,19 @@ ASSESSMENTS = '''WITH assessments AS (
 ASSESSMENT_ORDER = "stage,n,COALESCE(a->>'recorded_at',a->>'classified_at',a->>'analyzed_at','')"
 
 
+def analysis_result_name(result):
+    binding = {k: result.get(k) for k in ('content_fingerprint', 'exercise_id', 'exercise_context',
+                'registry_version', 'thermometer_rules_version')}
+    binding['source'] = result.get('source_reference', {}).get('source')
+    binding['id'] = result.get('source_reference', {}).get('id')
+    binding['model'] = result.get('requested_model', result.get('model'))
+    if result.get('review_run_id'):
+        binding['review_run_id'] = result['review_run_id']
+    name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,
+                                                         ensure_ascii=False).encode()).hexdigest()
+    return name
+
+
 class Repository:
     def __init__(self, config):
         self.config = config
@@ -148,14 +161,17 @@ class Repository:
             [self.scope, version, VERSION, json.dumps(context), model])['rows']
         return json.loads(rows[0][0]) if rows else []
 
+    def analysis_for_unit(self, source, identity, content_fingerprint, context):
+        rows = self.sql(ASSESSMENTS + """SELECT a FROM assessments
+            WHERE a->'source_reference'->>'source'=$2 AND a->'source_reference'->>'id'=$3
+              AND a->>'content_fingerprint'=$4
+              AND COALESCE(a->'exercise_context','null'::jsonb)=$5::jsonb
+            ORDER BY stage DESC,n DESC,COALESCE(a->>'recorded_at',a->>'classified_at',a->>'analyzed_at','') DESC
+            LIMIT 1""", [self.scope, source, identity, content_fingerprint, json.dumps(context)])['rows']
+        return json.loads(rows[0][0]) if rows else None
+
     def append_analysis(self, result):
-        binding = {k: result.get(k) for k in ('content_fingerprint', 'exercise_id', 'exercise_context',
-                    'registry_version', 'thermometer_rules_version')}
-        binding['source'] = result.get('source_reference', {}).get('source')
-        binding['id'] = result.get('source_reference', {}).get('id')
-        binding['model'] = result.get('requested_model', result.get('model'))
-        name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,
-                                                             ensure_ascii=False).encode()).hexdigest()
+        name = analysis_result_name(result)
         self.sql('''INSERT INTO signalas_state(scope,name,value)
             VALUES($1,$2,$3::jsonb) ON CONFLICT(scope,name) DO NOTHING''',
             [self.scope, name, json.dumps(result)])

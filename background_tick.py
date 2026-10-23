@@ -68,6 +68,9 @@ def tick(repo, *, clock=None, monotonic=None):
         # resumes analysis after the key or provider service has been restored.
         state = enqueue(repo)
         retried = True
+    import thermometer_recheck
+    if thermometer_recheck.active(repo):
+        state = thermometer_recheck.status(repo)
     progressed = 0
     if collection != 'already_running':
         while state.get('status') in ('pending', 'running') and monotonic() - started < MAX_ANALYSIS_SECONDS:

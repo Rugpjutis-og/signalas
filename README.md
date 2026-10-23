@@ -362,3 +362,9 @@ Naudojamas esamas autentifikuotas, CSRF apsaugotas `/api/thermometer/review` vei
 Foninis termometro atnaujinimas išlaiko atvertą sąrašą bei pasirinktą filtrą. Kol pildoma rankinio vertinimo forma, jos turinys neperpiešiamas; išsaugojimas iš naujo gauna aktualią statistiką.
 
 S1 ir D1 AI įvertinami pagal pateiktą turinį bei pradinį ir diskusijos kontekstą, be atskiro išorinio šaltinio reikalavimo ar automatinio perkėlimo peržiūrai vien dėl šių kodų. Nežinomas teiginys nelaikomas klaidingu, o trūkstant būtino fakto išlieka peržiūra. Šis pakeitimas taikomas naujiems vertinimams; išsaugoti sprendimai neperrašomi ir masinė mokama pakartotinė analizė nepaleidžiama.
+
+## Vienkartinė Sol termometro peržiūra
+
+`thermometer_recheck.start(repo)` administratoriaus pavedimu užfiksuoja tik dabartiniame pasirinktame laikotarpyje peržiūros / klaidos būsenos esančių vienetų ID ir pirštų atspaudus. Pakartotinis startas tos pačios užduoties nedubliuoja. Mokamus API kvietimus vykdo tik Vercel darbuotojas su `gpt-6.1-sol`, medium ir standartiniu tarifu. Numatytoji Luna konfigūracija nekeičiama. Peržiūros paleidimas automatiškai nesikartoja naujiems įrašams.
+
+Sol gauna tik termometro užduotį; esami naratyvų priskyrimai išsaugomi. Atskiri rezultatai iš karto įrašomi į Neon, jų deterministinis raktas turi peržiūros paleidimo ID. Prieš kvietimą tikrinamas turinio / konteksto aktualumas ir rankinis sprendimas. Pakeistas, pašalintas ar ranka patvirtintas turinys praleidžiamas. Nutrūkusi ar nepavykusi atskiro vieneto analizė automatiškai nekartojama; neaiškūs vienetai lieka peržiūrai. Bendra API kvotos ar prieigos klaida sustabdo šį paleidimą. Visa eilė laikoma Neon ir tęsiama esamu foniniu Vercel darbuotoju bei autorizuota analizės tęsimo užklausa, naudojant tą patį surinkimo / analizės užraktą. Baigus šią baigtinę eilę, įprasta Luna eilė tęsiasi.
