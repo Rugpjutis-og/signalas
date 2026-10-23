@@ -28,15 +28,17 @@ def tick(repo, *, clock=None, monotonic=None):
         # be retried every five minutes. The current snapshot remains readable.
         repo.write('background-schedule.json', {
             'next_collection_at': (current + COLLECTION_INTERVAL).isoformat(),
-            'last_attempt_at': current.isoformat()})
+            'last_attempt_at': current.isoformat(),
+            'collection_waiting_until': (current + timedelta(minutes=6)).isoformat()})
         try:
             outcome = repo.collect(reset_analysis_error=False)
             collection = outcome['status']
             if collection == 'already_running':
                 # Another invocation owns the lease; retry when next scheduled tick fires.
                 repo.write('background-schedule.json', {
-                    'next_collection_at': (current + timedelta(minutes=5)).isoformat(),
-                    'last_attempt_at': current.isoformat()})
+                    'next_collection_at': current.isoformat(),
+                    'last_attempt_at': current.isoformat(),
+                    'collection_waiting_until': (current + timedelta(minutes=6)).isoformat()})
             if collection == 'ok':
                 repo.write('background-schedule.json', {
                     'next_collection_at': (clock() + COLLECTION_INTERVAL).isoformat(),
@@ -44,6 +46,9 @@ def tick(repo, *, clock=None, monotonic=None):
                     'last_success_at': outcome['collected_at']})
         except ValueError:
             collection = 'error'
+            repo.write('background-schedule.json', {
+                'next_collection_at': (current + COLLECTION_INTERVAL).isoformat(),
+                'last_attempt_at': current.isoformat()})
     state = repo.read('analysis-job.json', {}) or {}
     retried = False
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':

@@ -169,6 +169,15 @@ class CloudAnalysisTests(unittest.TestCase):
         self.assertEqual(state['review_required'], 1)
         self.assertEqual(state['completed'], 1)
 
+    def test_browser_yields_to_waiting_collector(self):
+        ca.enqueue(self.repo)
+        self.db['background-schedule.json'] = {'collection_waiting_until': '2100-01-01T00:00:00Z'}
+        with patch.object(ca, 'analyze') as paid:
+            self.assertEqual(ca.step(self.repo)['reason'], 'collection_pending')
+        paid.assert_not_called()
+        self.assertEqual(self.db[ca.STATE]['status'], 'pending')
+        self.assertIn('DELETE', self.repo.sql.call_args.args[0])
+
     def test_collection_enqueues_only_after_successful_save(self):
         packet={'records':self.units,'post_count':1,'comment_count':0,'collected_at':'2026-10-23T09:00:00Z'}
         with patch('diaspora_client.DiasporaClient') as client, patch('cloud_repository.sync') as sync:

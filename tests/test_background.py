@@ -103,6 +103,16 @@ class BackgroundTickTests(unittest.TestCase):
             self.assertEqual(self.repo.collect.call_count,1)
             self.assertEqual(later['status'],'paused')
 
+    def test_busy_analysis_yields_to_collection_at_next_tick(self):
+        self.repo.collect.return_value = {'status': 'already_running'}
+        self.db['analysis-job.json'] = {'status': 'running', 'remaining': 10}
+        with patch.object(background_tick, 'step') as paid:
+            result = background_tick.tick(self.repo, clock=self.clock, monotonic=self.monotonic)
+        self.assertEqual(result['collection'], 'already_running')
+        self.assertEqual(self.db['background-schedule.json']['next_collection_at'], self.current.isoformat())
+        self.assertIn('collection_waiting_until', self.db['background-schedule.json'])
+        paid.assert_not_called()
+
     def test_provider_error_retries_after_hourly_collection_only(self):
         self.db['analysis-job.json']={'status':'error','reason':'api_access','remaining':2}
         self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(minutes=5)).isoformat()}

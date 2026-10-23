@@ -135,6 +135,11 @@ def step(repo, *, deadline=None, monotonic=None):
         state = repo.read(STATE, {}) or {}
         if state.get('status') not in ('pending', 'running'):
             return state
+        waiting = (repo.read('background-schedule.json', {}) or {}).get('collection_waiting_until')
+        if waiting and datetime.fromisoformat(waiting.replace('Z', '+00:00')) > datetime.now(timezone.utc):
+            # A continuously open browser must yield between items so the
+            # hourly collector can obtain the shared lease instead of starving.
+            return dict(state, status='already_running', reason='collection_pending')
         units, context = pending(repo)
         if not units:
             state.update(status='complete', remaining=0, updated_at=now())
