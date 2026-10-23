@@ -137,7 +137,7 @@ window.SignalThermometer = (() => {
         if(savedGeneration!==generation||current!==root||!root.isConnected)return;
         const updated=await acquire(savedPeriod);
         if(savedGeneration!==generation||current!==root||!root.isConnected)return;
-        expanded=true;active=payload.category;paint(root,updated);
+        expanded=true;paint(root,updated);
         const confirmation=root.querySelector('[data-thermo-review-confirmation]');
         confirmation.textContent='Vertinimas išsaugotas. Kryptis įskaityta į termometro statistiką.';
         confirmation.focus({preventScroll:true});

@@ -92,6 +92,7 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
    shown.assessed+=1;shown.unassessed-=1;
  }};
  const savingRoot=node();await savingWindow.SignalThermometer.mount(savingRoot,7);
+ savingRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
  const pendingUnit=shown.units.find(u=>u.assessment.status!=='assessed');
  const form=node();form.dataset={source:pendingUnit.source,id:pendingUnit.id};
  form.reportValidity=()=>true;form.values={category:'neutral',reason_code:'N1',reason:'Taiki nuomonė.'};
@@ -99,7 +100,11 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert.equal(savedPayload.category,'neutral');
  assert(savingRoot.innerHTML.includes(`Aprėptis: ${shown.assessed} iš ${shown.total}`));
  assert(savingRoot.querySelector('[data-thermo-review-confirmation]').textContent.includes('įskaityta'));
- assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Kryptis patvirtinta rankiniu būdu'));
+ assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Laukia rankinio patvirtinimo'));
+ assert(!savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Kryptis patvirtinta rankiniu būdu'));
+ savingWindow.SignalThermometer.invalidate();await savingWindow.SignalThermometer.refresh(savingRoot,7);
+ assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Laukia rankinio patvirtinimo'),
+   'saved review and subsequent background refresh must retain the manual-review queue');
  // A failed save keeps the form available and does not show a successful classification.
  savingWindow.SignalLiveData.saveThermometerReview=async()=>{throw Error('Išsaugoti nepavyko');};
  const retryForm=node();retryForm.dataset=form.dataset;retryForm.values=form.values;retryForm.reportValidity=()=>true;
