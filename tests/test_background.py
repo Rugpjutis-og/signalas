@@ -98,7 +98,30 @@ class BackgroundTickTests(unittest.TestCase):
             result=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
             self.assertEqual(result['status'],'error');run.assert_not_called()
             self.current+=timedelta(minutes=5)
-            background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
+            later=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
             self.assertEqual(self.repo.collect.call_count,1)
+            self.assertEqual(later['status'],'paused')
+
+    def test_provider_error_retries_after_hourly_collection_only(self):
+        self.db['analysis-job.json']={'status':'error','reason':'api_access','remaining':2}
+        self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(minutes=5)).isoformat()}
+        self.repo.collect.return_value={'status':'ok','collected_at':self.current.isoformat()}
+        def requeue(_):
+            state={'status':'pending','remaining':2}
+            self.db['analysis-job.json']=state
+            return state
+        def work(_):
+            state={'status':'complete','remaining':0}
+            self.db['analysis-job.json']=state
+            return state
+        with patch.object(background_tick,'enqueue',side_effect=requeue) as enqueue, patch.object(background_tick,'step',side_effect=work) as step:
+            self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'paused')
+            enqueue.assert_not_called();step.assert_not_called()
+            self.current+=timedelta(minutes=5)
+            outcome=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
+        self.assertEqual(outcome['status'],'ok')
+        self.assertEqual(outcome['analysis'],'complete')
+        enqueue.assert_called_once_with(self.repo)
+        step.assert_called_once_with(self.repo)
 
 if __name__=='__main__':unittest.main()

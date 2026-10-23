@@ -2,11 +2,12 @@
 import time
 from datetime import datetime, timedelta, timezone
 
-from cloud_analysis import step
+from cloud_analysis import enqueue, step
 from thermometer import instant
 
 COLLECTION_INTERVAL = timedelta(hours=1)
 MAX_ANALYSIS_SECONDS = 235  # Room inside the Vercel 300 s invocation limit.
+RETRYABLE_ANALYSIS_REASONS = frozenset({'api_access', 'api_quota', 'api_connection'})
 
 
 def tick(repo, *, clock=None, monotonic=None):
@@ -14,6 +15,7 @@ def tick(repo, *, clock=None, monotonic=None):
     monotonic = monotonic or time.monotonic
     started = monotonic()
     current = clock()
+    previous_analysis = repo.read('analysis-job.json', {}) or {}
     schedule = repo.read('background-schedule.json', {}) or {}
     next_due = schedule.get('next_collection_at')
     due = not next_due or instant(next_due) <= current
@@ -40,6 +42,12 @@ def tick(repo, *, clock=None, monotonic=None):
         except ValueError:
             collection = 'error'
     state = repo.read('analysis-job.json', {}) or {}
+    retried = False
+    if collection == 'ok' and state.get('status') == 'error' and state.get('reason') in RETRYABLE_ANALYSIS_REASONS:
+        # Retry provider failures only after the next hourly collection. This also
+        # resumes analysis after the key or provider service has been restored.
+        state = enqueue(repo)
+        retried = True
     progressed = 0
     if collection != 'already_running':
         while state.get('status') in ('pending', 'running') and monotonic() - started < MAX_ANALYSIS_SECONDS:
@@ -48,7 +56,8 @@ def tick(repo, *, clock=None, monotonic=None):
             if state.get('status') == 'already_running' or state.get('remaining') == before:
                 break
             progressed += 1
-    failed = collection == 'error' or state.get('status') == 'error'
-    return {'status': 'error' if failed else 'ok', 'collection': collection,
+    fresh_failure = state.get('status') == 'error' and (previous_analysis.get('status') != 'error' or retried)
+    status = 'error' if collection == 'error' or fresh_failure else 'paused' if state.get('status') == 'error' else 'ok'
+    return {'status': status, 'collection': collection,
             'analysis': state.get('status', 'idle'), 'processed': progressed,
             'remaining': state.get('remaining', 0)}
