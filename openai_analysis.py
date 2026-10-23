@@ -142,7 +142,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         "Kai trūksta būtino fakto, direction=needs_review ir missing_context trumpai įvardyk trūkumą. "
         "Šis bandymas skaito tik tekstą: pateikti medijos URL nėra peržiūrėti paveikslėliai. "
         "Nedaryk išvadų apie neperžiūrėtos medijos turinį. Atsakyk trumpai lietuviškai; "
-        "Kryptį pagrįsk vienu ar keliais N0–N2, S1–S4 arba D1–D4 priežasties kodais. "
+        "Kryptį pagrįsk vienu ar keliais N0–N2, S1–S4 arba D1–D4 priežasties kodais. Jei direction=needs_review, reason_codes turi būti tuščias masyvas []. Priskirtos krypties kodai turi priklausyti tik tai krypčiai: neutral=N0–N2, stabilizing=S1–S4, destabilizing=D1–D4. "
         "S ir D reikia tikslios turinio ištraukos. Vertink tik turinį ir pateiktą pratybų bei diskusijos kontekstą. S1 ir D1 nereikalauja atskiros išorinio šaltinio nuorodos; jiems turi pakakti pateiktų duomenų. Nevykdyk išorinės faktų paieškos ir nesiremk modelio atmintimi kaip fakto įrodymu. "
         "Nežinomas teiginys nėra klaidingas. Pasirink needs_review, kai būtinas faktas nežinomas. "
         "evidence turi būti tiksli trumpa originalaus vertinamo teksto ištrauka arba tuščia. "

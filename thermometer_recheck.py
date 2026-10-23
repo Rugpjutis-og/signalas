@@ -141,7 +141,18 @@ def step(repo, *, deadline=None, monotonic=None):
             state.pop('inflight', None)
             repo.write(STATE, state)
             return status(repo)
-        except (ValueError, TypeError, KeyError):
+        except (ValueError, TypeError, KeyError) as error:
+            message = str(error).lower()
+            reason = next((code for fragment, code in (
+                ('atsisak', 'model_refusal'), ('neužbaigt', 'incomplete_output'),
+                ('json', 'invalid_json'), ('unexpected thermometer', 'response_schema'),
+                ('strukt', 'response_schema'), ('neįvertintam', 'pending_reason_codes'),
+                ('priežast', 'reason_codes'), ('kategorija', 'category_codes'),
+                ('įrodymo', 'missing_evidence'), ('paaiškinimo', 'missing_reason'),
+                ('laukas', 'field_type'), ('tipo', 'field_type')) if fragment in message),
+                'analysis_validation')
+            failures = state.setdefault('failure_reasons', {})
+            failures[reason] = failures.get(reason, 0) + 1
             return advance(repo, state, 'failed')
         result.update(binding)
         result['method'] = 'openai_thermometer_recheck'
