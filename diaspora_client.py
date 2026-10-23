@@ -15,6 +15,13 @@ from content import source_url
 from platform_overview import adapt_diaspora_post, adapt_diaspora_comment
 
 
+class DiasporaRequestError(ValueError):
+    def __init__(self, reason, http_status=None):
+        self.reason, self.http_status = reason, http_status
+        super().__init__('Diasporos skaitymo užklausa nepavyko.' +
+                         (' HTTP %s.' % http_status if http_status else ''))
+
+
 class PageMetadata(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -80,9 +87,9 @@ class DiasporaClient:
         except HTTPError as error:
             if error.code == 304 and include_headers and any(k in headers for k in ('If-None-Match', 'If-Modified-Since')):
                 return None, url, 'application/json', validators
-            raise ValueError("Diasporos užklausa nepavyko (HTTP %s). Patikrinkite prieigą." % error.code) from None
+            raise DiasporaRequestError('source_http', error.code) from None
         except (URLError, OSError, UnicodeError):
-            raise ValueError("Nepavyko saugiai perskaityti Diasporos atsakymo.") from None
+            raise DiasporaRequestError('source_connection') from None
 
     def login(self):
         html, _, _ = self.request("/users/sign_in", accept="text/html")

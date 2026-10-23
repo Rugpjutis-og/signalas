@@ -23,6 +23,16 @@ SCHEMA = [
 # Schema readiness is only a short-lived process cache; application data stays in Neon.
 _schema_ready = {}
 
+# Read legacy aggregate assessments and new independent rows in chronological
+# storage order. New results never rewrite the legacy multi-megabyte JSON array.
+ASSESSMENTS = '''WITH assessments AS (
+    SELECT a,0 AS stage,n FROM signalas_state,
+      LATERAL jsonb_array_elements(value) WITH ORDINALITY t(a,n)
+      WHERE scope=$1 AND name='openai-analysis-pilot.json'
+    UNION ALL SELECT value AS a,1 AS stage,0 AS n FROM signalas_state
+      WHERE scope=$1 AND name LIKE 'analysis-result/%') '''
+ASSESSMENT_ORDER = "stage,n,COALESCE(a->>'recorded_at',a->>'classified_at',a->>'analyzed_at','')"
+
 
 class Repository:
     def __init__(self, config):
@@ -44,7 +54,11 @@ class Repository:
 
     def read(self, name, default=None):
         if name not in self.values:
-            rows = self.sql('SELECT value FROM signalas_state WHERE scope=$1 AND name=$2', [self.scope, name])['rows']
+            if name == 'openai-analysis-pilot.json':
+                rows = self.sql(ASSESSMENTS + 'SELECT COALESCE(jsonb_agg(a ORDER BY ' +
+                                ASSESSMENT_ORDER + "),'[]'::jsonb) FROM assessments", [self.scope])['rows']
+            else:
+                rows = self.sql('SELECT value FROM signalas_state WHERE scope=$1 AND name=$2', [self.scope, name])['rows']
             self.values[name] = json.loads(rows[0][0]) if rows else default
         return self.values[name]
 
@@ -123,13 +137,11 @@ class Repository:
     def analysis_for_queue(self, context, version, model):
         # Filter in Postgres and transfer only identities/fingerprints, not every
         # original text, discussion, evidence and historic result on every unit.
-        rows = self.sql('''SELECT COALESCE(jsonb_agg(jsonb_build_object(
+        rows = self.sql(ASSESSMENTS + '''SELECT COALESCE(jsonb_agg(jsonb_build_object(
             'source_reference',jsonb_build_object('source',a->'source_reference'->'source',
                 'id',a->'source_reference'->'id'),'content_fingerprint',a->'content_fingerprint',
-            'exercise_id',a->'exercise_id') ORDER BY n), '[]'::jsonb)
-            FROM signalas_state, LATERAL jsonb_array_elements(value) WITH ORDINALITY AS t(a,n)
-            WHERE scope=$1 AND name='openai-analysis-pilot.json'
-            AND (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
+            'exercise_id',a->'exercise_id') ORDER BY ''' + ASSESSMENT_ORDER + '''), '[]'::jsonb)
+            FROM assessments WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
             AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
             AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb
             AND COALESCE(a->>'requested_model',a->>'model')=$5''',
@@ -137,28 +149,33 @@ class Repository:
         return json.loads(rows[0][0]) if rows else []
 
     def append_analysis(self, result):
+        binding = {k: result.get(k) for k in ('content_fingerprint', 'exercise_id', 'exercise_context',
+                    'registry_version', 'thermometer_rules_version')}
+        binding['source'] = result.get('source_reference', {}).get('source')
+        binding['id'] = result.get('source_reference', {}).get('id')
+        binding['model'] = result.get('requested_model', result.get('model'))
+        name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,
+                                                             ensure_ascii=False).encode()).hexdigest()
         self.sql('''INSERT INTO signalas_state(scope,name,value)
-            VALUES($1,'openai-analysis-pilot.json',jsonb_build_array($2::jsonb))
-            ON CONFLICT(scope,name) DO UPDATE SET value=signalas_state.value || EXCLUDED.value''',
-            [self.scope, json.dumps(result)])
+            VALUES($1,$2,$3::jsonb) ON CONFLICT(scope,name) DO NOTHING''',
+            [self.scope, name, json.dumps(result)])
         self.values.pop('openai-analysis-pilot.json', None)
 
     def pending_claims(self, exercise_id, version):
-        rows = self.sql('''SELECT COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
+        rows = self.sql(ASSESSMENTS + '''SELECT COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
             'title',p->'title','topic_id',p->'topic_id','claim_template',p->'claim_template',
             'novelty_reason',p->'novelty_reason')),'[]'::jsonb)
-            FROM signalas_state, LATERAL jsonb_array_elements(value) a,
+            FROM assessments,
             LATERAL jsonb_array_elements(COALESCE(a->'result'->'narrative_analysis'->'proposals','[]'::jsonb)) p
-            WHERE scope=$1 AND name='openai-analysis-pilot.json'
-            AND a->>'registry_version'=$2 AND COALESCE(a->'exercise_id','null'::jsonb)=$3::jsonb''',
+            WHERE a->>'registry_version'=$2 AND COALESCE(a->'exercise_id','null'::jsonb)=$3::jsonb''',
             [self.scope, version, json.dumps(exercise_id)])['rows']
         return json.loads(rows[0][0]) if rows else []
 
     def dashboard_revision(self):
-        rows = self.sql('''SELECT name,md5(value::text) FROM signalas_state
-            WHERE scope=$1 AND name IN ('openai-analysis-pilot.json','live-context.json',
-                'dashboard-period.json','thermometer-reviews.json','narrative-registry-state.json')
-            ORDER BY name''', [self.scope])['rows']
+        rows = self.sql('''SELECT md5(COALESCE(string_agg(name||md5(value::text),'' ORDER BY name),''))
+            FROM signalas_state WHERE scope=$1 AND (name LIKE 'analysis-result/%' OR
+                name IN ('openai-analysis-pilot.json','live-context.json','dashboard-period.json',
+                         'thermometer-reviews.json','narrative-registry-state.json'))''', [self.scope])['rows']
         return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):
@@ -190,7 +207,7 @@ class Repository:
                 'description': REASONS.get(reason, 'Duomenys renkami ir analizuojami Vercel fone.')}
 
     def collect(self, *, reset_analysis_error=True):
-        from diaspora_client import DiasporaClient
+        from diaspora_client import DiasporaClient, DiasporaRequestError
         owner = uuid.uuid4().hex
         acquired = self.sql('''INSERT INTO signalas_jobs(scope,owner,expires_at)
             VALUES($1,$2,now()+interval '6 minutes')
@@ -198,12 +215,15 @@ class Repository:
             WHERE signalas_jobs.expires_at<now() RETURNING owner''', [self.scope, owner])['rows']
         if not acquired:
             return {'status': 'already_running'}
+        stage = 'login'
         try:
             client = DiasporaClient(self.config.get('DIASPORA_BASE_URL', 'https://diaspora.sauliai.lt'),
                                     self.config.get('DIASPORA_USERNAME'), self.config.get('DIASPORA_PASSWORD'))
             client.login()
+            stage = 'source'
             previous = self.latest()
             packet = client.collect(previous=previous, compact=True, workers=4, conditional=True)
+            stage = 'storage'
             saved = sync(packet, self.connection, self.scope, previous=previous)
             self.write('collection-status.json', {'status': 'ok', 'checked_at': packet['collected_at']})
             from discussion_context import compact_records
@@ -211,11 +231,17 @@ class Repository:
             self.packet = dict(packet, records=records, storage_version=2,
                                record_keys=[{'source': r['source'], 'id': r['id']} for r in records])
             from cloud_analysis import enqueue
+            stage = 'enqueue'
             analysis = enqueue(self, reset_error=reset_analysis_error)
             return {'status': 'ok', 'posts': packet['post_count'], 'comments': packet['comment_count'],
                     'collected_at': packet['collected_at'], 'cloud_storage': saved, 'analysis': analysis}
-        except Exception:
-            self.write('collection-status.json', {'status': 'error', 'checked_at': datetime.now(timezone.utc).isoformat()})
+        except Exception as error:
+            reason = error.reason if isinstance(error, (DiasporaRequestError, CloudStorageError)) else 'collection_validation'
+            self.write('collection-status.json', {'status': 'error', 'stage': stage, 'reason': reason,
+                'http_status': error.http_status if isinstance(error, DiasporaRequestError) else None,
+                'error_type': type(error).__name__ if type(error).__name__ in
+                    ('ValueError','KeyError','TypeError','CloudStorageError','DiasporaRequestError') else 'internal',
+                'checked_at': datetime.now(timezone.utc).isoformat()})
             raise ValueError('Duomenų surinkti nepavyko. Paskutinė sėkminga kopija duomenų bazėje išsaugota.') from None
         finally:
             self.sql('DELETE FROM signalas_jobs WHERE scope=$1 AND owner=$2', [self.scope, owner])

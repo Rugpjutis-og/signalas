@@ -75,8 +75,13 @@ class CloudTests(unittest.TestCase):
         repo.sql = unittest.mock.Mock(return_value={'rows': []})
         repo.read = unittest.mock.Mock(side_effect=AssertionError('must not fetch history'))
         repo.append_analysis({'id': 'new', 'analysis_executed': True})
-        self.assertIn('signalas_state.value || EXCLUDED.value', repo.sql.call_args.args[0])
-        self.assertEqual(len(repo.sql.call_args.args[1]), 2)
+        statement, params = repo.sql.call_args.args
+        self.assertIn('DO NOTHING', statement)
+        self.assertNotIn('DO UPDATE', statement, 'do not rewrite the historical aggregate')
+        self.assertTrue(params[1].startswith('analysis-result/'))
+        self.assertEqual(len(params), 3)
+        repo.append_analysis({'id': 'new', 'analysis_executed': True})
+        self.assertEqual(params[1], repo.sql.call_args.args[1][1], 'same assessment binding is idempotent')
 
     def test_collection_survives_cloud_failure(self):
         import integrations
