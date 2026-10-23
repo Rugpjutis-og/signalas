@@ -1,7 +1,7 @@
 name: Signalas background monitoring
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '3-58/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,7 @@ jobs:
           python3 - <<'PY'
           import json, os
           from urllib.parse import urlencode
+          from urllib.error import HTTPError
           from urllib.request import Request, urlopen
           url='https://signalas-ecru.vercel.app/api/background/tick'
           request_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']
@@ -28,8 +29,17 @@ jobs:
           with urlopen(request,timeout=20) as response:
               token=json.load(response)['value']
           request=Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
-          with urlopen(request,timeout=285) as response:
-              result=json.load(response)
+          try:
+              with urlopen(request,timeout=285) as response:
+                  result=json.load(response)
+          except HTTPError as error:
+              if error.code == 401:
+                  import base64
+                  segment=token.split('.')[1]
+                  claims=json.loads(base64.urlsafe_b64decode(segment+'='*(-len(segment)%4)))
+                  print('OIDC claims:',{key:claims.get(key) for key in
+                       ('iss','aud','repository','repository_id','ref','workflow_ref','event_name','iat','exp')})
+              raise
           print('Background task:',result.get('status'),'collection:',result.get('collection'),
                 'analysis:',result.get('analysis'),'remaining:',result.get('remaining'))
           if result.get('status')=='error':
