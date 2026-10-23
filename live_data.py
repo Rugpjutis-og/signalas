@@ -11,7 +11,10 @@ from openai_analysis import context_data
 from platform_overview import report as platform_report
 from periods import PERIODS, MAX_PERIOD, calendar_range
 from thermometer import CATEGORIES, LABELS, instant, proportions
+from thermometer_policy import VERSION as THERMOMETER_RULES_VERSION
 import monitoring
+import narrative_registry
+import narrative_projection
 
 ZONE = ZoneInfo("Europe/Vilnius")
 
@@ -119,42 +122,23 @@ def bootstrap(root=ROOT):
     start, end = bounds(packet, None, root)
     duration = (end.date() - start.date()).days
     records = scoped(packet["records"], start, end)
-    catalog = json.loads((root / "data/catalog.json").read_text(encoding="utf-8"))
-    known = {n["id"]: n for n in catalog["narratives"]}
-    narratives, units = {}, []
+    registry = narrative_registry.load(root)
     days = [(start.date() + timedelta(days=i)).isoformat() for i in range(duration)]
-    for record in records:
-        analysis = analyses.get((record["source"], record["id"]))
-        result = analysis["result"] if analysis else None
-        unit = {**record, "analysis": result, "analysis_executed": bool(analysis),
-                "stance": result["stance"] if result else "unknown"}
-        units.append(unit)
-        if not result or not (result.get("narrative_id") or result.get("candidate_title")):
-            continue
-        definition = known.get(result["narrative_id"])
-        title = definition["title"] if definition else result["candidate_title"]
-        theme = definition["theme"] if definition else result["theme_id"] or "unassigned"
-        identity = definition["id"] if definition else "C-" + hashlib.sha256(
-            (theme + ":" + " ".join(title.casefold().split())).encode()).hexdigest()[:10]
-        unit["narrative_id"] = identity
-        if identity not in narratives:
-            narratives[identity] = {
-                "id": identity, "title": title, "lines": [title[:27], title[27:54]] if len(title) > 27 else [title],
-                "description": definition["description"] if definition else result["reason"],
-                "theme": theme, "source": "user_list" if definition else "ai_proposal",
-                "status": "confirmed" if definition else "candidate", "fixed": False, "is_live": True,
-                "history_complete": False, "exercise_id": packet.get("exercise_id"), "days": [0] * duration,
-                "dailyStances": [[0, 0, 0] for _ in range(duration)], "evidence": [],
-                "firstSeenAt": record["published_at"], "first": "", "actors": [], "places": [], "secondaryThemes": []}
-        narrative = narratives[identity]
-        day = instant(record["published_at"]).astimezone(ZONE).date().isoformat()
-        index = days.index(day)
-        narrative["days"][index] += 1
-        if unit["stance"] in ("support", "oppose", "quote"):
-            narrative["dailyStances"][index][("support", "oppose", "quote").index(unit["stance"])] += 1
-        narrative["evidence"].append(unit)
-        if instant(record["published_at"]) < instant(narrative["firstSeenAt"]):
-            narrative["firstSeenAt"] = record["published_at"]
+    projection = narrative_projection.project(records, analyses, registry, days, ZONE, context, packet.get("exercise_id"))
+    first_seen = {}
+    for record in packet["records"]:
+        current = narrative_projection.valid_analysis(record, analyses.get(narrative_projection.key(record)), registry)
+        for match in current["matches"] if current else []:
+            old = first_seen.get(match["type_id"])
+            if old is None or instant(record["published_at"]) < instant(old):
+                first_seen[match["type_id"]] = record["published_at"]
+    for narrative in projection["narratives"]:
+        narrative["firstSeenAt"] = first_seen[narrative["id"]]
+    proposed = narrative_projection.candidates(packet, analyses, registry,
+        decisions=narrative_registry.state(root).get("decisions", {}))
+    # The queue covers the last 24 h; do not display candidates outside the chosen interval.
+    proposed = [c for c in proposed if any(start <= instant(u["published_at"]) < end for u in c["evidence"])]
+    revision = narrative_registry.digest([registry["version"], list(analyses.values()), proposed])
     return {"mode": "live", "source": packet["source"], "collected_at": packet["collected_at"],
             "monitoring": monitoring.status(root, collected_at=packet["collected_at"]),
             "coverage": packet["coverage"], "collection_scope": coverage(packet,start,end),
@@ -162,8 +146,10 @@ def bootstrap(root=ROOT):
             "start": start.isoformat(), "end": end.isoformat(), "days": days, "period": duration,
             "range_saved": bool(json.loads((root / "var/dashboard-period.json").read_text()).get("start_date")),
             "context_available": context is not None,
-            "units": units, "narratives": list(narratives.values()), "relations": [],
-            "analysis_count": sum(u["analysis_executed"] for u in units)}
+            **projection, "registry": narrative_registry.public_registry(registry),
+            "candidates": proposed, "candidate_policy": narrative_registry.CANDIDATE_POLICY,
+            "analysis_revision": revision,
+            "analysis_count": sum(u["analysis_executed"] for u in projection["units"])}
 
 
 def platform(period=None, root=ROOT, *, start_date=None, end_date=None):
@@ -191,13 +177,18 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     for record in scoped(packet["records"], start, end):
         analysis = analyses.get((record["source"], record["id"]))
         result = analysis["result"] if analysis else None
-        direction = result["direction"] if result else "needs_review"
-        assessed = direction in CATEGORIES
-        assessment = {"category": direction if assessed else None, "status": "assessed" if assessed else "needs_review",
+        current_rules = bool(analysis and analysis.get("thermometer_rules_version") == THERMOMETER_RULES_VERSION)
+        status = result.get("thermometer_status") if current_rules else "not_analyzed" if not result else "needs_review"
+        direction = result.get("thermometer_category") if current_rules else None
+        assessed = status == "classified" and direction in CATEGORIES
+        assessment = {"category": direction if assessed else None, "status": "assessed" if assessed else status,
                       "method": "openai_text_pilot" if analysis else "not_analyzed",
-                      "reason": (result["reason"] if assessed else result["missing_context"] or result["reason"]) if result else "AI analizė šiam turiniui dar neatlikta.",
+                      "reason": ((result.get("reason") if assessed else result.get("missing_context") or result.get("reason"))
+                                 if current_rules else "Vertinimas atliktas pagal ankstesnes taisykles; reikia pakartotinės peržiūros.") if result else "AI analizė šiam turiniui dar neatlikta.",
                       "context_version": None, "reviewed_parts": ["text"] if analysis else [],
-                      "evidence": [{"kind": "text", "quote": result["evidence"]}] if result and result["evidence"] else []}
+                      "reason_codes": result.get("reason_codes", []) if current_rules else [],
+                      "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
+                      "evidence": [{"kind": "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
         rows.append({**record, "attachments": [], "conversation_context": record.get("conversation_context", []),
                      "assessment": assessment})
     rows.sort(key=lambda r: instant(r["published_at"]), reverse=True)
@@ -210,5 +201,6 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     return {"mode": "live", "period": period, "start": start.isoformat(), "end": end.isoformat(),
             "coverage": packet["coverage"], "collection_scope": coverage(packet,start,end),
             "contexts": [], "exercise_context": context,
-            "analysis": "OpenAI teksto bandymas; medija neperžiūrėta.", "units": rows,
+            "analysis": "OpenAI teksto bandymas; medija neperžiūrėta.", "rules_version": THERMOMETER_RULES_VERSION,
+            "units": rows,
             "days": days, **proportions(rows)}

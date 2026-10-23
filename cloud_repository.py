@@ -73,9 +73,16 @@ class Repository:
         reason = 'collection_failed' if failure.get('status') == 'error' else None
         if not packet.get('collected_at'):
             reason = reason or 'missing_collection'
+        ai = self.read('openai-status.json', {}) or {}
+        job = self.read('analysis-job.json', {}) or {}
+        if ai.get('status') == 'error':
+            reason = ai.get('reason') or 'api_error'
+        if job.get('status') == 'error':
+            reason = reason or 'api_error'
+        from monitoring import REASONS
         return {'state': 'stopped' if reason else 'watching',
                 'reason': reason, 'collected_at': packet.get('collected_at'),
-                'description': 'Nepavyko surinkti duomenų. Paskutinė kopija išsaugota.' if reason else 'Duomenys atnaujinami tik paspaudus mygtuką.'}
+                'description': REASONS.get(reason, 'Duomenys surenkami ir analizuojami paspaudus mygtuką.')}
 
     def collect(self):
         from diaspora_client import DiasporaClient
@@ -94,8 +101,10 @@ class Repository:
             saved = sync(packet, self.connection, self.scope)
             self.write('collection-status.json', {'status': 'ok', 'checked_at': packet['collected_at']})
             self.packet = packet
+            from cloud_analysis import enqueue
+            analysis = enqueue(self)
             return {'status': 'ok', 'posts': packet['post_count'], 'comments': packet['comment_count'],
-                    'collected_at': packet['collected_at'], 'cloud_storage': saved}
+                    'collected_at': packet['collected_at'], 'cloud_storage': saved, 'analysis': analysis}
         except Exception:
             self.write('collection-status.json', {'status': 'error', 'checked_at': datetime.now(timezone.utc).isoformat()})
             raise ValueError('Duomenų surinkti nepavyko. Paskutinė sėkminga kopija duomenų bazėje išsaugota.') from None

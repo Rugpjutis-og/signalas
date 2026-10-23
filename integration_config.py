@@ -7,6 +7,8 @@ ROOT = Path(__file__).resolve().parent
 
 
 def settings(root=ROOT):
+    if hasattr(root, 'config'):
+        return dict(root.config)
     values = {}
     path = Path(root) / ".env"
     if path.exists():

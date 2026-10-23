@@ -139,6 +139,11 @@ class Handler(BaseHTTPRequestHandler):
                            'message': 'Vercel aplinkoje dar trūksta Diasporos prisijungimo nustatymų.'})
             elif route == '/api/collection/refresh' and method == 'POST':
                 self.send(repository.collect())
+            elif route == '/api/analysis/status' and method == 'GET':
+                self.send(repository.read('analysis-job.json', {}) or {'status': 'idle', 'remaining': 0})
+            elif route == '/api/analysis/continue' and method == 'POST':
+                from cloud_analysis import step
+                self.send(step(repository))
             elif route == '/api/monitoring/status' and method == 'GET':
                 self.send(repository.monitoring_status())
             elif route == '/api/metrics/context' and method == 'GET':

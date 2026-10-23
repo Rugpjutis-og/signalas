@@ -1,0 +1,9 @@
+# Termometro klasifikavimo taisyklės (v1.0)
+
+Šiame etape „Nuotaikų termometras“ vertina paskelbto turinio komunikacinę kryptį, ne autoriaus ketinimus, nuotaiką ar auditorijos pažiūras. Vienas įrašas su savo medija yra vienas vienetas, komentaras – atskiras vienetas. Naratyvo priskyrimas, autoriaus vardas, sekėjai ir sąveikų kiekis kategorijos nenulemia. Išplėstiniai naratyvai, kai bus pateikti, gali būti perduodami tik kaip papildomas kontekstas, o ne kaip patvirtinti faktai.
+
+`thermometer_policy.py` laiko vienoje vietoje taisyklių versiją ir pagrindo kodus. Neutralus turinys apima kasdienius įrašus, klausimus ir taikią kritiką. Stabilizuojančiai krypčiai būtinas S1–S4 mechanizmas, destabilizuojančiai – D1–D4. D1 klaidingumo teiginys šiame bandyme automatiškai netvirtinamas, nes nėra nepriklausomo faktų tikrinimo. Citata ar paneigimas nėra autoriaus palaikymas.
+
+Galutinės kategorijos turi tik `classified` rezultatai. `waiting_data`, `needs_review` ir `error` neturi kategorijos. Seno taisyklių formato rezultatai į naujus termometro procentus neįtraukiami. Procentų vardiklis – tik klasifikuoti vienetai; aprėptis rodoma atskirai. Kai klasifikuotų vienetų nėra, procentai nežinomi. Maža imtis ir maža aprėptis žymimos sąsajoje.
+
+AI jungtis vis dar yra **tik tekstinis, rankiniu būdu paleidžiamas bandymas**. Ji neanalizuoja prisegtų paveikslėlių, garso ar vaizdo, automatiškai nerengia OCR, transkripcijų ar faktų patikros. Neperskaityta susijusi medija siunčiama į `waiting_data`. Automatinio tikslaus pakartotinio bandymo, žmogaus peržiūros darbo eigos ir sužymėtos kokybės imties kol kas nėra. Tikrų pratybų tikslumo ir v1.0 ribų patvirtinti negalima. Joks automatinis API kvietimas ar DB migracija šiomis taisyklėmis nepridėta.

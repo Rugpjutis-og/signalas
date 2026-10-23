@@ -128,6 +128,8 @@ def main():
         packet = json.loads((ROOT / "var/diaspora-latest.json").read_text(encoding="utf-8"))
         context = json.loads(args.context.read_text(encoding="utf-8")) if args.context else None
         from live_data import fingerprint
+        import narrative_registry
+        from thermometer_policy import VERSION as thermometer_version
         target = ROOT / "var/openai-analysis-pilot.json"
         previous = json.loads(target.read_text(encoding="utf-8")) if target.exists() else []
         by_key = {(r["source"], r["id"]): r for r in packet["records"]}
@@ -137,7 +139,9 @@ def main():
                    and r.get("content_fingerprint") == fingerprint(by_key[(r["source_reference"]["source"], r["source_reference"]["id"])])]
         errors = []
         for unit in packet["records"][:args.limit]:
-            if any(r["source_reference"]["source"] == unit["source"] and r["source_reference"]["id"] == unit["id"] for r in results):
+            if any(r["source_reference"]["source"] == unit["source"] and r["source_reference"]["id"] == unit["id"]
+                   and r.get("registry_version") == narrative_registry.load()["version"]
+                   and r.get("thermometer_rules_version") == thermometer_version for r in results):
                 continue
             try:
                 result = analyze(unit, context)

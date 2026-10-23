@@ -71,10 +71,10 @@ def public_content(post):
             **source_reference(post)}
 
 
-def scoped_posts(records, start, end, exercise_id):
+def scoped_posts(records, start, end, exercise_id, kinds=('post', 'reshare')):
     unique = {}
     for post in records:
-        if post.get('exercise_id') != exercise_id or post.get('kind') not in ('post', 'reshare'):
+        if post.get('exercise_id') != exercise_id or post.get('kind') not in kinds:
             continue
         if not isinstance(post.get('id'), str) or not post['id'] or not isinstance(post.get('source'), str) or not post['source']:
             raise ValueError('Trūksta patikimo šaltinio turinio ID arba šaltinio')
@@ -95,6 +95,7 @@ def author_ranking(posts, snapshots=None):
 
 def report(records, snapshots, *, exercise_id, start, end, mode):
     selected = scoped_posts(records, start, end, exercise_id)
+    comments = scoped_posts(records, start, end, exercise_id, kinds=('comment',))
     categories = []
     for key, label in CATEGORIES:
         known = []
@@ -111,6 +112,8 @@ def report(records, snapshots, *, exercise_id, start, end, mode):
                            'status': 'partial' if missing and known else 'missing_data' if missing else 'ok' if known else 'empty'})
     return {'mode': mode, 'exercise_id': exercise_id, 'start': start.isoformat(), 'end': end.isoformat(),
             'counter_scope': 'lifetime_for_posts_published_in_period',
+            'totals': {'posts': len(selected), 'comments': len(comments),
+                       'basis': 'collected_records_by_own_publication_date', 'posts_include_reshares': True},
             'categories': categories, 'authors': author_ranking(selected, snapshots)}
 
 
@@ -119,7 +122,13 @@ def demo_report(period=7):
         raise ValueError('Laikotarpis turi būti 10, 7, 3 arba 1 diena')
     data = json.loads((ROOT / 'data/platform-demo.json').read_text(encoding='utf-8'))
     end = timestamp(data['end'])
-    result = report(data['posts'], data['membership_snapshots'], exercise_id=data['exercise_id'],
+    # Demo comments exist as individually dated interaction events in the fixture.
+    # Project those records, never infer period counts from lifetime counters.
+    comments = [{'id': a['id'], 'source': p['source'], 'exercise_id': p['exercise_id'],
+                 'kind': 'comment', 'published_at': a['published_at']}
+                for p in data['posts'] for a in p.get('interactions', [])
+                if a.get('kind') == 'comment' and a.get('id') and a.get('published_at')]
+    result = report(data['posts'] + comments, data['membership_snapshots'], exercise_id=data['exercise_id'],
                     start=end - timedelta(days=period), end=end, mode='demo')
     return dict(result, period=period)
 

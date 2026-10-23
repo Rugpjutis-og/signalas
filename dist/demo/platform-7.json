@@ -4,6 +4,12 @@
   "start": "2026-10-13T00:00:00+03:00",
   "end": "2026-10-20T00:00:00+03:00",
   "counter_scope": "lifetime_for_posts_published_in_period",
+  "totals": {
+    "posts": 18,
+    "comments": 95,
+    "basis": "collected_records_by_own_publication_date",
+    "posts_include_reshares": true
+  },
   "categories": [
     {
       "id": "comments",

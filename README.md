@@ -4,9 +4,9 @@
 
 Pagrindinė aplikacija: https://signalas-ecru.vercel.app/. Python API (`api/index.py`, `cloud_api.py`) veikia Vercel; visi nuolatiniai įrašai, komentarai, medijos metaduomenys, pratybų kontekstas, datos, analizės rezultatai ir surinkimo būsena saugomi Neon Postgres. Naršyklėje nenaudojamas localStorage ar IndexedDB; prisijungimui naudojamas tik Secure / HttpOnly / SameSite sesijos slapukas.
 
-„Atnaujinti duomenis“ surenka visą autorizuotai paskyrai matomą srautą ir jos profilį, ne visą Diasporos serverį. Pasikartojantys paspaudimai neleidžia paleisti lygiagrečių rinkimų (duomenų bazės lease). Rinkimas vykdomas tik rankiniu būdu; ankstesnė vietinė kasvalandinė automatika sustabdyta. Filtrų ir būsenos periodinės užklausos tik skaito duomenų bazę, nieko nerenka iš Diasporos ir nepaleidžia AI.
+„Atnaujinti duomenis“ surenka visą autorizuotai paskyrai matomą srautą ir jos profilį, ne visą Diasporos serverį. Pasikartojantys paspaudimai neleidžia paleisti lygiagrečių rinkimų (duomenų bazės lease). Rinkimas vykdomas tik rankiniu būdu; ankstesnė vietinė kasvalandinė automatika sustabdyta. Filtrų ir stebėjimo būsenos užklausos tik skaito duomenų bazę. Po sėkmingo rankinio surinkimo automatiškai sudaroma analizės eilė; ją tęsia autentifikuota aplikacija.
 
-Vercel **Production** paslaptys: `DATABASE_URL` (valdo Neon integracija), `SIGNALAS_ACCESS_PASSWORD` (bent 16 ženklų, atskiras aplikacijos prieigos slaptažodis), `DIASPORA_BASE_URL`, `DIASPORA_USERNAME`, `DIASPORA_PASSWORD`. Nieko nevadinkite NEXT_PUBLIC_ ar VITE_. Kiekvienas API turinio ir medijos skaitymas tikrina prisijungimą; keičiantiems veiksmams papildomai reikia tos pačios kilmės ir CSRF. Be prieigos slaptažodžio API užsidaro, o demonstraciniai duomenys neįjungiami automatiškai.
+Vercel **Production** paslaptys: `OPENAI_API_KEY`, `OPENAI_MODEL` (nenustačius naudojamas `openai_analysis.DEFAULT_ANALYSIS_MODEL`), `DATABASE_URL` (valdo Neon integracija), `SIGNALAS_ACCESS_PASSWORD` (bent 16 ženklų, atskiras aplikacijos prieigos slaptažodis), `DIASPORA_BASE_URL`, `DIASPORA_USERNAME`, `DIASPORA_PASSWORD`. Nieko nevadinkite NEXT_PUBLIC_ ar VITE_. Kiekvienas API turinio ir medijos skaitymas tikrina prisijungimą; keičiantiems veiksmams papildomai reikia tos pačios kilmės ir CSRF. Be prieigos slaptažodžio API užsidaro, o demonstraciniai duomenys neįjungiami automatiškai.
 
 Duomenų bazėje `signalas_fetches` saugo surinkimų kopijas, `signalas_content` – naujausius turinio vienetus, `signalas_state` – kontekstą, datas ir analizės/būsenos duomenis; `signalas_jobs` valdo rinkimo blokavimą. Kontekstas išsaugomas vieną kartą, ir lygiagretūs bandymai jo neperrašo. Originalūs medijos adresai saugomi kaip metaduomenys; prieigos reikalaujančios nuotraukos perduodamos tik prisijungus, jų failai diske nekaupiami.
 
@@ -15,6 +15,20 @@ Vercel funkcijos trukmė – iki 300 s. Viršijus šią vykdymo ribą ankstesnė
 ## Autorių reitingas
 
 80 balų už skirtingus autorinius įrašus, 15 už kitų paskyrų komentarus ir 5 už persidalijimus. Kiekviena dalis normalizuojama pagal didžiausią tinkamų autorių kiekį pasirinktame laikotarpyje; reikia bent trijų skirtingų autorinių įrašų. Organizacinės paskyros atmetamos pagal patvirtintus metaduomenis arba išplėstus pavadinimo požymius (žiniasklaida, verslai, institucijos, politinės, ne pelno, bendruomeninės ir kitos įstaigos). Tai euristika, ne tapatybės patvirtinimas. Vien vietovardis nėra organizacijos įrodymas. Formulė ir apribojimai aprašyti `docs/METRICS.md`. Duomenų bazės schema nekeičiama.
+
+## Standartizuotas naratyvų registras (vietiniai pakeitimai, 2026-10-23)
+
+Įtrauktas naudotojo Excel registras: 35 tipai, 15 nekintamų temų, priskyrimo / atmetimo kriterijai ir formuluočių atitikmenys. Live žemėlapis rodo patvirtintus tipus, jų pratybų atmainas ir atskiras įrašų / komentarų pozicijas; kandidatai rodomi atskirai, tik pasiekę bandomuosius sklaidos slenksčius. Senieji `N-…` ID automatiškai neperrašomi. Bendri kiekiai yra unikalių šaltinio vienetų aibė; nežinomos pozicijos iš procentų vardiklio išimtos.
+
+[Vertinimo sutartis, kandidatų ribos, administratoriaus sprendimai ir testai](docs/NARRATIVE_REGISTRY.md). Sprendimų saugojimas paruoštas esamai Neon bazei; šios užduoties metu produkciniai duomenys nekeisti, AI užklausos nevykdytos. Automatinė teksto analizė po surinkimo prijungta, kaip aprašyta žemiau. Medijos supratimas dar neprijungtas.
+
+## Analizė po duomenų surinkimo
+
+Paspaudus „Atnaujinti duomenis“, sėkmingai surinkti įrašai ir komentarai išsaugomi Neon, o naujas arba pasikeitęs turinys patenka į teksto analizės eilę. Viena užklausa vertina vieną turinio vienetą ir iškart išsaugo naratyvų bei termometro rezultatą. Bendro kiekio limito nėra. Galiojantys rezultatai pakartotinai neskaičiuojami; pakeitus tekstą / diskusijos kontekstą, pratybas, taisykles, registrą arba modelį reikia naujo vertinimo. Pirmas surinkimas po šio atnaujinimo gali pervertinti ankstesnį rinkinį ir naudoti API kreditus.
+
+Eilę tęsia atidaryta, prisijungusi aplikacija. Ją uždarius, naujos užduotys nebepaleidžiamos; grįžus nebaigta eilė tęsiama iš Neon. Tai nėra nepriklausomas nuolat veikiantis worker. Datos keitimas nieko nerenka ir nepradeda naujos eilės. Pasibaigus kreditams, nutrūkus ryšiui ar negavus tinkamo rezultato, eilė sustoja, lemputė tampa oranžinė. Ištaisius priežastį, mygtukas „Atnaujinti duomenis“ leidžia bandyti iš naujo. Neužbaigtos HTTP užklausos rezultatas gali būti nežinomas: pakartojimas po proceso nutrūkimo gali turėti papildomą API kainą; sėkmingai Neon įrašyti vertinimai nekartojami.
+
+Naudojamas esamas Responses API su `store:false`, tik tekstas. Nuotraukos, garsas ir vaizdo įrašai automatiškai neinterpretuojami; toks termometro turinys lieka peržiūrai. Visos eilės, vertinimų ir paslaugų būsenos laikomos esamoje Neon `signalas_state` lentelėje, schema nekeičiama. API tęsimui reikia prisijungimo, leistinos kilmės ir CSRF.
 
 ## Ankstesnės vietinės versijos dokumentacija
 
@@ -76,7 +90,7 @@ python3 integrations.py analyze --limit 1 --context var/exercise-context.json
 
 Rezultatai laikomi privačiame `var/diaspora-latest.json`, importuojami į esamą SQLite ir tampa prieinami per `/api/posts`. Pakartotinis importas ankstesnių įrašų neperrašo. JSON momentinė kopija turi naujausius gautus skaitiklius; ji nėra pilna istorija. Esamas importuoto turinio indikatorius atsinaujina perkrovus puslapį. Be patvirtinto pratybų susiejimo `exercise_id` ir auditorija lieka nežinomi. Vien paskyrai matomų įrašų negalima pateikti kaip visos platformos turinio.
 
-`ai-test` per OpenAI Responses API pateikia tik sintetinį sakinį ir tikrina struktūruotą atsakymą. `OPENAI_MODEL` numatyta `gpt-5-mini`; tai ryšio bandymo pasirinkimas, ne patvirtintas geriausias modelis. `analyze` aiškiai paleidžiamas ir apsiriboja 1–5 gautais turinio vienetais. API užklausos mokamos pagal paskyros sąlygas, AI analizė automatiškai nevykdoma.
+`ai-test` per OpenAI Responses API pateikia tik sintetinį sakinį ir tikrina struktūruotą atsakymą. `OPENAI_MODEL` numatyta `gpt-6.1-sol` su vidutiniu mąstymo lygiu: tai kokybės ir kainos santykio pradinis pasirinkimas bendrai tekstinei naratyvų ir termometro analizei, ne empiriškai patvirtintas geriausias modelis. Dabartinis vienas AI kvietimas vertina abi sritis, todėl modelio nustatymas joms bendras. `analyze` aiškiai paleidžiamas ir apsiriboja 1–5 gautais turinio vienetais. API užklausos mokamos pagal paskyros sąlygas, AI analizė automatiškai nevykdoma.
 
 Pradinio konteksto failo formatas sutampa su naršyklėje išsaugotu objektu: `initialSituation`, `confirmedFacts`, neprivalomas `nameMappings`. CLI pats naršyklės localStorage neskaito ir jo neperrašo. Nepateikus konteksto arba esant neperžiūrėtai medijai, termometro kategorija lieka `needs_review`. Bandymas analizuoja tik tekstą ir ankstesnę diskusiją; paveikslėlių URL nėra paveikslėlių analizė, o vaizdo ir garso atpažinimas šiame etape neprijungti.
 

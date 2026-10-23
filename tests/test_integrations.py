@@ -147,6 +147,9 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual([x["id"] for x in prepared["content"]["conversation_context"]], ["past"])
         self.assertEqual(prepared["exercise_context"]["nameMappings"], [])
         self.assertFalse(prepared["coverage"]["images"])
+        auxiliary = openai_analysis.prepare_input(unit, context, [{"title": "Papildomas pasakojimas"}])
+        self.assertEqual(auxiliary["auxiliary_narratives"], [{"title": "Papildomas pasakojimas"}])
+        self.assertEqual(auxiliary["content"]["conversation_context"][0]["id"], "past")
         with self.assertRaises(ValueError):
             openai_analysis.context_data({**context, "nameMappings": [
                 {"id": "a", "realName": "same", "exerciseName": "a"},
@@ -154,8 +157,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_model_result_validation_and_review_for_unread_media(self):
         catalog = app.catalog()
-        valid = {"theme_id": None, "narrative_id": None, "candidate_title": None, "stance": "unknown",
-                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": '"text"'}
+        valid = {"narrative_analysis": {"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},
+                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": '"text"', "reason_codes": ["N0"], "verified_claim_source": None}
         unit = {"id": "test", "source": "test", "kind": "post", "text": "text",
                 "published_at": "2026-10-21T10:00:00Z", "media": [{"kind": "image"}]}
         response = {"status": "completed", "model": "test", "output": [{"type": "message", "content": [
@@ -175,8 +178,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_multilingual_analysis_preserves_original_evidence_and_names(self):
         text = 'Nie panikujcie. Не паникуйте. Stay calm. Šilo miestas.'
-        valid = {"theme_id": None, "narrative_id": None, "candidate_title": None, "stance": "unknown",
-                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": text}
+        valid = {"narrative_analysis": {"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},
+                 "direction": "neutral", "reason": "Kasdienis turinys.", "missing_context": "", "evidence": text, "reason_codes": ["N0"], "verified_claim_source": None}
         unit = {"id":"language-test", "source":"test", "kind":"comment", "text":text,
                 "published_at":"2026-10-21T10:00:00Z", "media":[]}
         response={"status":"completed","output":[{"type":"message","content":[
@@ -188,6 +191,8 @@ class IntegrationTests(unittest.TestCase):
                 opener.return_value.open.return_value.__enter__.return_value=io.BytesIO(json.dumps(response).encode())
                 result=openai_analysis.analyze(unit,{"initialSituation":"Šilo miestas","confirmedFacts":"Faktai"},root=root)
                 sent=json.loads(opener.return_value.open.call_args.args[0].data)
+                self.assertEqual(sent['model'], 'gpt-6.1-sol')
+                self.assertEqual(sent['reasoning']['effort'], 'medium')
                 self.assertEqual(json.loads(sent['input'])['analysis_input']['content']['text'],text)
                 self.assertEqual(result['original_text'],text)
                 self.assertEqual(result['result']['evidence'],text)

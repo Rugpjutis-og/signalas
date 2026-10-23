@@ -157,3 +157,20 @@ In Naratyvų žemėlapis, omit the Visos temos aggregate option/view and the una
 ## Timeline without the selected-narrative panel
 
 Raida laike no longer appends the selected narrative detail sidebar in demo or live mode. Keep Naratyvo dinamika and Pakeisti tiriamą naratyvą, chart interactions, filters and sorting. Use the available width without an empty sidebar column. Map narrative expansion and detail rendering remain unchanged.
+
+
+## Platform period totals
+
+Show exactly two top cards: Iš viso įrašų and Iš viso komentarų. Count distinct collected source records by their own publication timestamps in the selected half-open interval. Posts include reshares; comments include replies even on older parent posts. Do not sum lifetime comment counters. Preserve collection coverage: account samples are not platform-wide totals; only complete administrator exports covering the interval may claim that. Missing totals are unavailable, never fabricated zero. Filter existing Neon-backed records; no collection or database migration is needed.
+
+
+## Standardized narrative registry (2026-10-23)
+
+Read docs/NARRATIVE_REGISTRY.md. data/narrative-registry.json is the user-supplied 35-type registry with exact inclusion/exclusion criteria, 15 immutable topics, source formulations and explicit historical crosswalk. Do not rename legacy N-001 into N001: definitions differ. Live projections accept current-version assessments only. Narrative matching is multi-claim, each with its own exact original-language evidence and stance; do not derive thermometer direction from type or stance. Specific beats broad for the same claim, and rollups/global counts deduplicate source+id. Unknown stance is excluded from percentages and coverage remains visible.
+
+Candidate thresholds in narrative_registry.CANDIDATE_POLICY are trial product settings: last24h, >=3 independent units, >=2 threads, >=max(2,ceil(.01*N)) authors or 3 when complete historical exercise membership is missing. Copies/reshare-only activity cannot qualify. Preserve the distinction between semantic novelty (model/manual judgment) and exact normalized template grouping plus near-copy heuristics. Candidates remain separate from confirmed types until an explicit administrator decision. No public viewer approval route: narrative_admin.py requires server Neon credentials and records definitions, aliases, decisions and history in existing signalas_state, with optimistic concurrency. Do not run it or paid reanalysis merely to test code. New registry versions require explicit reassessment; no silent historical migration. No deployment without new user approval. Tests use synthetic memory fixtures; browser QA may be blocked by host sandbox and must not be falsely claimed.
+
+
+## Authorized analysis after collection (2026-10-23)
+
+The user explicitly authorized publishing all prepared changes and running AI on collection. This supersedes earlier no-automatic-AI restrictions for this flow only. Vercel collection enqueues all current missing/stale text assessments in Neon. Authenticated CSRF-protected analysis/continue executes one unit under the same database lease as collection; successful results persist immediately. No filesystem/browser application persistence. Fingerprint, context, exercise, registry/rules version and configured model guard reuse. Failures stop paid calls until an explicit fresh collection; no automatic retry loop after quota/validation errors. The authenticated browser drains/resumes pending work; closing it pauses continuation, not a claimed always-on worker. Collection remains manual; never restart the old hourly collector. Media understanding remains unconnected. Preserve original texts and review statuses. Deployment is authorized for these changes; do not expose secrets or private data in Git.

@@ -30,7 +30,7 @@ class CloudApiTests(unittest.TestCase):
                 thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
                 base='http://127.0.0.1:'+str(server.server_port)
                 try:
-                    for path in ['/api/dashboard/bootstrap','/api/media/image','/api/auth/login']:
+                    for path in ['/api/dashboard/bootstrap','/api/media/image','/api/auth/login','/api/analysis/status','/api/analysis/continue']:
                         with self.assertRaises(HTTPError) as error:urlopen(base+path)
                         self.assertEqual(error.exception.code,401)
                     repository.initialize.assert_not_called()
@@ -49,6 +49,13 @@ class CloudApiTests(unittest.TestCase):
                     with urlopen(Request(base+'/api/collection/refresh',data=b'',headers=headers)) as response:
                         self.assertEqual(json.load(response)['posts'],15)
                     repository.collect.assert_called_once()
+                    with patch('cloud_analysis.step', return_value={'status':'complete','remaining':0}) as step:
+                        with self.assertRaises(HTTPError) as denied:
+                            urlopen(Request(base+'/api/analysis/continue',data=b'',headers={'Origin':'https://signalas-ecru.vercel.app','Cookie':cookie.split(';')[0]}))
+                        self.assertEqual(denied.exception.code,403);step.assert_not_called()
+                        with urlopen(Request(base+'/api/analysis/continue',data=b'',headers=headers)) as response:
+                            self.assertEqual(json.load(response)['status'],'complete')
+                        step.assert_called_once()
                 finally:server.shutdown();thread.join()
 
     def test_configuration_fails_closed(self):

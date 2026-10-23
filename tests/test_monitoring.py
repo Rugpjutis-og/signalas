@@ -93,8 +93,9 @@ class MonitoringTests(unittest.TestCase):
             opener.return_value.open.side_effect=None
             opener.return_value.open.return_value.__enter__.return_value=io.BytesIO(json.dumps({
                 "status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":json.dumps({
-                    "theme_id":None,"narrative_id":None,"candidate_title":None,"stance":"unknown","direction":"neutral",
-                    "reason":"Kasdienis turinys","missing_context":"","evidence":"text"})}]}]}).encode())
+                    "narrative_analysis":{"match_status":"no_narrative","matches":[],"proposals":[],"uncertainty_reason":""},"direction":"neutral",
+                    "reason":"Kasdienis turinys","missing_context":"","evidence":"text",
+                    "reason_codes":["N0"],"verified_claim_source":None})}]}]}).encode())
             openai_analysis.analyze(unit,root=self.root)
             self.assertEqual(self.status()["state"],"watching")
         monitoring.record("openai","api_connection",self.root)

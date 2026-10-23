@@ -19,6 +19,7 @@
       else{
         message.textContent=`Atnaujinta: ${result.posts} įrašų, ${result.comments} komentarų.${result.cloud_storage?.status==='error'?' Debesijos kopijos išsaugoti nepavyko; vietinė kopija išsaugota.':''}`;
         await window.SignalLiveData?.refresh();
+        if(result.analysis)await window.SignalAnalysis?.run(result.analysis);
 
       }
     }catch(error){message.textContent=error.message||'Ryšys nutrūko. Paskutinė sėkminga kopija išsaugota.';}

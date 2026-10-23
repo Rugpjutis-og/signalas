@@ -10,6 +10,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import narrative_registry
 import live_data
 import app
 
@@ -45,8 +46,10 @@ class LiveDataTests(unittest.TestCase):
         unit = unit or self.records[0]
         return {"analysis_executed": True, "source_reference": {"source": unit["source"], "id": unit["id"]},
                 "exercise_context": context, "content_fingerprint": live_data.fingerprint(unit),
-                "result": {"theme_id": "security", "narrative_id": "N-001", "candidate_title": None,
-                           "stance": "support", "direction": "needs_review", "reason": "Teksto siūlymas",
+                "registry_version": narrative_registry.load()["version"],
+                "result": {"narrative_analysis": {"match_status":"matched","proposals":[],"uncertainty_reason":"",
+                    "matches":[{"type_id":"N001","stance":"support","evidence":unit["text"],
+                                "instance_entities":{k:"" for k in narrative_registry.ENTITY_KEYS}}]}, "direction": "needs_review", "reason": "Teksto siūlymas",
                            "missing_context": "Trūksta pradinio konteksto.", "evidence": "Tekstas"}}
 
     def test_real_dates_all_content_review_and_no_demo(self):
@@ -84,9 +87,21 @@ class LiveDataTests(unittest.TestCase):
                    "coverage": "account_visible_stream_first_page", "records": self.records})
         self.assertEqual(live_data.bootstrap(self.root)["analysis_count"], 0)
 
+    def test_first_observed_date_does_not_reset_with_period(self):
+        old = {**self.records[0], "id":"earlier", "published_at":"2026-10-01T10:00:00Z"}
+        self.write("diaspora-latest.json", {"source":"pod.test", "collected_at":"2026-10-21T10:00:00Z",
+                   "coverage":"account_visible_stream_first_page", "records":self.records+[old]})
+        self.write("openai-analysis-pilot.json", [self.analysis(),self.analysis(old)])
+        data=live_data.bootstrap(self.root)
+        self.assertEqual(data["narratives"][0]["firstSeenAt"], old["published_at"])
+        self.assertEqual(sum(data["narratives"][0]["days"]), 1)
+
     def test_platform_unknown_audience_not_derived_from_interactions(self):
         report = live_data.platform(7, self.root)
         self.assertEqual(report["categories"][0]["items"][0]["count"], 100)
+        self.assertEqual(report["totals"]["posts"], 1)
+        self.assertEqual(report["totals"]["comments"], 1)
+        self.assertEqual(live_data.platform(1, self.root)["totals"]["comments"], 0)
         self.assertEqual(report["authors"]["status"], "empty")
         self.assertEqual(report["authors"]["below_minimum_authors"], 1)
         self.assertEqual(report["authors"]["items"], [])

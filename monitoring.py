@@ -24,10 +24,13 @@ def record(service, reason=None, root=ROOT):
     """One record per service avoids collection/analysis overwriting each other."""
     if service not in ("collection", "openai") or reason is not None and reason not in REASONS:
         raise ValueError("Neatpažinta stebėjimo būsena")
-    from integrations import private_json
-    private_json(Path(root) / ("var/%s-status.json" % service), {
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-        "status": "error" if reason else "ok", "reason": reason})
+    value = {"checked_at": datetime.now(timezone.utc).isoformat(),
+             "status": "error" if reason else "ok", "reason": reason}
+    if hasattr(root, 'write'):
+        root.write(service + '-status.json', value)
+    else:
+        from integrations import private_json
+        private_json(Path(root) / ("var/%s-status.json" % service), value)
 
 
 def http_failure(error, root=ROOT):

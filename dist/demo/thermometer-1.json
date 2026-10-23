@@ -78,6 +78,13 @@
   "total": 6,
   "assessed": 6,
   "unassessed": 0,
+  "pending": {
+    "waiting_data": 0,
+    "needs_review": 0,
+    "error": 0,
+    "not_analyzed": 0
+  },
+  "coverage_percent": 100.0,
   "categories": [
     {
       "id": "stabilizing",
@@ -104,6 +111,13 @@
       "total": 6,
       "assessed": 6,
       "unassessed": 0,
+      "pending": {
+        "waiting_data": 0,
+        "needs_review": 0,
+        "error": 0,
+        "not_analyzed": 0
+      },
+      "coverage_percent": 100.0,
       "categories": [
         {
           "id": "stabilizing",

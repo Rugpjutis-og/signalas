@@ -20,6 +20,21 @@ class PlatformOverviewTests(unittest.TestCase):
     def active_posts(self, number=3, actors=10, **changes):
         return [self.make_post(str(i), actors=['member-%s' % k for k in range(1, actors+1)], **changes) for i in range(number)]
 
+    def test_period_totals_count_unique_content_by_own_date(self):
+        old=self.make_post('old',published_at='2026-10-12T23:59:59Z')
+        current=self.make_post('current',published_at='2026-10-13T00:00:00Z')
+        current['counters']['comments']=999
+        comment=self.make_post('reply',kind='comment',published_at='2026-10-19T23:59:59Z')
+        comment['parent_id']='old'
+        share=self.make_post('share',kind='reshare')
+        after=self.make_post('after',kind='comment',published_at='2026-10-20T00:00:00Z')
+        foreign=self.make_post('foreign',exercise_id='B')
+        result=self.report([old,current,current,comment,comment,share,after,foreign])
+        self.assertEqual(result['totals']['posts'],2)
+        self.assertEqual(result['totals']['comments'],1)
+        self.assertEqual(self.report([])['totals']['posts'],0)
+        self.assertEqual(self.report([])['totals']['comments'],0)
+
     def test_one_viral_post_is_not_enough(self):
         self.assertEqual(self.report(self.active_posts(1, 100))['authors']['items'], [])
         self.assertEqual(self.report(self.active_posts(2, 100))['authors']['items'], [])

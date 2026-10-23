@@ -31,6 +31,11 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  for(const label of ['80 %','15 %','5 %','/ 100 balų','Originalūs įrašai','Kaip skaičiuojama?'])assert(platform.innerHTML.includes(label));
  assert(!platform.innerHTML.includes('Tipinis vieno įrašo įsitraukimas'));
  assert(!platform.innerHTML.includes('undefined'));
+ assert(platform.innerHTML.indexOf('platform-totals')<platform.innerHTML.indexOf('platform-categories'));
+ assert(platform.innerHTML.includes('Iš viso įrašų'));assert(platform.innerHTML.includes('Iš viso komentarų'));
+ const noTotals=structuredClone(report);delete noTotals.totals;w.SignalPlatformOverview.paint(platform,noTotals);
+ assert(platform.innerHTML.includes('Duomenų nėra'));
+ w.SignalPlatformOverview.paint(platform,report);
  assert(!platform.innerHTML.includes('href="https://diaspora.sauliai.lt/'));
  const missing=structuredClone(report);
  missing.categories.forEach(c=>{c.items=[];c.status='missing_data';c.missing_posts=1});
