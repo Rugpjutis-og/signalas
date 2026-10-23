@@ -9,6 +9,7 @@ COLLECTION_INTERVAL = timedelta(hours=1)
 MAX_ANALYSIS_SECONDS = 235  # Room inside the Vercel 300 s invocation limit.
 RETRYABLE_ANALYSIS_REASONS = frozenset({'api_access', 'api_quota', 'api_connection'})
 TRANSIENT_API_RETRY_INTERVAL = timedelta(minutes=15)
+RATE_LIMIT_RETRY_INTERVAL = timedelta(hours=1)
 
 
 def tick(repo, *, clock=None, monotonic=None):
@@ -49,7 +50,8 @@ def tick(repo, *, clock=None, monotonic=None):
         state = recover_validation_failure(repo)
     if state.get('status') == 'error' and state.get('reason') in ('api_capacity', 'api_rate_limit'):
         last_attempt = state.get('updated_at')
-        if not last_attempt or instant(last_attempt) + TRANSIENT_API_RETRY_INTERVAL <= current:
+        interval = RATE_LIMIT_RETRY_INTERVAL if state['reason'] == 'api_rate_limit' else TRANSIENT_API_RETRY_INTERVAL
+        if not last_attempt or instant(last_attempt) + interval <= current:
             # Back off transient capacity and request-rate failures before retrying.
             # Keep Flex; never silently switch to more expensive Standard processing.
             state = enqueue(repo)
@@ -67,7 +69,9 @@ def tick(repo, *, clock=None, monotonic=None):
             if state.get('status') == 'already_running' or state.get('remaining') == before:
                 break
             progressed += 1
-    fresh_failure = state.get('status') == 'error' and (previous_analysis.get('status') != 'error' or retried)
+    fresh_failure = state.get('status') == 'error' and (
+        previous_analysis.get('status') != 'error' or
+        (retried and previous_analysis.get('reason') != state.get('reason')))
     status = 'error' if collection == 'error' or fresh_failure else 'paused' if state.get('status') == 'error' else 'ok'
     return {'status': status, 'collection': collection,
             'analysis': state.get('status', 'idle'), 'processed': progressed,
