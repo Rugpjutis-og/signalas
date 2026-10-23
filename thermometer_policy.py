@@ -14,8 +14,28 @@ REASONS = {
     "D1": "Patvirtintai klaidingas ar iškreiptas žalingas teiginys",
     "D2": "Smurto, diskriminacijos ir neapykantos kurstymas",
     "D3": "Kolektyvinis kaltinimas ar grupės pavertimas priešu",
-    "D4": "Aiškus demokratinio dalyvavimo ar saugumo griovimas",
+    "D4": "Demokratinio dalyvavimo ar saugumo griovimas, visuotinio apleistumo ar bejėgiškumo formavimas",
 }
+
+# Prompt guidance revision is recorded without invalidating saved human decisions
+# or silently creating a paid full-dataset reanalysis.
+GUIDANCE_REVISION = "2026-10-24.1"
+COMMUNICATION_GUIDANCE = (
+    "Viešai veikiančių institucijų, valdžios, savivaldybės, kariuomenės, žiniasklaidos, žurnalistų ir kitų organizacijų komunikaciją vertink gyventojų saugumo, informavimo, paaiškinimų bei tiesos lūkesčio kontekste. Sąrašas nėra baigtinis.",
+    "Destabilizuojančiai krypčiai nebūtinas raginimas agresyviai veikti: D3 gali pagrįsti apibendrinantis kolektyvinės kaltės ar bendros piktybiškos veiklos primetimas; D4 gali pagrįsti visuotinio apleistumo, bejėgiškumo ar saugios išeities nebuvimo formavimas, kai tai aiškiai parodo turinys ir kontekstas.",
+    "Atskirk konkretaus neveikimo, tylos ar neinformavimo kritiką bei reikalavimą atsiskaityti nuo visuotinio kaltinimo, kad visos institucijos sąmoningai paliko gyventojus be saugumo, pagalbos ir patikimos informacijos, o jokie paaiškinimai ar veiksmai nebeturi prasmės. Antrajam mechanizmui vertinti neapsiribok vien smurto, neapykantos ar susidorojimo požymiais.",
+    "Kritikos aštrumas, emocingumas ar didelis nepasitikėjimas savaime nėra D3 ar D4. N1 nereikalauja pasitikėjimo valdžia: konkreti taiki kritika, informacijos ar atsakomybės reikalavimas gali likti N1 ir be institucijų palaikymo. Neigiama nuomonė apie Lietuvą, valdžią ar kariuomenę savaime nenulemia krypties.",
+    "Institucijų palaikymas ar pasitikėjimas savaime nėra stabilizuojantis: suprantamas sprendimas ar taiki palaikymo nuomonė gali būti N1. S kategorijai būtinas konkretus S1–S4 mechanizmas.",
+    "Vertink visą pasakymą: klausimas, citata, ironija, pasipiktinimas ar pateiktu kontekstu pagrįstas perspėjimas nėra automatiškai kolektyvinis kaltinimas. Nenaudok vien raktažodžių ar teigiamo / neigiamo tono. Nepriskirk autoriaus ketinimų ir neteigk, kad realus poveikis gyventojams buvo išmatuotas.",
+    "D3 ar D4 paaiškinime įvardyk konkretų kolektyvinės kaltės, apleistumo ar bejėgiškumo mechanizmą ir pateik jo ištrauką. Nežinomų faktų nepaversk įrodyta melagyste; trūkstant būtino konteksto palik needs_review.",
+)
+COMMUNICATION_EXAMPLES = (
+    {"text": "Kariuomenė nepaaiškino ribojimų, reikia informacijos.", "direction": "neutral", "reason_code": "N1", "basis": "Konkreti taiki kritika ir paaiškinimo reikalavimas; vien nepasitikėjimo nepakanka destabilizuojančiai krypčiai."},
+    {"text": "Visos institucijos mus paliko, niekam mūsų saugumas nerūpi, jokiais paaiškinimais negalima tikėti.", "direction": "destabilizing", "reason_code": "D4", "basis": "Jei kontekstas patvirtina tokį komunikacinį mechanizmą, visuotinio apleistumo ir patikimos išeities nebuvimo formavimas galimas ir be raginimo agresyviai veikti; tai nėra automatinė raktažodžių taisyklė."},
+    {"text": "Visi žurnalistai yra mūsų priešai ir sąmoningai kenkia gyventojams.", "direction": "destabilizing", "reason_code": "D3", "basis": "Visai grupei primetama kolektyvinė piktybiška veikla ir kuriamas priešo įvaizdis."},
+    {"text": "Pasitikiu institucijomis, suprantu jų sprendimą.", "direction": "neutral", "reason_code": "N1", "basis": "Taiki nuomonė; vien palaikymo nepakanka S mechanizmui."},
+)
+
 BY_CATEGORY = {
     "neutral": frozenset(("N0", "N1", "N2")),
     "stabilizing": frozenset(("S1", "S2", "S3", "S4")),

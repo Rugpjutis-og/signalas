@@ -255,6 +255,13 @@ class IntegrationTests(unittest.TestCase):
             self.assertNotIn("pending_claims", json.loads(sent["input"][1]["content"][0]["text"]))
             self.assertEqual(result["result"]["thermometer_category"], "neutral")
             self.assertEqual(result["model"], "gpt-6.1-sol")
+            reference = json.loads(sent['input'][0]['content'][0]['text'])
+            self.assertEqual(reference['guidance_revision'], '2026-10-24.1')
+            self.assertEqual(len(reference['communication_examples']), 4)
+            self.assertIn('agresyviai veikti', sent['instructions'])
+            self.assertIn('N1 nereikalauja pasitikėjimo valdžia', sent['instructions'])
+            self.assertEqual(result['thermometer_guidance_revision'], reference['guidance_revision'])
+
 
     def test_context_supported_s1_and_d1_are_not_forced_to_review(self):
         unit = {"id": "context-test", "source": "test", "kind": "post", "text": "Pagalbos punktas uždarytas.",
@@ -309,6 +316,10 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(stable['prompt_cache_breakpoint'],{'mode':'explicit'})
                 self.assertEqual(sent['prompt_cache_options'],{'mode':'explicit','ttl':'30m'})
                 self.assertEqual(result['requested_service_tier'],'default')
+                self.assertIn('visuotinio apleistumo', sent['instructions'])
+                self.assertIn('Vien neigiama nuomonė', sent['instructions'])
+                self.assertIn('communication_examples', json.loads(stable['text']))
+
                 self.assertEqual(result['original_text'],text)
                 self.assertEqual(result['result']['evidence'],text)
                 self.assertIn('originalo kalba',sent['instructions'])

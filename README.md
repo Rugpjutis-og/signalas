@@ -372,3 +372,7 @@ Sol gauna tik termometro užduotį; esami naratyvų priskyrimai išsaugomi. Atsk
 ### Jau priskirtos krypties pakeitimas
 
 Tikro turinio sąraše prie kiekvieno įvertinto įrašo ar komentaro yra suskleistas „Keisti kryptį“ veiksmas. Jis pateikia esamą kryptį, pagrindo kodą ir paaiškinimą; galima keisti ir AI, ir ankstesnį rankinį sprendimą. Išsaugomas tas pats turinio / konteksto ribomis galiojantis Neon rankinis sprendimas. Vienetas perkeliamas iš senos į naują kategoriją, nepakeičiant bendro vienetų skaičiaus ar aprėpties. Filtras nesikeičia, todėl kitai kategorijai priskirtas vienetas pasišalina iš dabartinio kategorijos sąrašo. Atverta ar pildoma koregavimo forma neperpiešiama foninio atnaujinimo metu. „Laukiama duomenų“ ir „Dar neanalizuota“ formų negauna.
+
+### Kolektyvinis kaltinimas ir visuotinis apleistumas
+
+2026-10-24 gairėse tikslinama, kad D3 / D4 gali būti nustatomi ir be agresyvių veiksmų raginimo, kai turinys ir kontekstas rodo kolektyvinės piktybiškos veiklos primetimą, visuotinį apleistumą, bejėgiškumą ar patikimos išeities nebuvimą. Vien aštri kritika, nepasitikėjimas, neigiama nuomonė apie Lietuvą ar institucijas nėra automatinis D kriterijus; N1 nereikalauja institucijų palaikymo. Palaikymo taip pat nepakanka S kategorijai. Šios gairės taikomos visų originalo kalbų turiniui tiek Luna, tiek baigtinei Sol peržiūrai. Nauji rezultatai pažymimi `thermometer_guidance_revision`, o ankstesni rezultatai ir rankiniai sprendimai automatiškai neperrašomi.

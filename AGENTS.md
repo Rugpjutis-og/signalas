@@ -198,3 +198,7 @@ Assessment storage now inserts one idempotent analysis-result/<binding hash> row
 ## Manual correction of classified thermometer content (2026-10-24)
 
 The user authorized changing directions for already assessed posts/comments, including prior AI and manual decisions. Show a collapsed „Keisti kryptį“ form with the existing direction, reason code and explanation prefilled. Use the existing authenticated Neon review endpoint and manual-precedence policy; do not add records to coverage or double-count a corrected unit. Retain the chosen filter after saving. Waiting-data and not-yet-analyzed items still have no manual form. Preserve open/dirty correction forms during live refresh.
+
+## Institutional criticism guidance (2026-10-24)
+
+Use thermometer_policy.COMMUNICATION_GUIDANCE and COMMUNICATION_EXAMPLES for both normal and thermometer-only model requests. D3/D4 do not require incitement to aggressive action: collective attribution of malicious institutional conduct or pervasive abandonment/helplessness can qualify when grounded in content/context. Intensity, distrust, opposition or criticism of Lithuania/government/military alone must not decide direction. Specific peaceful criticism/accountability requests remain eligible for N1 irrespective of loyalty; support alone is also not S. Record GUIDANCE_REVISION on new AI results without invalidating saved human decisions or triggering a new paid full reanalysis.

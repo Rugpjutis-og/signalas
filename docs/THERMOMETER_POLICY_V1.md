@@ -7,3 +7,11 @@
 Galutinės kategorijos turi tik `classified` rezultatai. `waiting_data`, `needs_review` ir `error` neturi kategorijos. Seno taisyklių formato rezultatai į naujus termometro procentus neįtraukiami. Procentų vardiklis – tik klasifikuoti vienetai; aprėptis rodoma atskirai. Kai klasifikuotų vienetų nėra, procentai nežinomi. Maža imtis ir maža aprėptis žymimos sąsajoje.
 
 AI jungtis vis dar yra **tik tekstinis, rankiniu būdu paleidžiamas bandymas**. Ji neanalizuoja prisegtų paveikslėlių, garso ar vaizdo, automatiškai nerengia OCR, transkripcijų ar faktų patikros. Neperskaityta susijusi medija siunčiama į `waiting_data`. Automatinio tikslaus pakartotinio bandymo, žmogaus peržiūros darbo eigos ir sužymėtos kokybės imties kol kas nėra. Tikrų pratybų tikslumo ir v1.0 ribų patvirtinti negalima. Joks automatinis API kvietimas ar DB migracija šiomis taisyklėmis nepridėta.
+
+## Komunikacinio mechanizmo patikslinimas (2026-10-24)
+
+D3 apima ir viešai veikiančioms institucijoms / organizacijoms primetamą kolektyvinę piktybišką veiklą. D4 gali apimti visuotinio apleistumo, bejėgiškumo ir saugios išeities nebuvimo formavimą. Agresyvių veiksmų raginimas šioms kryptims nebūtinas. Informacijos, paaiškinimų ir saugumo lūkestis taikomas valdžiai, savivaldybei, kariuomenei, žiniasklaidai, žurnalistams ir kitoms viešai veikiančioms organizacijoms; tai nėra uždaras sąrašas.
+
+Vien aštrumas, didelis nepasitikėjimas, neigiamas tonas ar neigiama nuomonė apie šalį nenulemia kategorijos. Konkretus reikalavimas paaiškinti veiksmus ar atsiskaityti gali likti N1, net jei valdžia nepasitikima. Palaikymas ir pasitikėjimas taip pat savaime nesuteikia stabilizuojančios kategorijos. Vertinama visa komunikacinė reikšmė, citavimas, ironija ir pateiktas kontekstas, o ne raktažodžiai ar autoriaus ketinimai. Modelis turi įvardyti konkretų mechanizmą ir jį pagrindžiančią originalią ištrauką.
+
+Bendros gairės bei iliustraciniai, o ne mechaniškai taikomi pavyzdžiai yra `thermometer_policy.py`. `GUIDANCE_REVISION` įrašoma naujame AI rezultate ir pateikiama tiek įprastai analizei, tiek Sol pakartotinei termometro peržiūrai. Išsaugoti rankiniai sprendimai ir ankstesni rezultatai neperrašomi, automatinė masinė mokama analizė nesukuriama.

@@ -10,6 +10,7 @@ from integration_config import ROOT, settings
 from openai_check import api_key, NoRedirect
 from thermometer import RULES, DEFINITIONS, instant
 from thermometer_policy import VERSION as THERMOMETER_RULES_VERSION, REASONS, validate_assessment
+from thermometer_policy import GUIDANCE_REVISION, COMMUNICATION_EXAMPLES
 import monitoring
 import narrative_registry
 
@@ -149,7 +150,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         + " ".join(RULES) + ("" if thermometer_only else "\n" + narrative_registry.INSTRUCTIONS))
     reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),
                  "directions": DEFINITIONS, "reason_codes": REASONS,
-                 "rules_version": THERMOMETER_RULES_VERSION}
+                 "rules_version": THERMOMETER_RULES_VERSION, "guidance_revision": GUIDANCE_REVISION,
+                 "communication_examples": COMMUNICATION_EXAMPLES}
     dynamic = {"analysis_input": prepared, "pending_claims": [] if thermometer_only else pending_claims(unit, root, catalog)}
     schema = analysis_schema(catalog)
     if thermometer_only:
@@ -243,6 +245,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "candidate_cluster_id": cluster_ids[0] if len(cluster_ids) == 1 else None,
             "candidate_cluster_ids": cluster_ids,
             "thermometer_rules_version": THERMOMETER_RULES_VERSION,
+            "thermometer_guidance_revision": GUIDANCE_REVISION,
             "registry_version": catalog["version"], "unit_id": unit["id"],
             "exercise_id": unit.get("exercise_id"),
             "content_version": narrative_registry.digest({k: unit.get(k) for k in ("text", "media", "parent_post", "conversation_context")}),

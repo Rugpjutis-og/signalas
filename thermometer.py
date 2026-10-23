@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from periods import PERIODS
-from thermometer_policy import VERSION, REASONS
+from thermometer_policy import VERSION, REASONS, COMMUNICATION_GUIDANCE
 
 ROOT = Path(__file__).resolve().parent
 ZONE = ZoneInfo('Europe/Vilnius')
@@ -35,11 +35,12 @@ RULES = [
     'Destabilizuojanti kryptis turi konkretų D1–D4 mechanizmą; D1 negalima grįsti modelio atmintimi ar vien pradinio konteksto tyla.',
     'Cituojamo arba paneigiamo žalingo turinio nepriskirk autoriaus palaikomam raginimui.',
     'Pavadinimų atitikmenys reiškia tik vardų ryšį, ne tikrovės faktų ar reputacijos perkėlimą.',
+    *COMMUNICATION_GUIDANCE,
 ]
 DEFINITIONS = {
     'stabilizing': 'Pagrįstas supratimas, bendradarbiavimas, savitarpio pagalba, konstruktyvus sprendimas ar saugus elgesys.',
     'neutral': 'Nėra aiškios stabilizuojančios ar destabilizuojančios krypties arba turinys nesusijęs su situacija.',
-    'destabilizing': 'Pagal scenarijaus faktus ir požymius skatina paniką, priešiškumą, smurtą, sabotažą ar pavojingą elgesį.',
+    'destabilizing': 'Pagal turinį ir pateiktą kontekstą skatina paniką, kolektyvinį priešiškumą, visuotinį apleistumą ar bejėgiškumą, smurtą, sabotažą ar pavojingą elgesį; agresyvaus veiksmo raginimas nebūtinas.',
 }
 
 
