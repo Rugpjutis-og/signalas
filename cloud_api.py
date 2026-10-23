@@ -1,16 +1,19 @@
 """Authenticated Vercel API. All application persistence is in Neon."""
 import base64
+import gzip
 import hashlib
 import hmac
 import json
 import os
 import secrets
+import re
 import time
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlsplit
 
 from cloud_repository import Repository
+from cloud_storage import CloudStorageError
 import live_data
 
 COOKIE = '__Host-signalas-session'
@@ -40,11 +43,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def send(self, value, status=200, cookie=None, mime='application/json; charset=utf-8'):
         body = value if isinstance(value, bytes) else json.dumps(value, ensure_ascii=False).encode()
+        compress = mime.startswith('application/json') and len(body) > 1024 and any(
+            part.strip().split(';')[0] == 'gzip' and not re.search(r';\s*q=0(?:\.0*)?(?:\s*;|$)', part)
+            for part in self.headers.get('Accept-Encoding', '').split(','))
+        if compress:
+            body = gzip.compress(body, mtime=0)
         self.send_response(status)
         self.send_header('Content-Type', mime)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'private, no-store')
-        self.send_header('Vary', 'Cookie')
+        self.send_header('Vary', 'Cookie, Accept-Encoding')
+        if compress:
+            self.send_header('Content-Encoding', 'gzip')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Cross-Origin-Resource-Policy', 'same-origin')
         if cookie:
@@ -82,6 +92,8 @@ class Handler(BaseHTTPRequestHandler):
                 repository = Repository(dict(os.environ))
                 repository.initialize()
                 self.send(tick(repository))
+            except CloudStorageError as error:
+                self.send({'error': str(error), 'reason': error.reason, 'status': 'paused'}, 503)
             except Exception:
                 self.send({'error': 'Foninis vykdymas nepavyko.'}, 502)
             return
@@ -142,14 +154,18 @@ class Handler(BaseHTTPRequestHandler):
             if route == '/api/auth/logout' and method == 'POST':
                 self.send({'status': 'ok'}, cookie=COOKIE+'=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0')
             elif route == '/api/dashboard/bootstrap' and method == 'GET':
-                self.send(dict(live_data.bootstrap(repository), csrf=csrf))
+                revision = repository.dashboard_revision()
+                self.send(dict(live_data.bootstrap(repository), csrf=csrf, data_revision=revision))
+            elif route == '/api/dashboard/revision' and method == 'GET':
+                self.send({'data_revision': repository.dashboard_revision()})
             elif route == '/api/dashboard/context':
                 if method == 'POST':
                     repository.save_context(payload.get('context'))
                 self.send({'context': repository.read('live-context.json')})
             elif route == '/api/dashboard/period' and method == 'POST':
                 live_data.store_period(payload['end_date'], repository, start_date=payload['start_date'])
-                self.send(live_data.bootstrap(repository))
+                revision = repository.dashboard_revision()
+                self.send(dict(live_data.bootstrap(repository), csrf=csrf, data_revision=revision))
             elif route == '/api/collection/status' and method == 'GET':
                 self.send({'available': bool(repository.config.get('DIASPORA_PASSWORD') and repository.config.get('DIASPORA_USERNAME')), 'csrf': csrf,
                            'message': 'Vercel aplinkoje dar trūksta Diasporos prisijungimo nustatymų.'})
@@ -158,8 +174,8 @@ class Handler(BaseHTTPRequestHandler):
             elif route == '/api/analysis/status' and method == 'GET':
                 self.send(repository.read('analysis-job.json', {}) or {'status': 'idle', 'remaining': 0})
             elif route == '/api/analysis/continue' and method == 'POST':
-                from cloud_analysis import step
-                self.send(step(repository))
+                from cloud_analysis import drain
+                self.send(drain(repository))
             elif route == '/api/thermometer/review' and method == 'POST':
                 from thermometer_review import save
                 self.send(save(repository, payload))
@@ -178,6 +194,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send(data, mime=mime)
             else:
                 self.send({'error': 'Nerastas API kelias.'}, 404)
+        except CloudStorageError as error:
+            self.send({'error': str(error), 'reason': error.reason,
+                       'state': 'stopped', 'description': str(error)}, 503)
         except (ValueError, KeyError, TypeError, OverflowError):
             self.send({'error': 'Užklausos įvykdyti nepavyko. Patikrinkite duomenis ir Vercel konfigūraciją; paskutinė kopija išsaugota.'}, 400)
         except Exception:

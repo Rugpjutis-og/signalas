@@ -12,10 +12,17 @@ window.SignalAnalysis=(()=>{
   async function drain(state){
     button.disabled=true;
     button.setAttribute('aria-busy','true');
+    let stopped=false,polling=false;
+    const progress=(value=state)=>{message.textContent=`Analizuojamas turinys… Liko ${value.remaining ?? '…'} vnt. Neaiškūs vertinimai paliekami peržiūrai, eilė tęsiama.`;};
+    const timer=setInterval(async()=>{
+      if(polling||stopped)return;polling=true;
+      try{const latest=await request('status');if(!stopped&&['pending','running'].includes(latest.status)){progress(latest);}}
+      catch(_){/* The active batch reports persistent failures. */}finally{polling=false;}
+    },30000);
     try{
       while(['pending','running','already_running'].includes(state.status)){
-        message.textContent=`Analizuojamas turinys… Liko ${state.remaining ?? '…'} vnt. Galite naudotis skiltimis arba uždaryti aplikaciją: foninis vykdymas tęsis.`;
-        if(state.status==='already_running')await sleep(3000);
+        progress();
+        if(state.status==='already_running')await sleep(10000);
         state=await request('continue','POST');
         if(state.status!=='already_running')await window.SignalLiveData?.refresh();
       }
@@ -24,7 +31,7 @@ window.SignalAnalysis=(()=>{
         message.textContent=`Duomenys išsaugoti. Analizė sustabdyta; liko ${state.remaining} vnt. ${reason} Pakartoti galima mygtuku „Atnaujinti duomenis“.`;
       }else if(state.status==='complete')message.textContent='Duomenys atnaujinti. Teksto analizė baigta; neaiškius ir medijos vertinimus reikia peržiūrėti.';
     }catch(error){message.textContent=(error.message||'Ryšys nutrūko.')+' Išsaugota analizė neprarasta. Atverkite aplikaciją iš naujo, kad tęstumėte eilę.';}
-    finally{button.disabled=false;button.removeAttribute('aria-busy');await window.SignalMonitoring?.refresh();}
+    finally{stopped=true;clearInterval(timer);button.disabled=false;button.removeAttribute('aria-busy');await window.SignalMonitoring?.refresh();}
   }
   function run(state){
     if(active)return active;

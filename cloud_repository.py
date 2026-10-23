@@ -1,11 +1,14 @@
 """Neon-backed application state and read adapter; never writes local files."""
 import json
 import uuid
+import hashlib
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cloud_storage import query, account_scope, sync, SCHEMA as FETCH_SCHEMA
+from cloud_storage import query, account_scope, sync, CloudStorageError, SCHEMA as FETCH_SCHEMA
 from integration_config import ROOT
+from thermometer_policy import VERSION
 
 SCHEMA = [
     '''CREATE TABLE IF NOT EXISTS signalas_state (
@@ -16,6 +19,9 @@ SCHEMA = [
     '''CREATE TABLE IF NOT EXISTS signalas_login_attempts (
         identity text PRIMARY KEY, attempts integer NOT NULL, expires_at timestamptz NOT NULL)''',
 ]
+
+# Schema readiness is only a short-lived process cache; application data stays in Neon.
+_schema_ready = {}
 
 
 class Repository:
@@ -30,7 +36,11 @@ class Repository:
         return query(self.connection, [{'query': statement, 'params': params or []}])['results'][0]
 
     def initialize(self):
+        identity = hashlib.sha256((self.connection or '').encode()).hexdigest()
+        if time.monotonic() < _schema_ready.get(identity, 0):
+            return
         query(self.connection, [{'query': sql, 'params': []} for sql in FETCH_SCHEMA + SCHEMA])
+        _schema_ready[identity] = time.monotonic() + 300
 
     def read(self, name, default=None):
         if name not in self.values:
@@ -58,20 +68,106 @@ class Repository:
 
     def latest(self):
         if self.packet is None:
-            rows = self.sql('SELECT packet FROM signalas_fetches WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1', [self.scope])['rows']
+            rows = self.sql('''WITH latest AS (SELECT packet FROM signalas_fetches
+                WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1)
+                SELECT CASE WHEN packet->>'storage_version'='2' THEN packet || jsonb_build_object('records',
+                    COALESCE((SELECT jsonb_agg(c.payload ORDER BY ref.n)
+                      FROM jsonb_array_elements(packet->'record_keys') WITH ORDINALITY ref(k,n)
+                      JOIN signalas_content c ON c.scope=$1 AND c.source=ref.k->>'source'
+                        AND c.content_id=ref.k->>'id'),'[]'::jsonb)) ELSE packet END FROM latest''', [self.scope])['rows']
             self.packet = json.loads(rows[0][0]) if rows else {
                 'records': [], 'source': 'diaspora.sauliai.lt', 'collected_at': None,
                 'coverage': 'account_stream_and_own_profile', 'stream_complete': False}
+            if self.packet.get('storage_version') == 2 and len(self.packet['records']) != len(self.packet['record_keys']):
+                self.packet = None
+                raise CloudStorageError('Trūksta surinkimo sąraše nurodytų įrašų. Ankstesni duomenys nepakeisti.')
         return self.packet
+
+    def expand_unit(self, unit):
+        from discussion_context import DiscussionIndex
+        records = self.latest()['records']
+        if getattr(self, '_discussion_records', None) is not records:
+            self._discussion_records = records
+            self._discussion_index = DiscussionIndex(records)
+        return self._discussion_index.expand(unit)
+
+    def content_unit(self, source, identity):
+        # A thumbnail must not download an entire multi-megabyte snapshot.
+        rows = self.sql('''WITH latest AS (SELECT packet FROM signalas_fetches
+            WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1)
+            SELECT c.payload FROM latest,signalas_content c
+            WHERE packet->>'storage_version'='2' AND c.scope=$1 AND c.source=$2 AND c.content_id=$3
+              AND EXISTS (SELECT 1 FROM jsonb_array_elements(packet->'record_keys') ref
+                          WHERE ref->>'source'=$2 AND ref->>'id'=$3)
+            UNION ALL SELECT r FROM latest,LATERAL jsonb_array_elements(packet->'records') r
+            WHERE COALESCE(packet->>'storage_version','1')<>'2' AND r->>'source'=$2 AND r->>'id'=$3''',
+            [self.scope, source, identity])['rows']
+        return json.loads(rows[0][0]) if rows else None
+
+    def collected_at(self):
+        from thermometer import instant
+        if self.packet is not None:
+            value = self.packet.get('collected_at')
+            return instant(value).isoformat() if value else None
+        rows = self.sql("SELECT packet->>'collected_at' FROM signalas_fetches WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1", [self.scope])['rows']
+        return instant(rows[0][0]).isoformat() if rows else None
+
+    def refresh_snapshot(self):
+        # A batch reuses its snapshot while still detecting concurrent collections.
+        if self.packet is not None:
+            rows = self.sql("SELECT packet->>'collected_at' FROM signalas_fetches WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1", [self.scope])['rows']
+            from thermometer import instant
+            if not rows or instant(rows[0][0]) != instant(self.packet['collected_at']):
+                self.packet = None
+
+    def analysis_for_queue(self, context, version, model):
+        # Filter in Postgres and transfer only identities/fingerprints, not every
+        # original text, discussion, evidence and historic result on every unit.
+        rows = self.sql('''SELECT COALESCE(jsonb_agg(jsonb_build_object(
+            'source_reference',jsonb_build_object('source',a->'source_reference'->'source',
+                'id',a->'source_reference'->'id'),'content_fingerprint',a->'content_fingerprint',
+            'exercise_id',a->'exercise_id') ORDER BY n), '[]'::jsonb)
+            FROM signalas_state, LATERAL jsonb_array_elements(value) WITH ORDINALITY AS t(a,n)
+            WHERE scope=$1 AND name='openai-analysis-pilot.json'
+            AND (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
+            AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
+            AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb
+            AND COALESCE(a->>'requested_model',a->>'model')=$5''',
+            [self.scope, version, VERSION, json.dumps(context), model])['rows']
+        return json.loads(rows[0][0]) if rows else []
+
+    def append_analysis(self, result):
+        self.sql('''INSERT INTO signalas_state(scope,name,value)
+            VALUES($1,'openai-analysis-pilot.json',jsonb_build_array($2::jsonb))
+            ON CONFLICT(scope,name) DO UPDATE SET value=signalas_state.value || EXCLUDED.value''',
+            [self.scope, json.dumps(result)])
+        self.values.pop('openai-analysis-pilot.json', None)
+
+    def pending_claims(self, exercise_id, version):
+        rows = self.sql('''SELECT COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
+            'title',p->'title','topic_id',p->'topic_id','claim_template',p->'claim_template',
+            'novelty_reason',p->'novelty_reason')),'[]'::jsonb)
+            FROM signalas_state, LATERAL jsonb_array_elements(value) a,
+            LATERAL jsonb_array_elements(COALESCE(a->'result'->'narrative_analysis'->'proposals','[]'::jsonb)) p
+            WHERE scope=$1 AND name='openai-analysis-pilot.json'
+            AND a->>'registry_version'=$2 AND COALESCE(a->'exercise_id','null'::jsonb)=$3::jsonb''',
+            [self.scope, version, json.dumps(exercise_id)])['rows']
+        return json.loads(rows[0][0]) if rows else []
+
+    def dashboard_revision(self):
+        rows = self.sql('''SELECT name,md5(value::text) FROM signalas_state
+            WHERE scope=$1 AND name IN ('openai-analysis-pilot.json','live-context.json',
+                'dashboard-period.json','thermometer-reviews.json','narrative-registry-state.json')
+            ORDER BY name''', [self.scope])['rows']
+        return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):
         return CloudPath(self, name) if name.startswith('var') else ROOT / name
 
     def monitoring_status(self, **kwargs):
-        packet = self.latest()
         failure = self.read('collection-status.json', {}) or {}
         reason = 'collection_failed' if failure.get('status') == 'error' else None
-        collected_at = packet.get('collected_at')
+        collected_at = kwargs.get('collected_at') or self.collected_at()
         if not collected_at:
             reason = reason or 'missing_collection'
         else:
@@ -90,7 +186,7 @@ class Repository:
             reason = reason or 'api_error'
         from monitoring import REASONS
         return {'state': 'stopped' if reason else 'watching',
-                'reason': reason, 'collected_at': packet.get('collected_at'),
+                'reason': reason, 'collected_at': collected_at,
                 'description': REASONS.get(reason, 'Duomenys renkami ir analizuojami Vercel fone.')}
 
     def collect(self, *, reset_analysis_error=True):
@@ -106,10 +202,14 @@ class Repository:
             client = DiasporaClient(self.config.get('DIASPORA_BASE_URL', 'https://diaspora.sauliai.lt'),
                                     self.config.get('DIASPORA_USERNAME'), self.config.get('DIASPORA_PASSWORD'))
             client.login()
-            packet = client.collect()
-            saved = sync(packet, self.connection, self.scope)
+            previous = self.latest()
+            packet = client.collect(previous=previous, compact=True, workers=4, conditional=True)
+            saved = sync(packet, self.connection, self.scope, previous=previous)
             self.write('collection-status.json', {'status': 'ok', 'checked_at': packet['collected_at']})
-            self.packet = packet
+            from discussion_context import compact_records
+            records = compact_records(packet['records'])
+            self.packet = dict(packet, records=records, storage_version=2,
+                               record_keys=[{'source': r['source'], 'id': r['id']} for r in records])
             from cloud_analysis import enqueue
             analysis = enqueue(self, reset_error=reset_analysis_error)
             return {'status': 'ok', 'posts': packet['post_count'], 'comments': packet['comment_count'],

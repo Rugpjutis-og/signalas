@@ -2,6 +2,7 @@
 import hashlib
 import json
 import re
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
@@ -12,7 +13,13 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class CloudStorageError(ValueError):
-    pass
+    def __init__(self, message=None, *, reason='database_unavailable'):
+        self.reason = reason
+        super().__init__(message or (
+            'Išnaudota Neon duomenų bazės perdavimo arba naudojimo kvota. '
+            'Atkurkite kvotą Neon valdymo skiltyje; duomenys nebuvo ištrinti.'
+            if reason == 'database_quota' else
+            'Neon duomenų bazė laikinai nepasiekiama. Išsaugoti duomenys nepakeisti.'))
 
 
 SCHEMA = [
@@ -52,16 +59,30 @@ def query(connection, queries):
         # Redirects must never forward the connection credential to another host.
         with build_opener(NoRedirect()).open(request, timeout=45) as response:
             return json.load(response)
+    except HTTPError as error:
+        # Expose only a fixed code, never the provider's SQL/credential-bearing body.
+        raise CloudStorageError(reason='database_quota' if error.code == 402 else
+                                'database_unavailable') from None
     except Exception:
         # Provider errors may echo credentials, SQL parameters or private content.
-        raise CloudStorageError('Nepavyko įrašyti į debesijos duomenų bazę; vietinė kopija išsaugota.') from None
+        raise CloudStorageError() from None
 
 
-def sync(packet, connection, scope):
+def sync(packet, connection, scope, *, previous=None):
     if not isinstance(packet.get('records'), list) or not packet.get('collected_at') or not scope:
         raise CloudStorageError('Trūksta surinkimo duomenų arba šaltinio identifikatoriaus.')
-    body = json.dumps(packet, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    from discussion_context import compact_records
+    records = compact_records(packet['records'])
+    # Collection rows become small manifests. Bodies live once in signalas_content;
+    # old full snapshots remain untouched for recovery, never read as live data.
+    manifest = {k: v for k, v in packet.items() if k != 'records'}
+    manifest.update(storage_version=2, record_keys=[{'source': r.get('source', 'diaspora'), 'id': r['id']} for r in records])
+    body = json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
     snapshot = hashlib.sha256(body.encode()).hexdigest()
+    prior = {(r['source'], r['id']): r for r in (previous or {}).get('records', [])}
+    changed = records if (previous or {}).get('storage_version') != 2 else [
+        r for r in records if prior.get((r['source'], r['id'])) != r]
+    changes = json.dumps(changed, ensure_ascii=False, separators=(',', ':'))
     query(connection, [{'query': sql, 'params': []} for sql in SCHEMA])
     # Both writes are one transaction: retries cannot duplicate snapshots/content.
     result = query(connection, [
@@ -70,15 +91,17 @@ def sync(packet, connection, scope):
          'params': [scope, snapshot, packet['collected_at'], body]},
         {'query': """INSERT INTO signalas_content(scope,source,content_id,collected_at,payload)
             SELECT $1, COALESCE(r->>'source','diaspora'), r->>'id', $2::timestamptz, r
-            FROM jsonb_array_elements($3::jsonb->'records') r
+            FROM jsonb_array_elements($3::jsonb) r
             ON CONFLICT(scope,source,content_id) DO UPDATE
             SET collected_at=EXCLUDED.collected_at,payload=EXCLUDED.payload
-            WHERE EXCLUDED.collected_at >= signalas_content.collected_at""",
-         'params': [scope, packet['collected_at'], body]},
+            WHERE EXCLUDED.collected_at >= signalas_content.collected_at
+            AND signalas_content.payload IS DISTINCT FROM EXCLUDED.payload""",
+         'params': [scope, packet['collected_at'], changes]},
     ])
     if len(result.get('results', [])) != 2:
         raise CloudStorageError('Debesijos įrašymo patvirtinimas negautas.')
-    return {'status': 'ok', 'records': len(packet['records']), 'collected_at': packet['collected_at']}
+    return {'status': 'ok', 'records': len(records), 'changed_records': len(changed),
+            'collected_at': packet['collected_at']}
 
 
 def account_scope(config):

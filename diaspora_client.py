@@ -1,6 +1,9 @@
 """Paginated authenticated account stream and own profile; never whole-pod access."""
 import json
 import math
+import copy
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from http.cookiejar import CookieJar
@@ -49,13 +52,18 @@ class DiasporaClient:
             raise ValueError("Trūksta DIASPORA_USERNAME arba DIASPORA_PASSWORD; naudokite configure_secrets.py diaspora.")
         self.base = base.rstrip("/")
         self.username, self.password = username, password
-        self.opener = build_opener(HTTPCookieProcessor(CookieJar()), SameOriginRedirect(self.base))
+        self.cookies = CookieJar()
+        self.opener = build_opener(HTTPCookieProcessor(self.cookies), SameOriginRedirect(self.base))
 
-    def request(self, path, *, data=None, accept="application/json"):
+    def request(self, path, *, data=None, accept="application/json", validators=None, include_headers=False):
         url = urljoin(self.base + "/", path)
         if urlsplit(url)[:2] != urlsplit(self.base)[:2]:
             raise ValueError("Duomenų gavimo adresas turi priklausyti tai pačiai Diasporai.")
         headers = {"Accept": accept, "User-Agent": "Signalas/1.0 (authorized read-only collection)"}
+        for key, header in (('etag', 'If-None-Match'), ('lastModified', 'If-Modified-Since')):
+            value = (validators or {}).get(key)
+            if isinstance(value, str) and 0 < len(value) <= 512 and all(32 <= ord(c) < 127 for c in value):
+                headers[header] = value
         if data is not None:
             headers["Content-Type"] = "application/x-www-form-urlencoded"
             headers["Origin"] = self.base
@@ -66,8 +74,12 @@ class DiasporaClient:
                 body = response.read(8 * 1024 * 1024 + 1)
                 if len(body) > 8 * 1024 * 1024:
                     raise ValueError("Diasporos atsakymas viršijo bandymo dydžio ribą.")
-                return body.decode("utf-8"), response.geturl(), response.headers.get("Content-Type", "")
+                result = (body.decode("utf-8"), response.geturl(), response.headers.get("Content-Type", ""))
+                return result + ({'etag': response.headers.get('ETag'),
+                                  'lastModified': response.headers.get('Last-Modified')},) if include_headers else result
         except HTTPError as error:
+            if error.code == 304 and include_headers and any(k in headers for k in ('If-None-Match', 'If-Modified-Since')):
+                return None, url, 'application/json', validators
             raise ValueError("Diasporos užklausa nepavyko (HTTP %s). Patikrinkite prieigą." % error.code) from None
         except (URLError, OSError, UnicodeError):
             raise ValueError("Nepavyko saugiai perskaityti Diasporos atsakymo.") from None
@@ -103,6 +115,21 @@ class DiasporaClient:
         if not metadata.canonical:
             return None
         return source_url(urljoin(self.base + "/", metadata.canonical))
+
+    def post_json(self, identity, validators=None):
+        body, url, mime, fresh = self.request('/posts/' + quote(str(identity), safe='') + '.json',
+                                              validators=validators, include_headers=True)
+        if body is None:
+            return None, fresh  # Authenticated source confirmed HTTP 304.
+        if 'json' not in mime or urlsplit(url).path == '/users/sign_in':
+            raise ValueError('Vietoje įrašo JSON gautas prisijungimo ar kitas puslapis.')
+        try:
+            raw = json.loads(body)
+        except ValueError:
+            raise ValueError('Netaisyklingas Diasporos įrašo JSON.') from None
+        if not isinstance(raw, dict):
+            raise ValueError('Diasporos įrašo JSON turi būti objektas.')
+        return raw, fresh
 
     def image(self, address):
         """Read a known same-pod raster image with the existing private session."""
@@ -157,50 +184,106 @@ class DiasporaClient:
                 raise ValueError("Diasporos laiko žymos neleidžia tęsti puslapiavimo neprarandant įrašų. Ankstesnė imtis nepakeista; reikia administratoriaus eksporto.")
             cursor = next_cursor
 
-    def collect(self):
+    def fork(self):
+        # Each bounded worker has its own opener and a private copy of the already
+        # authorized session. Cookies never leave this process or source origin.
+        client = DiasporaClient(self.base, self.username, self.password)
+        for cookie in self.cookies:
+            client.cookies.set_cookie(copy.copy(cookie))
+        return client
+
+    def collect(self, *, previous=None, compact=False, workers=1, conditional=False):
         raw_posts, feed_pages = self.stream("/stream.json")
         profile = self.json("/u/" + quote(self.username, safe=""))
         if not isinstance(profile, dict) or profile.get("is_own_profile") is not True or not profile.get("guid"):
             raise ValueError("Nepavyko patvirtinti savo profilio; ankstesnė imtis nepakeista.")
         own_posts, profile_pages = self.stream("/people/" + quote(profile["guid"], safe="") + "/stream.json")
         source = urlsplit(self.base).hostname
-        records, seen, warnings = [], set(), []
+        prior = {(r.get('source'), r.get('id')): r for r in (previous or {}).get('records', [])}
+        prior_comments = {}
+        for r in prior.values():
+            if r.get('kind') == 'comment':
+                prior_comments.setdefault((r.get('source'), r.get('parent_id')), []).append(r)
+        entries, seen = [], set()
         for entry in raw_posts + own_posts:
-            identity = entry.get("id") if isinstance(entry, dict) else None
-            guid = entry.get("guid") if isinstance(entry, dict) else None
-            if identity is None or not guid or guid in seen:
-                continue
-            seen.add(guid)
-            raw = self.json("/posts/" + quote(str(identity), safe="") + ".json")
+            if entry.get('guid') not in seen:
+                seen.add(entry['guid']); entries.append(entry)
+        local = threading.local()
+        workers = max(1, min(4, workers))
+
+        def read_post(entry):
+            if workers == 1:
+                client = self
+            else:
+                if not hasattr(local, 'client'): local.client = self.fork()
+                client = local.client
+            identity, guid = entry['id'], entry['guid']
+            # Details are still reconciled for OLD posts: equal counters cannot
+            # prove that an earlier comment has not been edited or deleted.
+            cached = prior.get((source, guid))
+            if conditional:
+                raw, validators = client.post_json(identity, (cached or {}).get('sourceValidators'))
+                if raw is None:
+                    if not cached:
+                        raise ValueError('Šaltinis grąžino 304, bet ankstesnio įrašo nėra.')
+                    comments = prior_comments.get((source, guid), [])
+                    if not cached.get('sourceUrl'):
+                        try:
+                            original = client.canonical(identity)
+                        except ValueError:
+                            original = None
+                        if original:
+                            cached = dict(cached, sourceUrl=original)
+                            comments = [dict(c, parentSourceUrl=original) for c in comments]
+                    return [cached] + comments, [], True
+            else:
+                raw, validators = client.json("/posts/" + quote(str(identity), safe="") + ".json"), None
             if raw.get("guid") != guid:
                 raise ValueError("Diasporos detalės neatitinka srauto įrašo.")
-            try:
-                original = self.canonical(identity)
-            except ValueError:
-                original = None
-                warnings.append("Vieno įrašo originalo nuorodos nepavyko patvirtinti.")
+            warnings = []
+            original = source_url(prior.get((source, guid), {}).get('sourceUrl'))
+            if not original:
+                try:
+                    original = client.canonical(identity)
+                except ValueError:
+                    original = None
+                    warnings.append("Vieno įrašo originalo nuorodos nepavyko patvirtinti.")
             post = adapt_diaspora_post(raw, source=source, exercise_id=None, sourceUrl=original,
                                       interactions_complete=True, source_base_url=self.base)
             post["public"] = raw.get("public")
-            records.append(post)
-            interactions = raw.get("interactions") or {}
-            comments = interactions.get("comments")
-            if not isinstance(comments, list):
-                comments = []
+            if conditional:
+                post['sourceValidators'] = validators
+            records = [post]
+            comments = (raw.get("interactions") or {}).get("comments")
             earlier = []
-            for raw_comment in sorted(comments, key=lambda c: c.get("created_at") or ""):
+            for raw_comment in sorted(comments if isinstance(comments, list) else [], key=lambda c: c.get("created_at") or ""):
                 comment = adapt_diaspora_comment(raw_comment, source=source, exercise_id=None,
                                                 parentSourceUrl=original, source_base_url=self.base)
                 if not comment.get("id"):
                     warnings.append("Praleistas komentaras be pastovaus šaltinio ID.")
                     continue
                 comment["parent_id"] = post["id"]
-                comment["parent_post"] = {key: post.get(key) for key in
-                                           ("id", "published_at", "text", "media", "sourceUrl")}
-                comment["conversation_context"] = list(earlier)
-                earlier.append({key: comment.get(key) for key in
-                                ("id", "published_at", "text", "media", "sourceUrl", "parentSourceUrl")})
+                if not compact:
+                    comment["parent_post"] = {key: post.get(key) for key in
+                                               ("id", "published_at", "text", "media", "sourceUrl")}
+                    comment["conversation_context"] = list(earlier)
+                    earlier.append({key: comment.get(key) for key in
+                                    ("id", "published_at", "text", "media", "sourceUrl", "parentSourceUrl")})
                 records.append(comment)
+            return records, warnings, False
+
+        records, warnings, not_modified = [], [], 0
+        if workers == 1:
+            for entry in entries:
+                found, notes, unchanged = read_post(entry)
+                records.extend(found); warnings.extend(notes); not_modified += int(unchanged)
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                for found, notes, unchanged in pool.map(read_post, entries):
+                    records.extend(found); warnings.extend(notes); not_modified += int(unchanged)
+        # GUID is the source identity; duplicate feed/profile/comment rows never
+        # create additional canonical content units.
+        records = list({(r['source'], r['id']): r for r in records}.values())
         return {"collected_at": datetime.now(timezone.utc).isoformat(), "source": source,
                 "mode": "live_sample", "coverage": "account_stream_and_own_profile",
                 "stream_complete": False, "exercise_id": None, "membership": None,
@@ -209,4 +292,6 @@ class DiasporaClient:
                                   "feed_pages": feed_pages, "profile_pages": profile_pages,
                                   "pagination_complete": True},
                 "post_count": len(seen), "comment_count": sum(p["kind"] == "comment" for p in records),
-                "records": records, "warnings": warnings}
+                "records": records, "warnings": warnings,
+                "collection_stats": {"detail_requests": len(entries), "not_modified": not_modified,
+                                     "detail_bodies": len(entries)-not_modified, "workers": workers}}

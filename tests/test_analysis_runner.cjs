@@ -5,7 +5,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
  const message={textContent:''};
  const queue=[{status:'pending',remaining:2},{status:'pending',remaining:1},{status:'complete',remaining:0}];
  const window={SignalSession:{ready:new Promise(r=>resolveReady=r),csrf:()=> 'csrf-test'},SignalLiveData:{refresh:async()=>redraws++},SignalMonitoring:{refresh:async()=>{}}};
- const runtime={window,document:{getElementById:id=>id==='fetch-data'?button:message},setTimeout,fetch:async(url,options)=>{
+ const runtime={window,document:{getElementById:id=>id==='fetch-data'?button:message},setTimeout,setInterval:()=>1,clearInterval:()=>{},fetch:async(url,options)=>{
   calls.push({url,options});return {ok:true,json:async()=>queue.shift()};
  }};
  vm.runInNewContext(fs.readFileSync('dist/analysis-runner.js','utf8'),runtime);

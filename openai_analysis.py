@@ -1,5 +1,6 @@
 """Explicit, bounded text-analysis pilot. Does not alter the demo dashboards."""
 import json
+import socket
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener
@@ -14,6 +15,21 @@ import narrative_registry
 
 DEFAULT_ANALYSIS_MODEL = "gpt-6-luna"
 ANALYSIS_SERVICE_TIER = "default"
+ANALYSIS_TIMEOUT_SECONDS = 180
+
+
+class AnalysisItemError(ValueError):
+    """This unit needs review; it must not block other units."""
+    def __init__(self, reason='analysis_validation'):
+        self.reason = reason
+        super().__init__('Turinio vieneto automatinį vertinimą reikia peržiūrėti.')
+
+
+class AnalysisServiceError(ValueError):
+    """A provider-wide failure cannot be solved by skipping source content."""
+    def __init__(self, reason):
+        self.reason = reason
+        super().__init__('AI paslauga laikinai negali tęsti analizės.')
 
 
 def analysis_schema(catalog):
@@ -106,7 +122,7 @@ def validate_result(result, catalog):
     return result
 
 
-def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
+def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=ANALYSIS_TIMEOUT_SECONDS):
     catalog = narrative_registry.load(root)
     prepared = prepare_input(unit, context, expanded_narratives)
     model = settings(root).get("OPENAI_MODEL") or DEFAULT_ANALYSIS_MODEL
@@ -159,14 +175,18 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
     request = Request("https://api.openai.com/v1/responses", data=json.dumps(payload).encode("utf-8"),
                       headers={"Authorization": "Bearer " + api_key(root), "Content-Type": "application/json"})
     try:
-        with build_opener(NoRedirect).open(request, timeout=180) as response:
+        with build_opener(NoRedirect).open(request, timeout=timeout) as response:
             raw = json.load(response)
     except HTTPError as error:
-        monitoring.http_failure(error, root)
-        raise ValueError("OpenAI analizės užklausa nepavyko (HTTP %s). Patikrinkite modelio prieigą, limitus ir API kreditą." % error.code) from None
-    except (URLError, OSError):
+        reason = monitoring.http_failure(error, root)
+        raise AnalysisServiceError(reason) from None
+    except (TimeoutError, socket.timeout):
+        raise AnalysisItemError('analysis_timeout') from None
+    except (URLError, OSError) as error:
+        if isinstance(getattr(error, 'reason', None), TimeoutError):
+            raise AnalysisItemError('analysis_timeout') from None
         monitoring.record("openai", "api_connection", root)
-        raise ValueError("Nepavyko pasiekti OpenAI analizės API.") from None
+        raise AnalysisServiceError('api_connection') from None
     except (ValueError, UnicodeError):
         raise ValueError("Neatpažintas OpenAI atsakymas.") from None
     monitoring.record("openai", root=root)
@@ -226,6 +246,13 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None):
 
 
 def pending_claims(unit, root, registry):
+    if hasattr(root, 'pending_claims'):
+        values = root.pending_claims(unit.get('exercise_id'), registry['version'])
+        drafts = {(p['topic_id'], p['claim_template']): p for p in values}
+        values = list(drafts.values())
+        if len(json.dumps(values, ensure_ascii=False)) > 60000:
+            raise ValueError('Laukiančių teiginių kontekstas per didelis; reikia peržiūros.')
+        return values
     path = root / "var/openai-analysis-pilot.json"
     if not path.exists(): return []
     drafts = {}

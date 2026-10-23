@@ -50,6 +50,8 @@ def save(repo, payload):
     unit = next((u for u in repo.latest()['records'] if u.get('source') == source and u.get('id') == unit_id), None)
     if unit is None:
         raise ValueError('Turinio vieneto nėra surinktoje imtyje.')
+    from discussion_context import DiscussionIndex
+    unit = DiscussionIndex(repo.latest()['records']).expand(unit)
     context = context_data(repo.read('live-context.json'))
     review = {'source_reference': source_reference(unit), 'content_fingerprint': fingerprint(unit),
               'exercise_id': unit.get('exercise_id'), 'exercise_context': context,

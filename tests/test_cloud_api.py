@@ -1,4 +1,6 @@
 import hashlib
+import gzip
+import io
 import json
 import os
 import threading
@@ -13,6 +15,18 @@ from cloud_repository import Repository
 
 
 class CloudApiTests(unittest.TestCase):
+    def test_large_private_json_is_compressed_for_browser(self):
+        handler = cloud_api.Handler.__new__(cloud_api.Handler)
+        handler.headers = {'Accept-Encoding': 'gzip, deflate, br'}
+        handler.wfile = io.BytesIO()
+        handler.send_response = Mock(); handler.send_header = Mock(); handler.end_headers = Mock()
+        value = {'units': [{'text': 'synthetic content'}] * 200}
+        handler.send(value)
+        self.assertEqual(json.loads(gzip.decompress(handler.wfile.getvalue())), value)
+        self.assertLess(len(handler.wfile.getvalue()), 500)
+        handler.send_header.assert_any_call('Cache-Control', 'private, no-store')
+        handler.send_header.assert_any_call('Content-Encoding', 'gzip')
+
     def test_signed_session_expiration_and_tampering(self):
         token = cloud_api.session_token('a-long-private-password', now=1000)
         self.assertTrue(cloud_api.valid_session(token, 'a-long-private-password', now=1001))
@@ -49,7 +63,7 @@ class CloudApiTests(unittest.TestCase):
                     with urlopen(Request(base+'/api/collection/refresh',data=b'',headers=headers)) as response:
                         self.assertEqual(json.load(response)['posts'],15)
                     repository.collect.assert_called_once()
-                    with patch('cloud_analysis.step', return_value={'status':'complete','remaining':0}) as step:
+                    with patch('cloud_analysis.drain', return_value={'status':'complete','remaining':0}) as step:
                         with self.assertRaises(HTTPError) as denied:
                             urlopen(Request(base+'/api/analysis/continue',data=b'',headers={'Origin':'https://signalas-ecru.vercel.app','Cookie':cookie.split(';')[0]}))
                         self.assertEqual(denied.exception.code,403);step.assert_not_called()
@@ -63,6 +77,21 @@ class CloudApiTests(unittest.TestCase):
             handler=cloud_api.Handler.__new__(cloud_api.Handler);handler.send=Mock()
             handler.dispatch('GET')
             self.assertEqual(handler.send.call_args.args[1],503)
+
+    def test_database_quota_is_not_reported_as_invalid_user_input(self):
+        from cloud_storage import CloudStorageError
+        password = 'a-long-private-password'
+        handler = cloud_api.Handler.__new__(cloud_api.Handler)
+        handler.path = '/api/dashboard/bootstrap'
+        handler.headers = {'Cookie': cloud_api.COOKIE + '=' + cloud_api.session_token(password)}
+        handler.send = Mock()
+        with patch.dict(os.environ, {'SIGNALAS_ACCESS_PASSWORD': password}), patch.object(cloud_api, 'Repository') as repo:
+            repo.return_value.initialize.side_effect = CloudStorageError(reason='database_quota')
+            handler.dispatch('GET')
+        data, code = handler.send.call_args.args
+        self.assertEqual(code, 503)
+        self.assertEqual(data['reason'], 'database_quota')
+        self.assertEqual(data['state'], 'stopped')
 
     def test_context_immutable_on_conflicting_save(self):
         repo=Repository({});saved={'initialSituation':'Original','confirmedFacts':'Confirmed','nameMappings':[]}

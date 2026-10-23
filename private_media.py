@@ -22,7 +22,11 @@ class MediaDelivery:
         self.cache_size = 0
 
     def image(self, source, identity, index):
-        packet = json.loads((self.root / 'var/diaspora-latest.json').read_text(encoding='utf-8'))
+        if hasattr(self.root, 'content_unit'):
+            record = self.root.content_unit(source, identity)
+            packet = {'records': [record] if record else [], 'collected_at': self.root.collected_at()}
+        else:
+            packet = json.loads((self.root / 'var/diaspora-latest.json').read_text(encoding='utf-8'))
         config = self.config()
         base = config.get('DIASPORA_BASE_URL', 'https://diaspora.sauliai.lt')
         if source != urlsplit(base).hostname or not isinstance(index, int) or index < 0:

@@ -8,7 +8,7 @@ Pagrindinė aplikacija: https://signalas-ecru.vercel.app/. Python API (`api/inde
 
 Vercel **Production** paslaptys: `OPENAI_API_KEY`, `OPENAI_MODEL` (nenustačius naudojamas `openai_analysis.DEFAULT_ANALYSIS_MODEL`), `DATABASE_URL` (valdo Neon integracija), `SIGNALAS_ACCESS_PASSWORD` (bent 16 ženklų, atskiras aplikacijos prieigos slaptažodis), `DIASPORA_BASE_URL`, `DIASPORA_USERNAME`, `DIASPORA_PASSWORD`. Nieko nevadinkite NEXT_PUBLIC_ ar VITE_. Kiekvienas API turinio ir medijos skaitymas tikrina prisijungimą; keičiantiems veiksmams papildomai reikia tos pačios kilmės ir CSRF. Be prieigos slaptažodžio API užsidaro, o demonstraciniai duomenys neįjungiami automatiškai.
 
-Duomenų bazėje `signalas_fetches` saugo surinkimų kopijas, `signalas_content` – naujausius turinio vienetus, `signalas_state` – kontekstą, datas ir analizės/būsenos duomenis; `signalas_jobs` valdo rinkimo blokavimą. Kontekstas išsaugomas vieną kartą, ir lygiagretūs bandymai jo neperrašo. Originalūs medijos adresai saugomi kaip metaduomenys; prieigos reikalaujančios nuotraukos perduodamos tik prisijungus, jų failai diske nekaupiami.
+Duomenų bazėje `signalas_fetches` saugo surinkimų manifestus ir senąsias kopijas, `signalas_content` – naujausius turinio vienetus, `signalas_state` – kontekstą, datas ir analizės/būsenos duomenis; `signalas_jobs` valdo rinkimo blokavimą. Kontekstas išsaugomas vieną kartą, ir lygiagretūs bandymai jo neperrašo. Originalūs medijos adresai saugomi kaip metaduomenys; prieigos reikalaujančios nuotraukos perduodamos tik prisijungus, jų failai diske nekaupiami.
 
 Vercel funkcijos trukmė – iki 300 s. Viršijus šią vykdymo ribą ankstesnė sėkminga kopija lieka duomenų bazėje; blokavimas baigia galioti po 6 min. Bendras įrašų skaičiaus limitas netaikomas. Ilgalaikiams dideliems rinkimams vėliau gali reikėti užduočių eilės; atskiras mokamas worker ar planas dabar nekuriamas.
 
@@ -24,11 +24,25 @@ Vercel funkcijos trukmė – iki 300 s. Viršijus šią vykdymo ribą ankstesnė
 
 ## Analizė po duomenų surinkimo
 
-Paspaudus „Atnaujinti duomenis“ arba suveikus foniniam grafikui, sėkmingai surinkti įrašai ir komentarai išsaugomi Neon, o naujas arba pasikeitęs turinys patenka į teksto analizės eilę. Viena užklausa vertina vieną turinio vienetą ir iškart išsaugo naratyvų bei termometro rezultatą. Bendro kiekio limito nėra. Galiojantys rezultatai pakartotinai neskaičiuojami; pakeitus tekstą / diskusijos kontekstą, pratybas, taisykles, registrą arba modelį reikia naujo vertinimo. Pirmas surinkimas po šio atnaujinimo gali pervertinti ankstesnį rinkinį ir naudoti API kreditus.
+Paspaudus „Atnaujinti duomenis“ arba suveikus foniniam grafikui, sėkmingai surinkti įrašai ir komentarai išsaugomi Neon, o naujas arba pasikeitęs turinys patenka į teksto analizės eilę. Viena AI užklausa vertina vieną turinio vienetą ir iškart išsaugo naratyvų bei termometro rezultatą. Bendro kiekio limito nėra. Galiojantys rezultatai pakartotinai neskaičiuojami; pakeitus tekstą / diskusijos kontekstą, pratybas, taisykles, registrą arba modelį reikia naujo vertinimo. Pirmas surinkimas po šio atnaujinimo gali pervertinti ankstesnį rinkinį ir naudoti API kreditus.
 
 Eilę vykdo Vercel fone pagal GitHub Actions saugų periodinį paleidimą, net kai naršyklė uždaryta. Atidaryta aplikacija taip pat gali pagreitinti laukiančią eilę. Visa būsena ir rezultatai laikomi Neon. Datos keitimas nieko nerenka ir nepradeda naujos eilės. Pasibaigus kreditams ar nutrūkus ryšiui, eilė sustoja, lemputė tampa oranžinė. Prieigos, kvotos ar ryšio klaidos automatiškai pakartotinai bandomos tik po kito sėkmingo kasvalandinio surinkimo; ištaisius priežastį, mygtukas „Atnaujinti duomenis“ leidžia bandyti ir anksčiau. Jei vieno vieneto AI atsakymas neįveikia validacijos, jis saugiai pažymimas „Reikia peržiūros“, nėra skaičiuojamas kaip atlikta AI klasifikacija, o likusi eilė tęsiama. Neužbaigtos HTTP užklausos rezultatas gali būti nežinomas: pakartojimas po proceso nutrūkimo gali turėti papildomą API kainą; sėkmingai Neon įrašyti vertinimai nekartojami.
 
 Naudojamas esamas Responses API su `store:false`, tik tekstas. Nuotraukos, garsas ir vaizdo įrašai automatiškai neinterpretuojami; toks termometro turinys lieka peržiūrai. Visos eilės, vertinimų ir paslaugų būsenos laikomos esamoje Neon `signalas_state` lentelėje, schema nekeičiama. API tęsimui reikia prisijungimo, leistinos kilmės ir CSRF.
+
+## Perdavimo ir eilės atkūrimas (2026-10-23)
+
+Neon HTTP 402 reiškia išnaudotą duomenų bazės kvotą, o ne netinkamą laikotarpį ar prarastą turinį. API grąžina aiškią 503 būseną su `database_quota`, o lemputė rodo sustabdytą srautą ir paaiškinimą. Kvotą atkuria paskyros savininkas Neon konsolėje.
+
+Nauji surinkimai `signalas_fetches` saugo tik metaduomenis ir dabartinei paskyros imčiai priklausančių ID sąrašą (`storage_version=2`). Kiekvienas įrašas / komentaras laikomas vieną kartą `signalas_content`, pagal `(scope, source, content_id)`. Įrašomi tik nauji arba pasikeitę vienetai, įskaitant pakeistus sąveikų skaitiklius. Ankstesnės pilnos kopijos paliekamos atkūrimui; nauji manifestai nėra istorinės turinio versijos. Dabartinis sąrašas riboja ir miniatiūrų prieigą.
+
+Komentaras saugo `parent_id`. Pirminis įrašas ir ankstesni komentarai atkuriami atmintyje tik konkrečiam vertinimui; jų tekstai nekopijuojami į kiekvieną duomenų bazės eilutę. Senasis formatas skaitomas suderinamai, galiojančių turinio žymų ir rankinių sprendimų nekeičia. Termometro diskusija iš vieną kartą pateikto konteksto sąrašo atveriama tik išskleidus „Diskusijos kontekstas“.
+
+Rinkiklis vis dar perskaito visus paskyrai matomo srauto ir savo profilio puslapius, nes senas įrašas gali gauti naujų ar redaguotų komentarų. Vien skaitiklių lygybė nėra patikimas pakeitimų žurnalas. Jei šaltinis pateikia ETag arba Last-Modified, siunčiama sąlyginė užklausa: tik tikras autorizuotas HTTP 304 leidžia pakartotinai naudoti ankstesnį įrašą ir jo komentarus. Jei tokių žymų nėra arba šaltinis grąžina 200, skaitomos pilnos detalės. Detalės tikrinamos iki keturių lygiagrečių užklausų, o patvirtinta originalo nuoroda pakartotinai naudojama vietoje naujos HTML užklausos. Tai nėra visos platformos administracinė prieiga ar pažadas, kad pirmas didžiulis rinkimas tilps į 300 s.
+
+Analizės vykdymas vienoje ribotos trukmės užklausoje pakartotinai naudoja tą pačią surinkimo kopiją. Eilei Postgres grąžina tik suderinamų rezultatų ID ir žymas, o naujas rezultatas atominiu JSONB veiksmu pridedamas serveryje, nesiunčiant visos istorijos pirmyn ir atgal. Būsenos ir miniatiūrų tikrinimas nebeskaito viso srauto. Naršyklė prieš siųsdamasi pilną rodinį tikrina mažą versijos žymą; dideli JSON atsakymai glaudinami.
+
+Prieš mokamą užklausą Neon įrašoma konkretaus vieneto vykdymo žyma. Jei procesas nutrūko ir ankstesnio vykdytojo blokavimas baigėsi, būtent tas vienetas paliekamas „Reikia peržiūros“ ir automatiškai pakartotinai neapmokestinamas. Netinkamas atsakymas ar laiko viršijimas taip pat nestabdo kitų vienetų. Bendra kvotos, prieigos ar duomenų bazės klaida sustabdo mokamus kvietimus ir nėra paverčiama masiniu viso turinio pažymėjimu peržiūrai.
 
 ## Foninis grafikas
 

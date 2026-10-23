@@ -24,12 +24,18 @@ window.SignalLiveData=(()=>{
   async function refresh(){
     if(!active())return;
     const revision=selectionRevision;
+    if(data.data_revision){
+      const check=await fetch('/api/dashboard/revision',{cache:'no-store'});
+      if(!check.ok){const detail=await check.json().catch(()=>({}));throw Error(detail.error||'Duomenų atnaujinti nepavyko. Rodoma paskutinė sėkmingai gauta imtis.');}
+      const latest=await check.json();
+      if(latest.data_revision===data.data_revision||revision!==selectionRevision)return;
+    }
     const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
-    if(!response.ok)throw Error('Duomenų atnaujinti nepavyko. Rodoma paskutinė sėkmingai gauta imtis.');
+    if(!response.ok){const detail=await response.json().catch(()=>({}));throw Error(detail.error||'Duomenų atnaujinti nepavyko. Rodoma paskutinė sėkmingai gauta imtis.');}
     const latest=await response.json();
     if(latest.mode!=='live'||revision!==selectionRevision)return;
     token=latest.csrf;
-    if(latest.collected_at!==data.collected_at||latest.start!==data.start||latest.end!==data.end||latest.analysis_revision!==data.analysis_revision){
+    if(latest.data_revision!==data.data_revision||latest.collected_at!==data.collected_at||latest.start!==data.start||latest.end!==data.end||latest.analysis_revision!==data.analysis_revision){
       data=latest;window.SignalDemo?.refreshLive(data,{preserveDay:true});
     }
   }
@@ -76,9 +82,8 @@ window.SignalLiveData=(()=>{
     await window.SignalSession?.ready;
     await window.SignalExerciseContext?.ready;
     const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
-    if(!response.ok)throw Error('Nepavyko patikrinti pasirinkto duomenų šaltinio. Demonstraciniai duomenys neįjungiami automatiškai.');
+    if(!response.ok){const detail=await response.json().catch(()=>({}));throw Error(detail.error||'Nepavyko įkelti duomenų iš serverio.');}
     data=await response.json();token=data.csrf;
-    if(active())await syncContext();
     return data;
   }
   const ready=initialize();

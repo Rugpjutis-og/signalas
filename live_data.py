@@ -15,6 +15,7 @@ from thermometer_policy import VERSION as THERMOMETER_RULES_VERSION
 import monitoring
 import narrative_registry
 import narrative_projection
+from discussion_context import DiscussionIndex, compact_records, COMMENT_PART
 
 ZONE = ZoneInfo("Europe/Vilnius")
 
@@ -36,9 +37,10 @@ def load(root=ROOT):
         "records": [], "collected_at": datetime.now(ZONE).isoformat(), "source": "diaspora.sauliai.lt",
         "coverage": "account_visible_stream_first_page", "stream_complete": False}
     records = {}
-    for unit in packet["records"]:
+    for unit in compact_records(packet["records"]):
         records.setdefault((unit["source"], unit["id"]), unit)
     packet["records"] = list(records.values())
+    discussions = DiscussionIndex(packet['records'])
     context_path = root / "var/live-context.json"
     context = context_data(json.loads(context_path.read_text(encoding="utf-8"))) if context_path.exists() else None
     analysis_path = root / "var/openai-analysis-pilot.json"
@@ -51,7 +53,7 @@ def load(root=ROOT):
         if (unit and (analysis.get("analysis_executed") is True or
                       analysis.get("processing_disposition") == "needs_review") and
                 analysis.get("exercise_context") == context
-                and analysis.get("content_fingerprint") == fingerprint(unit)):
+                and analysis.get("content_fingerprint") == fingerprint(discussions.expand(unit))):
             assessed[key] = analysis
     return packet, context, assessed
 
@@ -173,6 +175,7 @@ def platform(period=None, root=ROOT, *, start_date=None, end_date=None):
 
 def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     packet, context, analyses = load(root)
+    discussions = DiscussionIndex(packet['records'])
     from thermometer_review import applicable, key as review_key, saved as saved_reviews
     manual_reviews = saved_reviews(root)
     start, end = bounds(packet, period, root, start_date=start_date, end_date=end_date)
@@ -194,7 +197,7 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
                       "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
                       "evidence": [{"kind": "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
         manual = manual_reviews.get(review_key(record['source'], record['id']))
-        if applicable(manual, record, context):
+        if applicable(manual, discussions.expand(record), context):
             assessment = {"category": manual['category'], "status": "assessed", "method": "manual_review",
                           "reason": manual['reason'], "context_version": None,
                           "reviewed_parts": ["analitiko peržiūra"],
@@ -212,6 +215,8 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     return {"mode": "live", "period": period, "start": start.isoformat(), "end": end.isoformat(),
             "coverage": packet["coverage"], "collection_scope": coverage(packet,start,end),
             "contexts": [], "exercise_context": context,
+            "context_records": [{k: r.get(k) for k in ('source', 'kind', 'parent_id') + COMMENT_PART}
+                                for r in packet['records']],
             "analysis": "OpenAI teksto bandymas; medija neperžiūrėta.", "rules_version": THERMOMETER_RULES_VERSION,
             "units": rows,
             "days": days, **proportions(rows)}

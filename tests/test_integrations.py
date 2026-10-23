@@ -138,6 +138,68 @@ class IntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "puslapiavimo"):
             client.stream("/stream.json")
 
+    def test_refresh_reuses_original_url_but_detects_edited_old_comment(self):
+        client = diaspora_client.DiasporaClient('https://example.org', 'user', 'test')
+        post = {'id': 1, 'guid': 'p', 'text': 'Original', 'post_type': 'StatusMessage',
+                'created_at': '2026-10-23T09:00:00Z', 'author': {'guid': 'person'},
+                'interactions': {'comments_count': 1, 'comments': [{'guid': 'c', 'text': 'Edited old comment',
+                    'created_at': '2026-10-23T10:00:00Z'}]}}
+        calls = []
+        def json_api(path):
+            calls.append(path)
+            if path == '/u/user': return {'guid': 'person', 'is_own_profile': True}
+            return post if path.startswith('/posts/') else [post]
+        client.json = json_api
+        client.canonical = unittest.mock.Mock(side_effect=AssertionError('must reuse verified URL'))
+        packet = client.collect(compact=True, previous={'records': [
+            {'source': 'example.org', 'id': 'p', 'sourceUrl': 'https://example.org/verified-original'}]})
+        self.assertEqual(sum(p.startswith('/posts/') for p in calls), 1, 'feed/profile duplicate expanded only once')
+        self.assertEqual(packet['records'][1]['text'], 'Edited old comment')
+        self.assertNotIn('conversation_context', packet['records'][1])
+        self.assertEqual(packet['records'][1]['parent_id'], 'p')
+
+    def test_authenticated_conditional_request_requires_real_304(self):
+        client = diaspora_client.DiasporaClient('https://example.org', 'user', 'test')
+        client.opener = unittest.mock.Mock()
+        client.opener.open.side_effect = HTTPError('https://example.org/posts/1.json', 304, 'Not Modified', {}, None)
+        body, _, _, _ = client.request('/posts/1.json', validators={'etag': '"etag-test"'}, include_headers=True)
+        self.assertIsNone(body)
+        self.assertEqual(client.opener.open.call_args.args[0].get_header('If-none-match'), '"etag-test"')
+        with self.assertRaises(ValueError):
+            client.request('/posts/1.json', validators={'etag': 'bad\r\nheader'}, include_headers=True)
+        self.assertIsNone(client.opener.open.call_args.args[0].get_header('If-none-match'))
+
+    def test_304_reuses_complete_cached_thread_and_checks_source(self):
+        client = diaspora_client.DiasporaClient('https://example.org', 'user', 'test')
+        entry = {'id': 1, 'guid': 'p'}
+        client.json = lambda path: {'guid': 'person', 'is_own_profile': True} if path == '/u/user' else [entry]
+        client.post_json = unittest.mock.Mock(return_value=(None, {'etag': '"test"'}))
+        client.canonical = unittest.mock.Mock(side_effect=AssertionError('must reuse canonical URL'))
+        cached = {'source': 'example.org', 'id': 'p', 'kind': 'post', 'text': 'Original',
+                  'sourceUrl': 'https://example.org/verified', 'sourceValidators': {'etag': '"test"'}}
+        comment = {'source': 'example.org', 'id': 'c', 'kind': 'comment', 'parent_id': 'p', 'text': 'Original comment'}
+        result = client.collect(compact=True, conditional=True, previous={'records': [cached, comment]})
+        client.post_json.assert_called_once_with(1, {'etag': '"test"'})
+        self.assertEqual(result['records'], [cached, comment])
+        self.assertEqual(result['collection_stats']['not_modified'], 1)
+        self.assertEqual(result['collection_stats']['detail_bodies'], 0)
+
+    def test_bounded_parallel_collection_preserves_unique_post_order(self):
+        from types import SimpleNamespace
+        barrier = threading.Barrier(4)
+        entries = [{'id': i, 'guid': str(i)} for i in range(4)]
+        client = diaspora_client.DiasporaClient('https://example.org', 'user', 'test')
+        client.json = lambda path: {'guid': 'person', 'is_own_profile': True} if path == '/u/user' else entries
+        def detail(path):
+            barrier.wait(timeout=5)
+            i = path.split('/')[2].split('.')[0]
+            return {'id': int(i), 'guid': i, 'text': 'Original', 'post_type': 'StatusMessage',
+                    'created_at': '2026-10-23T10:00:00Z', 'author': {'guid': 'person'}, 'interactions': {'comments': []}}
+        client.fork = lambda: SimpleNamespace(json=detail, canonical=lambda i: None)
+        packet = client.collect(compact=True, workers=4)
+        self.assertEqual([r['id'] for r in packet['records']], ['0', '1', '2', '3'])
+        self.assertEqual(packet['post_count'], 4)
+
     def test_previous_discussion_only_and_legacy_context(self):
         unit = {"id": "test", "text": "text", "published_at": "2026-10-21T10:00:00Z",
                 "conversation_context": [{"id": "past", "published_at": "2026-10-21T09:00:00Z"},

@@ -78,7 +78,7 @@ class BackgroundTickTests(unittest.TestCase):
     def test_hourly_collection_and_queue_progress_without_browser(self):
         self.repo.collect.return_value={'status':'ok','collected_at':self.current.isoformat()}
         states=[{'status':'pending','remaining':1},{'status':'complete','remaining':0}]
-        def work(_):
+        def work(_, **kwargs):
             state=states.pop(0);self.db['analysis-job.json']=state;return state
         self.db['analysis-job.json']={'status':'pending','remaining':2}
         with patch.object(background_tick,'step',side_effect=work) as run:
@@ -111,7 +111,7 @@ class BackgroundTickTests(unittest.TestCase):
             state={'status':'pending','remaining':2}
             self.db['analysis-job.json']=state
             return state
-        def work(_):
+        def work(_, **kwargs):
             state={'status':'complete','remaining':0}
             self.db['analysis-job.json']=state
             return state
@@ -123,7 +123,7 @@ class BackgroundTickTests(unittest.TestCase):
         self.assertEqual(outcome['status'],'ok')
         self.assertEqual(outcome['analysis'],'complete')
         enqueue.assert_called_once_with(self.repo)
-        step.assert_called_once_with(self.repo)
+        step.assert_called_once_with(self.repo, deadline=235, monotonic=self.monotonic)
 
     def test_capacity_retries_after_cooldown(self):
         self.db['analysis-job.json']={'status':'error','reason':'api_capacity','remaining':2,
@@ -135,7 +135,7 @@ class BackgroundTickTests(unittest.TestCase):
             self.current+=timedelta(minutes=15)
             self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'ok')
         enqueue.assert_called_once_with(self.repo)
-        paid.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo, deadline=235, monotonic=self.monotonic)
         self.repo.collect.assert_not_called()
 
     def test_api_request_rate_limit_retries_after_cooldown(self):
@@ -150,7 +150,7 @@ class BackgroundTickTests(unittest.TestCase):
             self.current+=timedelta(minutes=45)
             self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'ok')
         enqueue.assert_called_once_with(self.repo)
-        paid.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo, deadline=235, monotonic=self.monotonic)
         self.repo.collect.assert_not_called()
 
     def test_switch_from_flex_to_standard_resumes_without_old_cooldown(self):
@@ -161,7 +161,7 @@ class BackgroundTickTests(unittest.TestCase):
              patch.object(background_tick,'step',return_value={'status':'complete','remaining':0}) as paid:
             self.assertEqual(background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)['status'],'ok')
         enqueue.assert_called_once_with(self.repo)
-        paid.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo, deadline=235, monotonic=self.monotonic)
         self.repo.collect.assert_not_called()
 
     def test_repeated_rate_limit_remains_paused_without_new_failure_alert(self):
@@ -184,7 +184,7 @@ class BackgroundTickTests(unittest.TestCase):
             result=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
         self.assertEqual(result['status'],'ok')
         fallback.assert_called_once_with(self.repo)
-        paid.assert_called_once_with(self.repo)
+        paid.assert_called_once_with(self.repo, deadline=235, monotonic=self.monotonic)
         self.repo.collect.assert_not_called()
 
 if __name__=='__main__':unittest.main()

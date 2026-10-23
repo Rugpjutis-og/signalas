@@ -67,7 +67,7 @@ def tick(repo, *, clock=None, monotonic=None):
     if collection != 'already_running':
         while state.get('status') in ('pending', 'running') and monotonic() - started < MAX_ANALYSIS_SECONDS:
             before = state.get('remaining')
-            state = step(repo)
+            state = step(repo, deadline=started + MAX_ANALYSIS_SECONDS, monotonic=monotonic)
             if state.get('status') == 'already_running' or state.get('remaining') == before:
                 break
             progressed += 1

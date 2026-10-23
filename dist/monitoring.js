@@ -16,7 +16,7 @@ window.SignalMonitoring=(()=>{
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
     try{
       const response=await fetch('/api/monitoring/status',{cache:'no-store',signal:controller.signal});
-      if(!response.ok)throw Error('status');
+      if(!response.ok){const detail=await response.json().catch(()=>({}));paint(false,detail.description||detail.error||'Nepavyko patikrinti ryšio su serveriu.');return;}
       const status=await response.json();
       paint(status.state==='watching'&&navigator.onLine!==false,status.description);
     }catch(_){paint(false,'Nepavyko patikrinti ryšio su serveriu.');}
