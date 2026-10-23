@@ -12,7 +12,7 @@ REASONS = {
     "S3": "Įtampos mažinimas ir pagarba žmonių orumui",
     "S4": "Demokratinis dalyvavimas, teisės ir solidarumas",
     "D1": "Patvirtintai klaidingas ar iškreiptas žalingas teiginys",
-    "D2": "Smurto, prievartos ar diskriminacijos kurstymas",
+    "D2": "Smurto, diskriminacijos ir neapykantos kurstymas",
     "D3": "Kolektyvinis kaltinimas ar grupės pavertimas priešu",
     "D4": "Aiškus demokratinio dalyvavimo ar saugumo griovimas",
 }
