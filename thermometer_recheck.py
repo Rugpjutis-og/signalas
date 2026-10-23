@@ -1,5 +1,6 @@
 """One explicitly authorized, finite Sol review pass; execution stays on Vercel."""
 import copy
+import json
 import uuid
 import time
 from datetime import datetime, timezone
@@ -36,41 +37,32 @@ def start(repo):
     old = repo.read(STATE, {}) or {}
     if old:
         return status(repo)
-    owner = uuid.uuid4().hex
-    acquired = repo.sql('''INSERT INTO signalas_jobs(scope,owner,expires_at)
-        VALUES($1,$2,now()+interval '6 minutes') ON CONFLICT(scope) DO UPDATE
-        SET owner=EXCLUDED.owner,expires_at=EXCLUDED.expires_at
-        WHERE signalas_jobs.expires_at<now() RETURNING owner''', [repo.scope, owner])['rows']
-    if not acquired:
-        return {'status': 'already_running'}
-    try:
-        repo.values.clear()
-        if repo.read(STATE):
-            return status(repo)
-        report = thermometer(root=repo)
-        records, context, _ = load(repo)
-        by_id = {(r['source'], r['id']): r for r in records['records']}
-        targets = []
-        for unit in report['units']:
-            if unit['assessment']['status'] not in ELIGIBLE:
-                continue
-            original = repo.expand_unit(by_id[unit['source'], unit['id']])
-            targets.append({'source': unit['source'], 'id': unit['id'],
-                            'content_fingerprint': fingerprint(original),
-                            'exercise_id': original.get('exercise_id')})
-        job = {'status': 'pending' if targets else 'complete', 'run_id': uuid.uuid4().hex,
-               'processing_model': MODEL, 'kind': 'thermometer_recheck',
-               'targets': targets, 'exercise_context': context, 'rules_version': VERSION,
-               'registry_version': registry(repo)['version'], 'cursor': 0,
-               'total': len(targets), 'remaining': len(targets), 'completed': 0,
-               'classified': 0, 'review_required': 0, 'failed': 0, 'skipped': 0,
-               'started_at': now(), 'updated_at': now(),
-               'start': report['start'], 'end': report['end']}
-        repo.write(STATE, job)
-        return status(repo)
-    finally:
-        repo.sql('DELETE FROM signalas_jobs WHERE scope=$1 AND owner=$2', [repo.scope, owner])
-
+    report = thermometer(root=repo)
+    records, context, _ = load(repo)
+    by_id = {(r['source'], r['id']): r for r in records['records']}
+    targets = []
+    for unit in report['units']:
+        if unit['assessment']['status'] not in ELIGIBLE:
+            continue
+        original = repo.expand_unit(by_id[unit['source'], unit['id']])
+        targets.append({'source': unit['source'], 'id': unit['id'],
+                        'content_fingerprint': fingerprint(original),
+                        'exercise_id': original.get('exercise_id')})
+    job = {'status': 'pending' if targets else 'complete', 'run_id': uuid.uuid4().hex,
+           'processing_model': MODEL, 'kind': 'thermometer_recheck',
+           'targets': targets, 'exercise_context': context, 'rules_version': VERSION,
+           'registry_version': registry(repo)['version'], 'cursor': 0,
+           'total': len(targets), 'remaining': len(targets), 'completed': 0,
+           'classified': 0, 'review_required': 0, 'failed': 0, 'skipped': 0,
+           'started_at': now(), 'updated_at': now(),
+           'start': report['start'], 'end': report['end']}
+    # Freeze the snapshot without interrupting an in-flight primary assessment.
+    # Atomic insert makes competing starts idempotent; per-unit execution still
+    # uses the shared six-minute lease and revalidates every frozen fingerprint.
+    repo.sql("""INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,$3::jsonb)
+        ON CONFLICT(scope,name) DO NOTHING""", [repo.scope, STATE, json.dumps(job)])
+    repo.values.pop(STATE, None)
+    return status(repo)
 
 def advance(repo, state, outcome):
     state[outcome] = state.get(outcome, 0) + 1

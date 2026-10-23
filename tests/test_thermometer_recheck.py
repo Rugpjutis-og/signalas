@@ -1,4 +1,5 @@
 import copy
+import json
 import unittest
 from unittest.mock import Mock, patch
 
@@ -19,7 +20,11 @@ class RecheckTests(unittest.TestCase):
         self.repo.write = lambda name, value: self.db.update({name: copy.deepcopy(value)})
         self.repo.latest = lambda: {'records': [self.unit]}
         self.repo.refresh_snapshot = Mock()
-        self.repo.sql = Mock(return_value={'rows': [['owner']]})
+        def sql(statement, params=None):
+            if 'INSERT INTO signalas_state' in statement:
+                self.db.setdefault(params[1], json.loads(params[2]))
+            return {'rows': [['owner']]}
+        self.repo.sql = Mock(side_effect=sql)
         self.repo.append_analysis = lambda value: self.db.setdefault(analysis_result_name(value), copy.deepcopy(value))
         self.original = {'source_reference': {'source': 'test', 'id': '1'},
                          'result': {'thermometer_status': 'needs_review', 'narrative_analysis': {'original': True}},
