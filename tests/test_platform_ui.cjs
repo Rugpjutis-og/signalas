@@ -2,8 +2,8 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const root=path.resolve(__dirname,'..');
 const read=name=>JSON.parse(fs.readFileSync(path.join(root,'dist/demo',name)));
 const sources=['source-content.js','thermometer.js','platform-overview.js'].map(f=>fs.readFileSync(path.join(root,'dist',f),'utf8'));
-function runtime(fetch){const context={window:{},URL,Intl,Date,fetch};vm.createContext(context);for(const code of sources)vm.runInContext(code,context);return context.window;}
-function node(){const children=new Map();return {innerHTML:'',isConnected:true,attributes:{},setAttribute(k,v){this.attributes[k]=v},querySelector(key){if(!children.has(key))children.set(key,node());return children.get(key)},querySelectorAll(){return []}};}
+function runtime(fetch){const context={window:{},URL,Intl,Date,fetch,FormData:class {constructor(form){return Object.entries(form.values)}}};vm.createContext(context);for(const code of sources)vm.runInContext(code,context);return context.window;}
+function node(){const children=new Map();return {innerHTML:'',isConnected:true,attributes:{},focus(){},scrollIntoView(){},setAttribute(k,v){this.attributes[k]=v},querySelector(key){if(!children.has(key))children.set(key,node());return children.get(key)},querySelectorAll(){return []}};}
 (async()=>{
  const thermo=read('thermometer-7.json');
  thermo.units[0].is_demo=false;thermo.units[0].sourceUrl='https://pod.test/p/from-api';thermo.units[0].media=[{kind:'image',thumbnailUrl:'https://pod.test/photo/small.jpg',originalUrl:'https://pod.test/photo/full.jpg',alt:'Įrašo nuotrauka'}];
@@ -63,6 +63,45 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('data-thermo-review'));
  assert(reviewMarkup.includes('Išsaugoti vertinimą'));
  assert(reviewMarkup.includes('name="verified_claim_source"'));
+ assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
+ for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
+ assert(liveRoot.innerHTML.includes('Peržiūrėti ir priskirti kryptį'));
+ // Saving one decision refetches the report immediately and confirms the persisted category.
+ let shown=structuredClone(liveThermo),savedPayload=null;
+ const savingWindow=runtime(async()=>({ok:true,json:async()=>shown}));
+ savingWindow.SignalLiveData={saveThermometerReview:async payload=>{
+   savedPayload=payload;
+   shown=structuredClone(shown);
+   const unit=shown.units.find(u=>u.assessment.status!=='assessed');
+   unit.assessment={...unit.assessment,status:'assessed',category:payload.category,method:'manual_review'};
+   shown.assessed+=1;shown.unassessed-=1;
+ }};
+ const savingRoot=node();await savingWindow.SignalThermometer.mount(savingRoot,7);
+ const pendingUnit=shown.units.find(u=>u.assessment.status!=='assessed');
+ const form=node();form.dataset={source:pendingUnit.source,id:pendingUnit.id};
+ form.reportValidity=()=>true;form.values={category:'neutral',reason_code:'N1',reason:'Taiki nuomonė.'};
+ await savingRoot.onsubmit({preventDefault(){},target:{closest:()=>form}});
+ assert.equal(savedPayload.category,'neutral');
+ assert(savingRoot.innerHTML.includes(`Aprėptis: ${shown.assessed} iš ${shown.total}`));
+ assert(savingRoot.querySelector('[data-thermo-review-confirmation]').textContent.includes('įskaityta'));
+ assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Kryptis patvirtinta rankiniu būdu'));
+ // A failed save keeps the form available and does not show a successful classification.
+ savingWindow.SignalLiveData.saveThermometerReview=async()=>{throw Error('Išsaugoti nepavyko');};
+ const retryForm=node();retryForm.dataset=form.dataset;retryForm.values=form.values;retryForm.reportValidity=()=>true;
+ await savingRoot.onsubmit({preventDefault(){},target:{closest:()=>retryForm}});
+ assert.equal(retryForm.querySelector('[type=submit]').disabled,false);
+ assert.equal(retryForm.querySelector('.thermo-review-error').textContent,'Išsaugoti nepavyko');
+
+ // Only review-required and failed assessments allow a manual direction.
+ for(const status of ['needs_review','error','waiting_data','not_analyzed','assessed']){
+   const scoped=structuredClone(liveThermo);
+   scoped.units.forEach(unit=>{unit.assessment.status=status;});
+   const scopedWindow=runtime(async()=>({ok:true,json:async()=>scoped}));
+   const scopedRoot=node();await scopedWindow.SignalThermometer.mount(scopedRoot,7);
+   scopedRoot.onclick({target:{closest:selector=>selector==='#thermo-content-toggle'?{}:null}});
+   assert.equal(scopedRoot.querySelector('#thermo-evidence').innerHTML.includes('data-thermo-review'),
+     ['needs_review','error'].includes(status),status);
+ }
  const notAnalyzed=structuredClone(liveThermo);
  notAnalyzed.units.forEach(unit=>{unit.assessment.status='not_analyzed';});
  const pendingWindow=runtime(async()=>({ok:true,json:async()=>notAnalyzed}));

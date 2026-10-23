@@ -352,3 +352,9 @@ Vercel projektui prijungta Neon Postgres `signalas-data` (Free, Frankfurt). Viet
 `signalas_fetches` saugo surinkimų JSON kopijas, `signalas_content` – naujausius įrašus ir komentarus su medijos metaduomenimis bei sąveikomis. Nuotraukų failai nekopijuojami. Šaltinio/paskyros sritis atskirta; pakartotinis siuntimas nedubliuoja turinio. Debesijos klaida nepašalina vietinės kopijos ir grąžinama atskirai `cloud_storage` rezultate. Pakartoti paskutinės kopijos siuntimą: `python3 cloud_storage.py`.
 
 Duomenų bazė nėra viešas API. Vercel sąsaja lieka demonstracinė iki atskiros autentifikuotos skaitymo integracijos. Automatinis rinkimas vis dar vyksta vietiniame kompiuteryje per esamą kasvalandinę užduotį. Duomenų kopijų kaupimą riboja pasirinkto nemokamo plano talpa; automatinio privataus turinio trynimo ar mokamo plano įjungimo nėra.
+
+## Rankinis termometro krypties patvirtinimas
+
+„Nuotaikų termometras“ → „Neįvertinta · Peržiūrėti ir priskirti kryptį“ atveria turinio sąrašą. Įrašams ir komentarams, kuriems reikia peržiūros arba vertinimas baigėsi klaida, rodoma rankinio patvirtinimo forma su trimis kryptimis: stabilizuojantis, neutralus, destabilizuojantis. Pasirenkamas pagrindo kodas ir trumpai pagrindžiamas sprendimas; ištrauka būtina stabilizuojančiai ir destabilizuojančiai krypčiai, o D1 atveju būtinas patikrinto fakto šaltinis. Duomenų laukiantiems ir dar nepradėto AI vertinimo įrašams rankinio patvirtinimo forma nerodoma.
+
+Naudojamas esamas autentifikuotas, CSRF apsaugotas `/api/thermometer/review` veiksmas ir „Neon“ saugykla. Po išsaugojimo išvaloma termometro ataskaitų atmintinė, iš naujo gaunama pasirinkto laikotarpio statistika ir parodomas patvirtinimas. Rankinis sprendimas skaičiuojamas vieną kartą, turi pirmenybę prieš AI ir galioja tik tam pačiam turiniui, diskusijos bei pratybų kontekstui ir taisyklių versijai. Formos išsaugojimas negali perjungti tuo metu naudotojo pakeisto laikotarpio.

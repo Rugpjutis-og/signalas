@@ -82,6 +82,23 @@ class LiveDataTests(unittest.TestCase):
                    "source": "pod.test", "coverage": "account_visible_stream_first_page", "records": self.records})
         self.assertEqual(live_data.thermometer(7, self.root)["assessed"], 0)
 
+    def test_manual_directions_override_ai_for_posts_and_comments(self):
+        for unit in self.records:
+            for category, code in [('stabilizing', 'S2'), ('neutral', 'N1'), ('destabilizing', 'D2')]:
+                with self.subTest(unit=unit['id'], category=category):
+                    self.write("openai-analysis-pilot.json", [self.analysis(unit)])
+                    self.write("thermometer-reviews.json", {thermometer_review.key(unit['source'], unit['id']): {
+                        "content_fingerprint": live_data.fingerprint(unit), "exercise_id": None,
+                        "exercise_context": None, "rules_version": thermometer_review.VERSION,
+                        "category": category, "reason_code": code, "reason": "Analitiko sprendimas.",
+                        "evidence": unit['text']}})
+                    for _ in range(2):
+                        report = live_data.thermometer(7, self.root)
+                        self.assertEqual((report['total'], report['assessed'], report['unassessed']), (2, 1, 1))
+                        self.assertEqual(next(c for c in report['categories'] if c['id'] == category)['percent'], 100)
+                        row = next(r for r in report['units'] if r['id'] == unit['id'])
+                        self.assertEqual(row['assessment']['method'], 'manual_review')
+
     def test_bound_analysis_counts_unknown_stances_and_dedup(self):
         self.write("openai-analysis-pilot.json", [self.analysis(), self.analysis()])
         data = live_data.bootstrap(self.root)
