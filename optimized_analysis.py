@@ -59,7 +59,7 @@ def ensure_plan(repo):
     state=repo.read(ca.STATE,{}) or {}
     if state.get('status') not in ('pending','running') or (state.get('queue_generation') and state.get('reason')!='queue_refresh_required'):
         return
-    if state.get('inflight') or state.get('inflight_batch'):return # Recover the older single-unit receipt first.
+    if state.get('inflight_batch'):return # Existing parallel receipts are recovered by run_locked.
     owner=uuid.uuid4().hex
     got=repo.sql("""INSERT INTO signalas_jobs(scope,owner,expires_at) VALUES($1,$2,now()+interval '6 minutes')
         ON CONFLICT(scope) DO UPDATE SET owner=EXCLUDED.owner,expires_at=EXCLUDED.expires_at
@@ -70,6 +70,18 @@ def ensure_plan(repo):
         waiting=(repo.read('background-schedule.json',{}) or {}).get('collection_waiting_until')
         if waiting and datetime.fromisoformat(waiting.replace('Z','+00:00'))>datetime.now(timezone.utc):return
         state=repo.read(ca.STATE,{}) or {}
+        if state.get('inflight'):
+            receipt=state['inflight'];ref=receipt.get('source_reference',{})
+            record=next((u for u in repo.latest()['records'] if (u['source'],u['id'])==(ref.get('source'),ref.get('id'))),None)
+            context=ca.context_data(repo.read('live-context.json'))
+            if record:
+                unit=repo.expand_unit(record)
+                prior=repo.analysis_queue_results([unit],context,ca.registry(repo)['version'],repo.config.get('OPENAI_MODEL') or ca.DEFAULT_ANALYSIS_MODEL)
+                previous=prior[-1] if prior else None
+                if ca.receipt(unit,context,repo)==receipt and eligible(repo,unit,previous,context):
+                    repo.append_analysis(ca.failure_result(repo,unit,context,'analysis_interrupted'))
+            state.pop('inflight',None);state.update(status='pending')
+            repo.write(ca.STATE,state)
         if not state.get('queue_generation') or state.get('reason')=='queue_refresh_required':
             ca.enqueue(repo)
     finally:repo.sql('DELETE FROM signalas_jobs WHERE scope=$1 AND owner=$2',[repo.scope,owner])

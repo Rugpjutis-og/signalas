@@ -150,3 +150,17 @@ class OptimizedTests(unittest.TestCase):
         with patch.object(ca,'analyze') as paid:state=ca.step(self.repo)
         paid.assert_not_called();self.assertEqual(state['status'],'complete')
         self.assertEqual(state['review_required'],2)
+
+    def test_legacy_receipt_migration_is_targeted_and_does_not_repay(self):
+        self.db[ca.STATE]={'status':'running','remaining':4,'inflight':ca.receipt(self.units[0],None,self.repo)}
+        with patch.object(ca,'analyze') as paid:opt.ensure_plan(self.repo)
+        paid.assert_not_called();self.assertNotIn('inflight',self.db[ca.STATE])
+        self.assertIn('queue_generation',self.db[ca.STATE])
+        self.assertEqual(self.db[ca.RESULTS][0]['processing_reason'],'analysis_interrupted')
+
+    def test_saved_legacy_receipt_is_not_marked_as_interrupted(self):
+        self.db[ca.RESULTS]=[{**self.result(self.units[0]),'content_fingerprint':ca.fingerprint(self.units[0])}]
+        self.db[ca.STATE]={'status':'running','remaining':4,'inflight':ca.receipt(self.units[0],None,self.repo)}
+        opt.ensure_plan(self.repo)
+        self.assertEqual(len(self.db[ca.RESULTS]),1)
+        self.assertTrue(self.db[ca.RESULTS][0]['analysis_executed'])
