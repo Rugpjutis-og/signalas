@@ -142,7 +142,7 @@ def run_step(repo, client, *, seconds=STEP_SECONDS, monotonic=None):
             batch=state['entries'][state['detail_cursor']:state['detail_cursor']+BATCH_SIZE]
             if not batch:return finish(repo,state)
             prior=previous(repo,batch,state['source'])
-            packet=client.collect_entries(batch,previous=prior,compact=True,workers=BATCH_SIZE,conditional=True)
+            packet=client.collect_entries(batch,previous=prior,compact=True,workers=BATCH_SIZE,conditional=True,allow_empty=True)
             known={(r['source'],r['id']):r for r in prior['records']}
             changed=[r for r in packet['records'] if known.get((r['source'],r['id']))!=r]
             keys={(r['source'],r['id']) for r in state['record_keys']}

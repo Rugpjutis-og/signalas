@@ -116,6 +116,17 @@ class CollectionTests(unittest.TestCase):
             self.assertTrue(publish[2]['query'].startswith('DELETE FROM signalas_state'))
             self.assertEqual(publish[2]['params'][1],'collection-stage/run/%')
             self.assertEqual(repo.values[cc.STATE]['status'],'complete')
+    def test_entire_missing_batch_can_advance_but_full_missing_collection_cannot_publish(self):
+        from diaspora_client import DiasporaClient
+        client=DiasporaClient('https://example.org','test','synthetic')
+        client.json=Mock(side_effect=DiasporaRequestError('source_http',404))
+        entries=[{'id':i,'guid':'gone'+str(i)} for i in range(4)]
+        packet=client.collect_entries(entries,workers=1,conditional=False,allow_empty=True)
+        self.assertEqual(packet['records'],[])
+        self.assertEqual(packet['collection_stats']['unavailable_details'],4)
+        with self.assertRaises(DiasporaRequestError):
+            client.collect_entries(entries,workers=1,conditional=False)
+
     def test_all_unavailable_details_cannot_publish_empty_replacement(self):
         with self.assertRaises(DiasporaRequestError):
             cc.finish(Mock(),{'entries':[{'guid':'gone'}],'record_keys':[]})

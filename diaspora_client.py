@@ -219,7 +219,7 @@ class DiasporaClient:
             'feed_pages': feed_pages, 'profile_pages': profile_pages, 'pagination_complete': True}
         return packet
 
-    def collect_entries(self, entries, *, previous=None, compact=True, workers=4, conditional=True):
+    def collect_entries(self, entries, *, previous=None, compact=True, workers=4, conditional=True, allow_empty=False):
         """Reconcile only this bounded batch; callers own pagination/checkpointing."""
         source = urlsplit(self.base).hostname
         prior = {(r.get('source'), r.get('id')): r for r in (previous or {}).get('records', [])}
@@ -309,7 +309,7 @@ class DiasporaClient:
         # GUID is the source identity; duplicate feed/profile/comment rows never
         # create additional canonical content units.
         records = list({(r['source'], r['id']): r for r in records}.values())
-        if entries and not records:
+        if entries and not records and not allow_empty:
             raise DiasporaRequestError('source_details_unavailable', 404)
         return {"collected_at": datetime.now(timezone.utc).isoformat(), "source": source,
                 "mode": "live_sample", "coverage": "account_stream_and_own_profile",
