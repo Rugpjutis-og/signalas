@@ -228,23 +228,29 @@ class DiasporaClient:
             # Details are still reconciled for OLD posts: equal counters cannot
             # prove that an earlier comment has not been edited or deleted.
             cached = prior.get((source, guid))
-            if conditional:
-                raw, validators = client.post_json(identity, (cached or {}).get('sourceValidators'))
-                if raw is None:
-                    if not cached:
-                        raise ValueError('Šaltinis grąžino 304, bet ankstesnio įrašo nėra.')
-                    comments = prior_comments.get((source, guid), [])
-                    if not cached.get('sourceUrl'):
-                        try:
-                            original = client.canonical(identity)
-                        except ValueError:
-                            original = None
-                        if original:
-                            cached = dict(cached, sourceUrl=original)
-                            comments = [dict(c, parentSourceUrl=original) for c in comments]
-                    return [cached] + comments, [], True
-            else:
-                raw, validators = client.json("/posts/" + quote(str(identity), safe="") + ".json"), None
+            try:
+                if conditional:
+                    raw, validators = client.post_json(identity, (cached or {}).get('sourceValidators'))
+                    if raw is None:
+                        if not cached:
+                            raise ValueError('Šaltinis grąžino 304, bet ankstesnio įrašo nėra.')
+                        comments = prior_comments.get((source, guid), [])
+                        if not cached.get('sourceUrl'):
+                            try:
+                                original = client.canonical(identity)
+                            except ValueError:
+                                original = None
+                            if original:
+                                cached = dict(cached, sourceUrl=original)
+                                comments = [dict(c, parentSourceUrl=original) for c in comments]
+                        return [cached] + comments, [], True
+                else:
+                    raw, validators = client.json("/posts/" + quote(str(identity), safe="") + ".json"), None
+            except DiasporaRequestError as error:
+                if error.http_status != 404:
+                    raise
+                # A stale feed reference is not authority to retain inaccessible content.
+                return [], ['Šaltinio įrašo detalės nebepasiekiamos (HTTP 404); į imtį neįtrauktos.'], False
             if raw.get("guid") != guid:
                 raise ValueError("Diasporos detalės neatitinka srauto įrašo.")
             warnings = []
@@ -291,6 +297,8 @@ class DiasporaClient:
         # GUID is the source identity; duplicate feed/profile/comment rows never
         # create additional canonical content units.
         records = list({(r['source'], r['id']): r for r in records}.values())
+        if entries and not records:
+            raise DiasporaRequestError('source_details_unavailable', 404)
         return {"collected_at": datetime.now(timezone.utc).isoformat(), "source": source,
                 "mode": "live_sample", "coverage": "account_stream_and_own_profile",
                 "stream_complete": False, "exercise_id": None, "membership": None,
@@ -298,7 +306,8 @@ class DiasporaClient:
                 "account_scope": {"feed_posts": len(raw_posts), "own_profile_posts": len(own_posts),
                                   "feed_pages": feed_pages, "profile_pages": profile_pages,
                                   "pagination_complete": True},
-                "post_count": len(seen), "comment_count": sum(p["kind"] == "comment" for p in records),
+                "post_count": sum(p["kind"] in ("post", "reshare") for p in records), "comment_count": sum(p["kind"] == "comment" for p in records),
                 "records": records, "warnings": warnings,
                 "collection_stats": {"detail_requests": len(entries), "not_modified": not_modified,
-                                     "detail_bodies": len(entries)-not_modified, "workers": workers}}
+                                     "detail_bodies": len(entries)-not_modified, "workers": workers,
+                                     "unavailable_details": sum("HTTP 404" in warning for warning in warnings)}}

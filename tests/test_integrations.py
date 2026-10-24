@@ -200,6 +200,23 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual([r['id'] for r in packet['records']], ['0', '1', '2', '3'])
         self.assertEqual(packet['post_count'], 4)
 
+    def test_one_missing_detail_does_not_block_other_authorized_posts(self):
+        client=diaspora_client.DiasporaClient('https://example.org','user','test')
+        entries=[{'id':1,'guid':'gone'},{'id':2,'guid':'available'}]
+        client.stream=lambda path:(entries,1)
+        def endpoint(path):
+            if path=='/u/user':return {'guid':'person','is_own_profile':True}
+            if path.startswith('/posts/1'):raise diaspora_client.DiasporaRequestError('source_http',404)
+            return {'id':2,'guid':'available','text':'Available','post_type':'StatusMessage',
+                    'created_at':'2026-10-24T10:00:00Z','author':{},'interactions':{'comments':[]}}
+        client.json=endpoint;client.canonical=lambda identity:None
+        packet=client.collect(compact=True)
+        self.assertEqual([r['id'] for r in packet['records']],['available'])
+        self.assertEqual(packet['post_count'],1)
+        self.assertEqual(packet['collection_stats']['unavailable_details'],1)
+        client.json=lambda path: {'guid':'person','is_own_profile':True} if path=='/u/user' else (_ for _ in ()).throw(diaspora_client.DiasporaRequestError('source_http',500))
+        with self.assertRaises(diaspora_client.DiasporaRequestError):client.collect(compact=True)
+
     def test_previous_discussion_only_and_legacy_context(self):
         unit = {"id": "test", "text": "text", "published_at": "2026-10-21T10:00:00Z",
                 "conversation_context": [{"id": "past", "published_at": "2026-10-21T09:00:00Z"},
