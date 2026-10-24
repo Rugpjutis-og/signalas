@@ -6,7 +6,7 @@ from cloud_analysis import enqueue, recover_validation_failure, step
 from openai_analysis import ANALYSIS_SERVICE_TIER
 from thermometer import instant
 
-COLLECTION_INTERVAL = timedelta(hours=1)
+COLLECTION_INTERVAL = timedelta(minutes=15)
 MAX_ANALYSIS_SECONDS = 235  # Room inside the Vercel 300 s invocation limit.
 RETRYABLE_ANALYSIS_REASONS = frozenset({'api_access', 'api_quota', 'api_connection'})
 TRANSIENT_API_RETRY_INTERVAL = timedelta(minutes=15)
@@ -21,6 +21,10 @@ def tick(repo, *, clock=None, monotonic=None):
     previous_analysis = repo.read('analysis-job.json', {}) or {}
     schedule = repo.read('background-schedule.json', {}) or {}
     next_due = schedule.get('next_collection_at')
+    # Honor the new cadence even when Neon still holds an older hourly deadline.
+    anchors = [instant(schedule[k]) for k in ('last_attempt_at', 'last_success_at') if schedule.get(k)]
+    if next_due and anchors:
+        next_due = min(instant(next_due), max(anchors) + COLLECTION_INTERVAL).isoformat()
     due = not next_due or instant(next_due) <= current
     collection = 'not_due'
     if due:
@@ -64,7 +68,7 @@ def tick(repo, *, clock=None, monotonic=None):
             state = enqueue(repo)
             retried = True
     if collection == 'ok' and state.get('status') == 'error' and state.get('reason') in RETRYABLE_ANALYSIS_REASONS:
-        # Retry provider failures only after the next hourly collection. This also
+        # Retry provider failures only after the next scheduled collection. This also
         # resumes analysis after the key or provider service has been restored.
         state = enqueue(repo)
         retried = True

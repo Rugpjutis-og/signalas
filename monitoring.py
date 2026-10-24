@@ -5,7 +5,7 @@ from pathlib import Path
 
 from integration_config import ROOT
 
-# Hourly collection plus 30 minutes of scheduling/network grace. Not a content filter.
+# Staleness alarm retains a 90-minute scheduler/network grace window; not the fetch cadence.
 MAX_COLLECTION_AGE = timedelta(minutes=90)
 REASONS = {
     "collection_failed": "Nepavyko atnaujinti Diasporos duomenų.",
@@ -103,5 +103,5 @@ def status(root=ROOT, *, collected_at=None, now=None):
         reason = "status_unavailable"
     return {"state": "stopped" if reason else "watching",
             "label": "Srauto stebėjimas sustabdytas" if reason else "Stebimas srautas",
-            "reason": reason, "description": REASONS.get(reason, "Duomenys atnaujinami kas valandą."),
+            "reason": reason, "description": REASONS.get(reason, "Duomenų surinkimas numatytas kas 15 minučių."),
             "collected_at": collected_at}

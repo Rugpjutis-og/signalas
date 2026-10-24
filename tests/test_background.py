@@ -75,7 +75,7 @@ class BackgroundTickTests(unittest.TestCase):
         self.clock=lambda:self.current
         self.monotonic=lambda:0
 
-    def test_hourly_collection_and_queue_progress_without_browser(self):
+    def test_quarter_hour_collection_and_queue_progress_without_browser(self):
         self.repo.collect.return_value={'status':'ok','collected_at':self.current.isoformat()}
         states=[{'status':'pending','remaining':1},{'status':'complete','remaining':0}]
         def work(_, **kwargs):
@@ -88,9 +88,24 @@ class BackgroundTickTests(unittest.TestCase):
         self.current+=timedelta(minutes=5)
         background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
         self.repo.collect.assert_called_once()
-        self.current+=timedelta(minutes=60)
+        self.current+=timedelta(minutes=10)
         background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
         self.assertEqual(self.repo.collect.call_count,2)
+
+    def test_existing_hourly_deadline_adopts_fifteen_minute_cadence(self):
+        self.db['background-schedule.json'] = {
+            'last_success_at': self.current.isoformat(),
+            'next_collection_at': (self.current + timedelta(hours=1)).isoformat()}
+        self.db['analysis-job.json'] = {'status': 'complete', 'remaining': 0}
+        self.repo.collect.return_value = {'status': 'ok', 'collected_at': self.current.isoformat()}
+        self.current += timedelta(minutes=14)
+        background_tick.tick(self.repo, clock=self.clock, monotonic=self.monotonic)
+        self.repo.collect.assert_not_called()
+        self.current += timedelta(minutes=1)
+        background_tick.tick(self.repo, clock=self.clock, monotonic=self.monotonic)
+        self.repo.collect.assert_called_once_with(reset_analysis_error=False)
+        self.assertEqual(self.db['background-schedule.json']['next_collection_at'],
+                         (self.current + timedelta(minutes=15)).isoformat())
 
     def test_errors_stop_paid_calls_and_collection_failure_backoff(self):
         self.repo.collect.side_effect=ValueError('private source error')
@@ -113,7 +128,7 @@ class BackgroundTickTests(unittest.TestCase):
         self.assertIn('collection_waiting_until', self.db['background-schedule.json'])
         paid.assert_not_called()
 
-    def test_provider_error_retries_after_hourly_collection_only(self):
+    def test_provider_error_retries_after_scheduled_collection_only(self):
         self.db['analysis-job.json']={'status':'error','reason':'api_access','remaining':2}
         self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(minutes=5)).isoformat()}
         self.repo.collect.return_value={'status':'ok','collected_at':self.current.isoformat()}
