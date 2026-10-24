@@ -17,7 +17,7 @@ def valid_analysis(record, analysis, registry):
     if (not analysis or analysis.get('registry_version') != registry['version'] or
             analysis.get('exercise_id') != record.get('exercise_id')): return None
     try:
-        return registry_api.validate(analysis['result']['narrative_analysis'], registry, record.get('text', ''))
+        return registry_api.validate(analysis['result']['narrative_analysis'], registry, record.get('text', ''), visual_refs=analysis.get('reviewed_image_refs', []))
     except (KeyError, TypeError, ValueError): return None
 
 

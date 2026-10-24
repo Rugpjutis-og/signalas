@@ -161,6 +161,21 @@ class RecheckTests(unittest.TestCase):
             self.assertEqual(retry.step(self.repo)['classified'], 1)
             api.assert_not_called()
 
+    def test_review_and_primary_alternate_for_noncategory_review(self):
+        self.db[retry.STATE]=self.job()
+        self.db[retry.STATE]['targets']*=2
+        self.db[retry.STATE]['total']=self.db[retry.STATE]['remaining']=2
+        self.db[cloud_analysis.STATE]={'status':'pending','remaining':20,'updated_at':'one'}
+        with patch.object(retry,'analyze',side_effect=self.response), patch.object(cloud_analysis,'_primary_step',return_value={'status':'pending','remaining':19}) as primary:
+            cloud_analysis.step(self.repo)
+            primary.assert_not_called()
+            cloud_analysis.step(self.repo)
+            primary.assert_called_once()
+            self.db[cloud_analysis.STATE].update(remaining=19,updated_at='two')
+            cloud_analysis.step(self.repo)
+            self.assertEqual(primary.call_count,1)
+            self.assertEqual(self.db[retry.STATE]['completed'],2)
+
     def test_normal_worker_dispatches_finite_review_without_resetting_primary_queue(self):
         self.db[retry.STATE] = self.job()
         self.db[cloud_analysis.STATE] = {'status': 'pending', 'remaining': 20}

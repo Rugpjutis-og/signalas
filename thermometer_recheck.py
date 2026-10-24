@@ -102,8 +102,7 @@ def advance(repo, state, outcome, result=None):
     state['completed'] = state['cursor']
     state['status'] = ('category_pending' if state.get('selection_category') else 'pending') if state['remaining'] else 'complete'
     state['updated_at'] = now()
-    if state.get('selection_category'):
-        state['after_primary'] = primary_marker(repo)
+    state['after_primary'] = primary_marker(repo)
     state.pop('inflight', None)
     repo.write(STATE, state)
     return status(repo)

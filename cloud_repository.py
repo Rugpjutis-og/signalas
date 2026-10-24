@@ -40,6 +40,8 @@ def analysis_result_name(result):
     binding['source'] = result.get('source_reference', {}).get('source')
     binding['id'] = result.get('source_reference', {}).get('id')
     binding['model'] = result.get('requested_model', result.get('model'))
+    if result.get('vision_revision'):
+        binding['vision_revision'] = result['vision_revision']
     if result.get('review_run_id'):
         binding['review_run_id'] = result['review_run_id']
     name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,
@@ -153,7 +155,8 @@ class Repository:
         rows = self.sql(ASSESSMENTS + '''SELECT COALESCE(jsonb_agg(jsonb_build_object(
             'source_reference',jsonb_build_object('source',a->'source_reference'->'source',
                 'id',a->'source_reference'->'id'),'content_fingerprint',a->'content_fingerprint',
-            'exercise_id',a->'exercise_id') ORDER BY ''' + ASSESSMENT_ORDER + '''), '[]'::jsonb)
+            'exercise_id',a->'exercise_id','vision_revision',a->'vision_revision',
+            'thermometer_status',a->'result'->'thermometer_status') ORDER BY ''' + ASSESSMENT_ORDER + '''), '[]'::jsonb)
             FROM assessments WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
             AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
             AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb

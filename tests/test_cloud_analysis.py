@@ -33,6 +33,22 @@ class CloudAnalysisTests(unittest.TestCase):
                 'registry_version':self.version,'thermometer_rules_version':ca.VERSION,
                 'exercise_id':unit.get('exercise_id'),'exercise_context':None,'model':'test-model'}
 
+    def test_photo_waiting_data_requeues_once_and_manual_decisions_are_excluded(self):
+        from vision_input import REVISION
+        from thermometer_review import key
+        self.units[0]['media']=[{'kind':'image','originalUrl':'https://pod.test/photo.png'}]
+        old=dict(self.result(self.units[0]),content_fingerprint=ca.fingerprint(self.units[0]),
+                 thermometer_status='waiting_data')
+        self.db[ca.RESULTS]=[old]
+        self.assertEqual(len(ca.pending(self.repo)[0]),1)
+        old['vision_revision']=REVISION
+        self.assertEqual(len(ca.pending(self.repo)[0]),0)
+        old.pop('vision_revision')
+        self.db['thermometer-reviews.json']={key('test','1'):{
+            'content_fingerprint':ca.fingerprint(self.units[0]),'exercise_id':'A',
+            'exercise_context':None,'rules_version':ca.VERSION}}
+        self.assertEqual(len(ca.pending(self.repo)[0]),0)
+
     def test_resume_skip_versions_context_and_counters(self):
         self.assertEqual(settings(self.repo)['OPENAI_API_KEY'],'test-key')
         ca.enqueue(self.repo)

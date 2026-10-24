@@ -94,7 +94,7 @@ window.SignalExerciseContext = (() => {
       integration_status:'prepared_only',analysis_executed:false};
   }
   function statusMarkup() {
-    if(window.SignalLiveData?.active())return '<p>Išsaugotas pradinis kontekstas naudojamas abiem tikro turinio analizės moduliams. AI teksto bandymai vykdomi atskirai; medijos turinys neperžiūrėtas.</p>';
+    if(window.SignalLiveData?.active())return '<p>Išsaugotas pradinis kontekstas naudojamas abiem tikro turinio analizės moduliams. AI vertina tekstą ir prieinamas nuotraukas. Neperžiūrėti vaizdo klipai ar nepasiekiama medija nepristatomi kaip išanalizuoti.</p>';
     try {
       return get()?'<p>Pradinis kontekstas išsaugotas ir prieinamas abiem analizės moduliams. AI analizė dar neprijungta; rodomi iš anksto parengti demonstraciniai rezultatai.</p>':
         '<p>Pradinis pratybų kontekstas dar neišsaugotas. AI analizė neprijungta; rodomi demonstraciniai rezultatai.</p>';

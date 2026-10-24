@@ -107,6 +107,16 @@ class BackgroundTickTests(unittest.TestCase):
         self.assertEqual(self.db['background-schedule.json']['next_collection_at'],
                          (self.current + timedelta(hours=1)).isoformat())
 
+    def test_open_app_services_overdue_collection_before_more_analysis(self):
+        from cloud_analysis import drain
+        self.db['background-schedule.json']={'next_collection_at':'2026-01-01T00:00:00Z'}
+        self.db['analysis-job.json']={'status':'pending','remaining':5}
+        with patch.object(background_tick,'tick') as tick, patch('cloud_analysis.step') as paid:
+            result=drain(self.repo,monotonic=self.monotonic)
+        tick.assert_called_once()
+        paid.assert_not_called()
+        self.assertEqual(result['remaining'],5)
+
     def test_errors_stop_paid_calls_and_collection_failure_backoff(self):
         self.repo.collect.side_effect=ValueError('private source error')
         self.db['analysis-job.json']={'status':'error','reason':'api_quota','remaining':10}

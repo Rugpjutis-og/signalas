@@ -192,10 +192,10 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
                       "method": analysis.get("method", "not_analyzed") if analysis else "not_analyzed",
                       "reason": ((result.get("reason") if assessed else result.get("missing_context") or result.get("reason"))
                                  if current_rules else "Vertinimas atliktas pagal ankstesnes taisykles; reikia pakartotinės peržiūros.") if result else "AI analizė šiam turiniui dar neatlikta.",
-                      "context_version": None, "reviewed_parts": ["text"] if analysis and analysis.get("analysis_executed") else [],
+                      "context_version": None, "reviewed_parts": (["text"] + (["images"] if analysis.get("image_review", {}).get("reviewed_image_refs") else [])) if analysis and analysis.get("analysis_executed") else [],
                       "reason_codes": result.get("reason_codes", []) if current_rules else [],
                       "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
-                      "evidence": [{"kind": "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
+                      "evidence": [{"kind": "image" if result["evidence"].startswith("VAIZDAS[") else "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
         manual = manual_reviews.get(review_key(record['source'], record['id']))
         if applicable(manual, discussions.expand(record), context):
             assessment = {"category": manual['category'], "status": "assessed", "method": "manual_review",
@@ -217,6 +217,6 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
             "contexts": [], "exercise_context": context,
             "context_records": [{k: r.get(k) for k in ('source', 'kind', 'parent_id') + COMMENT_PART}
                                 for r in packet['records']],
-            "analysis": "OpenAI teksto bandymas; medija neperžiūrėta.", "rules_version": THERMOMETER_RULES_VERSION,
+            "analysis": "OpenAI teksto ir prieinamų nuotraukų analizė; garsas ir vaizdo klipai neanalizuojami.", "rules_version": THERMOMETER_RULES_VERSION,
             "units": rows,
             "days": days, **proportions(rows)}

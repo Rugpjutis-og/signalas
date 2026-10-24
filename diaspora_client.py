@@ -138,13 +138,13 @@ class DiasporaClient:
             raise ValueError('Diasporos įrašo JSON turi būti objektas.')
         return raw, fresh
 
-    def image(self, address):
+    def image(self, address, *, timeout=25):
         """Read a known same-pod raster image with the existing private session."""
         parsed = urlsplit(address)
         if parsed[:2] != urlsplit(self.base)[:2] or parsed.username or parsed.password:
             raise ValueError("Nuotraukos adresas turi priklausyti autorizuotai HTTPS platformai.")
         try:
-            with self.opener.open(Request(address, headers={"Accept": "image/*", "User-Agent": "Signalas/1.0"}), timeout=25) as response:
+            with self.opener.open(Request(address, headers={"Accept": "image/*", "User-Agent": "Signalas/1.0"}), timeout=timeout) as response:
                 body = response.read(8 * 1024 * 1024 + 1)
                 if len(body) > 8 * 1024 * 1024:
                     raise ValueError("Nuotrauka viršija saugaus perdavimo dydį.")

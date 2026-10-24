@@ -76,7 +76,8 @@ def validate_shape(value, rule):
     if 'enum' in rule and value not in rule['enum']: raise ValueError('Nežinomas registro ID arba būsena.')
 
 
-def validate(value, registry, text=None):
+def validate(value, registry, text=None, *, visual_refs=()):
+    from vision_input import visual_evidence
     validate_shape(value, schema(registry))
     value = copy.deepcopy(value)
     matches, proposals = value['matches'], value['proposals']
@@ -92,7 +93,7 @@ def validate(value, registry, text=None):
     if len(ids) != len(set(ids)): raise ValueError('Vieneto ir tipo pora negali kartotis.')
     for item in matches + proposals:
         quote = item['evidence']
-        if not quote.strip() or (text is not None and quote not in text):
+        if not quote.strip() or (text is not None and quote not in text and not visual_evidence(quote, visual_refs)):
             raise ValueError('Naratyvui būtina tiksli savarankiško teiginio ištrauka.')
     # The same claim cannot be assigned to both a broad type and its subtype.
     # Separate claims retain separate evidence. Reject rather than silently guess.

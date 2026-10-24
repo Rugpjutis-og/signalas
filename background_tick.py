@@ -13,19 +13,24 @@ TRANSIENT_API_RETRY_INTERVAL = timedelta(minutes=15)
 RATE_LIMIT_RETRY_INTERVAL = timedelta(hours=1)
 
 
-def tick(repo, *, clock=None, monotonic=None):
-    clock = clock or (lambda: datetime.now(timezone.utc))
-    monotonic = monotonic or time.monotonic
-    started = monotonic()
-    current = clock()
-    previous_analysis = repo.read('analysis-job.json', {}) or {}
-    schedule = repo.read('background-schedule.json', {}) or {}
+def collection_due(schedule, current):
     next_due = schedule.get('next_collection_at')
     # Extend older short deadlines to the hourly cadence; preserve immediate busy-lock retries.
     anchors = [instant(schedule[k]) for k in ('last_attempt_at', 'last_success_at') if schedule.get(k)]
     if next_due and anchors and instant(next_due) > instant(schedule.get('last_attempt_at') or max(anchors).isoformat()):
         next_due = max(instant(next_due), max(anchors) + COLLECTION_INTERVAL).isoformat()
-    due = not next_due or instant(next_due) <= current
+    return not next_due or instant(next_due) <= current
+
+
+def tick(repo, *, clock=None, monotonic=None):
+    clock = clock or (lambda: datetime.now(timezone.utc))
+    monotonic = monotonic or time.monotonic
+    started = monotonic()
+    repo._queue_cache_enabled = True
+    current = clock()
+    previous_analysis = repo.read('analysis-job.json', {}) or {}
+    schedule = repo.read('background-schedule.json', {}) or {}
+    due = collection_due(schedule, current)
     collection = 'not_due'
     if due:
         # Persist a retry/backoff deadline before network I/O. Failed collection must not

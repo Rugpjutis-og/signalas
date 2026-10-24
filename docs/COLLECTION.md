@@ -70,3 +70,12 @@ Eksportuojami medijos adresai, ne vieša failų kopija. Jei originalus serveris 
 ## Tikrų miniatiūrų pateikimas · 2026-10-21
 
 Patikrinus 3 šaltinio nuotraukas nustatyta: HTTPS atsakymuose yra tikri WEBP duomenys, bet `Content-Type: text/plain` ir `X-Content-Type-Options: nosniff`. Signale pridėtas apsaugotas vietinis atvaizdavimo kelias (`private_media.py`): jis naudoja esamą autorizuotą sesiją, patikrina rastrinio failo signatūrą ir pateikia teisingą `image/webp` tipą tik tikslų loopback Host ir antraštės žymą turinčiai užklausai. Kitos užklausos gauna 403. Leidžiami tik dabartinėje autorizuotai gautoje kopijoje esantys medijos adresai iš konfigūruoto podo. Nežinomas šaltinis, įrašas, indeksas ar kitas domenas nesuteikia priėjimo. Vieša medijos kopija nekuriama; turinys lieka ribotoje proceso atmintyje. Originalo nuorodos nepakeičiamos. Tai pateikimo pataisa, ne medijos AI analizė ar platesnė platformos prieiga.
+
+
+## Nuotraukų analizė ir eilių paskirstymas (2026-10-24)
+
+Įrašas su nuotraukomis lieka vienu analizės vienetu. Luna „medium“ vertina tekstą ir prieinamas nuotraukas kartu; SOL „medium“ papildomai peržiūri atrinktą neaiškų turinį. Eilės gauna pakaitinius vykdymus. Nauji ir pasikeitę vienetai aptarnaujami prieš senesnį nuotraukų laukimą. Analizė saugoma po kiekvieno vieneto, o rankinis sprendimas turi pirmenybę.
+
+Originalios nuotraukos gaunamos su esama Diasporos autorizacija ir perduodamos OpenAI kaip privatūs `input_image` duomenys. Pirmenybė originalui, miniatiūra – atsarginė. Ribos vienam vertinimui: 4 nuotraukos, 12 MiB, 35 sekundžių gavimo biudžetas. Nei nuotraukų baitai, nei base64 neįrašomi į istoriją ar Neon. Trūkstami, per dideli, animuoti GIF ir vaizdo klipai neapsimetami peržiūrėtais. Garsas ir išorinės vaizdo nuorodos neanalizuojami. Vizualinis įrodymas turi patikrintą `VAIZDAS[id:indeksas]` nuorodą ir matomo požymio aprašymą; tai ne teksto citata.
+
+Atidaryta autorizuota aplikacija gali inicijuoti jau vėluojantį valandinį rinkimą prieš kitą analizės paketą. Uždarius aplikaciją lieka GitHub Actions pažadinimas, kurio tikslus laikas negarantuojamas.

@@ -5,6 +5,7 @@ import time
 
 from live_data import fingerprint
 from content import source_reference
+from vision_input import has_images, REVISION as VISION_REVISION
 from openai_analysis import (analyze, context_data, DEFAULT_ANALYSIS_MODEL, ANALYSIS_SERVICE_TIER,
                              ANALYSIS_TIMEOUT_SECONDS, AnalysisItemError, AnalysisServiceError)
 from cloud_storage import CloudStorageError
@@ -26,11 +27,34 @@ def pending(repo):
     results = repo.analysis_for_queue(context, version, model)
     good = {(a.get('source_reference', {}).get('source'), a.get('source_reference', {}).get('id')): a
             for a in results}
-    units = {(r['source'], r['id']): r for r in repo.latest()['records']}
-    return sorted((r for k, r in units.items() if k not in good or
-                   good[k].get('content_fingerprint') != fingerprint(repo.expand_unit(r)) or
-                   good[k].get('exercise_id') != r.get('exercise_id')),
-                  key=lambda r: (r['published_at'], r['id'])), context
+    records = repo.latest()['records']
+    units = {(r['source'], r['id']): r for r in records}
+    if not getattr(repo, '_queue_cache_enabled', False) or getattr(repo, '_queue_record_pool', None) is not records:
+        repo._queue_record_pool = records
+        repo._queue_bindings = {}
+    bindings = repo._queue_bindings
+    from thermometer_review import saved, applicable, key
+    manual = saved(repo)
+    selected = []
+    for k, unit in units.items():
+        if k not in bindings:
+            expanded = repo.expand_unit(unit)
+            bindings[k] = (fingerprint(expanded), has_images(expanded))
+        content_hash, images = bindings[k]
+        previous = good.get(k)
+        if previous and previous.get('content_fingerprint') == content_hash and manual.get(key(*k)) and applicable(manual[key(*k)], repo.expand_unit(unit), context):
+            continue
+        needs_photo = (images and previous and
+                       previous.get('thermometer_status') == 'waiting_data' and
+                       previous.get('vision_revision') != VISION_REVISION)
+        if (not previous or previous.get('content_fingerprint') != content_hash or
+                previous.get('exercise_id') != unit.get('exercise_id') or needs_photo):
+            selected.append(unit)
+    # Unprocessed/changed content first; bounded photo backfill cannot starve new units.
+    return sorted(selected, key=lambda r: (
+        bool(good.get((r['source'],r['id']), {}).get('thermometer_status') == 'waiting_data'),
+        r['published_at'], r['id'])), context
+
 
 
 def enqueue(repo, *, reset_error=True):
@@ -63,6 +87,7 @@ def review_required(repo, state, units, context, *, unit=None, reason_code='anal
     result = {
         'analysis_executed': False, 'processing_disposition': 'needs_review',
         'method': 'openai_validation_failed', 'processing_reason': reason_code,
+        'vision_revision': VISION_REVISION,
         'model': model, 'requested_model': model,
         'registry_version': registry(repo)['version'], 'thermometer_rules_version': VERSION,
         'exercise_id': unit.get('exercise_id'), 'exercise_context': context,
@@ -113,7 +138,7 @@ def receipt(unit, context, repo):
     return {'source_reference': source_reference(unit), 'content_fingerprint': fingerprint(unit),
             'exercise_id': unit.get('exercise_id'), 'exercise_context': context,
             'model': repo.config.get('OPENAI_MODEL') or DEFAULT_ANALYSIS_MODEL,
-            'registry_version': registry(repo)['version'], 'thermometer_rules_version': VERSION}
+            'registry_version': registry(repo)['version'], 'thermometer_rules_version': VERSION, 'vision_revision': VISION_REVISION if has_images(unit) else None}
 
 
 def step(repo, *, deadline=None, monotonic=None):
@@ -123,7 +148,7 @@ def step(repo, *, deadline=None, monotonic=None):
         trial = repo.read(thermometer_recheck.STATE, {}) or {}
         primary = repo.read(STATE, {}) or {}
         # A category audit alternates with the normal queue instead of pausing it.
-        if (not trial.get('selection_category') or primary.get('status') not in ('pending', 'running') or
+        if (primary.get('status') not in ('pending', 'running') or
                 trial.get('after_primary') != thermometer_recheck.primary_marker(repo)):
             return thermometer_recheck.step(repo, deadline=deadline, monotonic=monotonic)
     return _primary_step(repo, deadline=deadline, monotonic=monotonic)
@@ -217,8 +242,17 @@ def _primary_step(repo, *, deadline=None, monotonic=None):
 def drain(repo, *, seconds=235, monotonic=None):
     """Reuse one private snapshot across a bounded Vercel batch."""
     clock = monotonic or time.monotonic
+    repo._queue_cache_enabled = True
     deadline = clock() + seconds
     import thermometer_recheck
+    from background_tick import collection_due, tick
+    schedule = repo.read('background-schedule.json', {}) or {}
+    if schedule and collection_due(schedule, datetime.now(timezone.utc)):
+        # An open authenticated app can service overdue collection before more paid calls.
+        # The same shared lease and persisted retry deadline still protect all workers.
+        tick(repo, monotonic=clock)
+        return (thermometer_recheck.status(repo) if thermometer_recheck.active(repo) else
+                repo.read(STATE, {}) or {'status':'idle','remaining':0})
     state = (thermometer_recheck.status(repo) if thermometer_recheck.active(repo) else
              repo.read(STATE, {}) or {'status': 'idle', 'remaining': 0})
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
