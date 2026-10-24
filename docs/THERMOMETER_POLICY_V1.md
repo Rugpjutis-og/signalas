@@ -21,3 +21,11 @@ Bendros gairės bei iliustraciniai, o ne mechaniškai taikomi pavyzdžiai yra `t
 „D5 – Antisisteminis naratyvas“ pasirenkamas destabilizuojančios krypties rankinio patvirtinimo ir koregavimo formose; serveris išsaugo jį tuo pačiu Neon mechanizmu. Naujo turinio AI schemoje kodas taip pat leidžiamas, tačiau jam reikia konkretaus turinio ir konteksto pagrindo: demokratinių procesų, teisių ar viešojo saugumo griovimo mechanizmo. Taikus protestas, opozicija, kritika ar autoriaus vaidmuo savaime nėra D5.
 
 Priedas nekeičia `VERSION`, turinio ar konteksto susiejimo ir nekuria istorinių įrašų pakartotinės analizės eilės. Ankstesni AI bei rankiniai sprendimai lieka galiojantys. Nauji rezultatai žymimi gairių revizija `2026-10-24.3`; atskiros anksčiau autorizuotos baigtinės peržiūros nėra paleidžiamos iš naujo.
+
+## Organizatoriaus fiktyvių pratybų taisyklė
+
+Tik privačiame `exercise-account-context.json` esančioms, tiksliais šaltinio GUID susietoms paskyroms organizatorius patvirtino atskirą scenarijaus taisyklę: protesto / mitingo organizavimas ar palaikymas arba oficialios scenarijaus valdžios / šaulių kritika priskiriami D5. Tai pratybų vertinimo susitarimas, o ne realių asmenų politinių pažiūrų ar taikaus protesto pavojingumo nustatymas.
+
+`exercise_rule.py` taikomas tik įprastai naujo / iki aktyvavimo neįvertinto turinio analizei. Tikslinio seno turinio Sol peržiūros režime jis išjungtas. Ankstesnius AI / rankinius sprendimus nuo pakeitimo saugo aktyvavimo laikas ir esamas `supplement_eligible` patikrinimas; jokia nauja analizės eilė nekuriama. Taisyklė saugoma toje pačioje Neon būsenoje lauke `scoring_rule`; visos 50 paskyrų lieka privačioje bazėje.
+
+AI nustato aiškų paties autoriaus turinio požymį ir pateikia tikslią ištrauką, o serveris taiko organizatoriaus D5 priskyrimą. `none`, neaiškus turinys, trūkstama medija ir svetimos ištraukos priverstinio priskyrimo nesukuria. Rezultato `exercise_rule_application` išsaugo taisyklės ID, kilmę, požymį ir nepriklausomo turinio vertinimo kryptį; vartotojui paaiškinime rodoma, kad kategorija skirta pagal organizatoriaus pratybų taisyklę. Rankinis sprendimas išlieka viršesnis. Naratyvų atpažinimas nekeičiamas.

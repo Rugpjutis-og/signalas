@@ -150,6 +150,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     actor_context = account_context_for_unit(root, unit)
     if actor_context:
         prepared['exercise_actor_context'] = actor_context
+    from exercise_rule import for_unit as scoring_rule_for_unit, INSTRUCTIONS as SCORING_INSTRUCTIONS, TRIGGERS
+    scoring_rule = scoring_rule_for_unit(root, unit, thermometer_only=thermometer_only)
+    if scoring_rule:
+        prepared["exercise_scoring_rule"] = scoring_rule
     image_parts, vision = prepare_images(unit, root)
     prepared["coverage"].update(images=bool(vision["reviewed_image_refs"]), image_review=vision)
     model = model_override or settings(root).get("OPENAI_MODEL") or DEFAULT_ANALYSIS_MODEL
@@ -208,6 +212,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         dynamic.pop("pending_claims", None)
         schema["properties"].pop("narrative_analysis")
         schema["required"].remove("narrative_analysis")
+    if scoring_rule:
+        instructions += "\n" + SCORING_INSTRUCTIONS
+        schema["properties"]["exercise_rule_trigger"] = {"type": "string", "enum": list(TRIGGERS)}
+        schema["required"].append("exercise_rule_trigger")
     payload = {
         "model": model, "service_tier": ANALYSIS_SERVICE_TIER, "store": False, "max_output_tokens": 6000,
         "instructions": instructions,
@@ -260,6 +268,11 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         raise ValueError("Modelis atsisakė pateikti rezultatą; turinys neklasifikuotas.")
     try:
         decoded = json.loads("".join(c["text"] for c in output if c.get("type") == "output_text"))
+        rule_trigger = "none"
+        if scoring_rule:
+            rule_trigger = decoded.pop("exercise_rule_trigger", None) if isinstance(decoded, dict) else None
+            if rule_trigger not in TRIGGERS:
+                raise ValueError("Netinkamas pratybų taisyklės požymis")
         if thermometer_only:
             if not isinstance(decoded, dict) or set(decoded) != set(schema["required"]):
                 raise ValueError("Unexpected thermometer response fields")
@@ -283,6 +296,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     if has_media:
         result.update(direction="needs_review", missing_context=
                       "Dalis vieneto arba pirminio įrašo medijos neperžiūrėta: " + ', '.join(sorted({m['reason'] for m in vision['missing']})))
+    from exercise_rule import apply as apply_scoring_rule
+    rule_application = apply_scoring_rule(result, scoring_rule, rule_trigger, unit, visual_refs=vision["own_image_refs"])
     if result["direction"] == "needs_review":
         result["reason_codes"] = []
     if result["direction"] == "needs_review" and not result["missing_context"].strip():
@@ -309,6 +324,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "exercise_context": prepared["exercise_context"], "coverage": prepared["coverage"],
             "scenario_supplement_ids": [s['id'] for s in supplements],
             "exercise_actor_context_revision": actor_context['revision'] if actor_context else None,
+            "exercise_rule_application": rule_application,
             "result": result, "usage": raw.get("usage"), "automatically_applied": False}
 
 
