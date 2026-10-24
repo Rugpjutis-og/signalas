@@ -246,6 +246,15 @@ class Repository:
                 'reason': reason, 'collected_at': collected_at,
                 'description': REASONS.get(reason, 'Duomenys renkami ir analizuojami Vercel fone.')}
 
+    def collection_progress(self):
+        rows=self.sql("""SELECT jsonb_build_object('kind','collection','status',value->'status',
+            'phase',value->'phase','processed_posts',COALESCE(value->'detail_cursor','0'::jsonb),
+            'discovered_posts',jsonb_array_length(COALESCE(value->'entries','[]'::jsonb)),
+            'remaining',GREATEST(0,jsonb_array_length(COALESCE(value->'entries','[]'::jsonb))-
+                COALESCE((value->>'detail_cursor')::int,0)))
+            FROM signalas_state WHERE scope=$1 AND name='collection-job.json'""",[self.scope])['rows']
+        return json.loads(rows[0][0]) if rows else {'kind':'collection','status':'idle'}
+
     def collect(self, *, reset_analysis_error=True):
         from diaspora_client import DiasporaClient, DiasporaRequestError
         owner = uuid.uuid4().hex
@@ -259,26 +268,26 @@ class Repository:
         try:
             client = DiasporaClient(self.config.get('DIASPORA_BASE_URL', 'https://diaspora.sauliai.lt'),
                                     self.config.get('DIASPORA_USERNAME'), self.config.get('DIASPORA_PASSWORD'))
-            client.login()
+            from cloud_collection import run_step
             stage = 'source'
-            previous = self.latest()
-            packet = client.collect(previous=previous, compact=True, workers=4, conditional=True)
-            stage = 'storage'
-            saved = sync(packet, self.connection, self.scope, previous=previous)
-            self.write('collection-status.json', {'status': 'ok', 'checked_at': packet['collected_at']})
-            from discussion_context import compact_records
-            records = compact_records(packet['records'])
-            self.packet = dict(packet, records=records, storage_version=2,
-                               record_keys=[{'source': r['source'], 'id': r['id']} for r in records])
+            outcome = run_step(self, client)
+            if outcome['status'] == 'pending':
+                self.write('collection-status.json', dict(outcome, status='running',
+                    checked_at=datetime.now(timezone.utc).isoformat()))
+                return outcome
+            self.write('collection-status.json', {'status': 'ok', 'checked_at': outcome['collected_at']})
             from cloud_analysis import enqueue
             stage = 'enqueue'
-            analysis = enqueue(self, reset_error=reset_analysis_error)
-            return {'status': 'ok', 'posts': packet['post_count'], 'comments': packet['comment_count'],
-                    'collected_at': packet['collected_at'], 'cloud_storage': saved, 'analysis': analysis}
+            outcome['analysis'] = enqueue(self, reset_error=reset_analysis_error)
+            return outcome
         except Exception as error:
+            progress = self.values.get('collection-job.json') or {}
+            if progress.get('status') == 'running':
+                self.write('collection-job.json', dict(progress, status='error'))
             reason = error.reason if isinstance(error, (DiasporaRequestError, CloudStorageError)) else 'collection_validation'
             self.write('collection-status.json', {'status': 'error', 'stage': stage, 'reason': reason,
                 'http_status': error.http_status if isinstance(error, DiasporaRequestError) else None,
+                'resource': error.resource if isinstance(error, DiasporaRequestError) else None,
                 'error_type': type(error).__name__ if type(error).__name__ in
                     ('ValueError','KeyError','TypeError','CloudStorageError','DiasporaRequestError') else 'internal',
                 'checked_at': datetime.now(timezone.utc).isoformat()})

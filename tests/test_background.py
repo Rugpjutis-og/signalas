@@ -92,6 +92,16 @@ class BackgroundTickTests(unittest.TestCase):
         background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
         self.assertEqual(self.repo.collect.call_count,2)
 
+    def test_collection_checkpoint_resumes_immediately_without_paid_analysis(self):
+        self.db['collection-job.json']={'status':'running'}
+        self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(hours=1)).isoformat()}
+        self.db['analysis-job.json']={'status':'pending','remaining':10}
+        self.repo.collect.return_value={'status':'pending','processed_posts':4}
+        with patch.object(background_tick,'step') as paid:
+            outcome=background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
+        self.assertEqual(outcome['collection'],'pending');paid.assert_not_called()
+        self.assertEqual(self.db['background-schedule.json']['next_collection_at'],self.current.isoformat())
+
     def test_existing_short_deadline_adopts_hourly_cadence(self):
         self.db['background-schedule.json'] = {
             'last_success_at': self.current.isoformat(),

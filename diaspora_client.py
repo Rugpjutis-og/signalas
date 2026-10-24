@@ -16,8 +16,8 @@ from platform_overview import adapt_diaspora_post, adapt_diaspora_comment
 
 
 class DiasporaRequestError(ValueError):
-    def __init__(self, reason, http_status=None):
-        self.reason, self.http_status = reason, http_status
+    def __init__(self, reason, http_status=None, resource=None):
+        self.reason, self.http_status, self.resource = reason, http_status, resource
         super().__init__('Diasporos skaitymo užklausa nepavyko.' +
                          (' HTTP %s.' % http_status if http_status else ''))
 
@@ -87,7 +87,11 @@ class DiasporaClient:
         except HTTPError as error:
             if error.code == 304 and include_headers and any(k in headers for k in ('If-None-Match', 'If-Modified-Since')):
                 return None, url, 'application/json', validators
-            raise DiasporaRequestError('source_http', error.code) from None
+            resource = ('post_detail' if urlsplit(url).path.startswith('/posts/') else
+                        'profile_stream' if urlsplit(url).path.startswith('/people/') else
+                        'own_profile' if urlsplit(url).path.startswith('/u/') else
+                        'feed' if urlsplit(url).path == '/stream.json' else 'login')
+            raise DiasporaRequestError('source_http', error.code, resource) from None
         except (URLError, OSError, UnicodeError):
             raise DiasporaRequestError('source_connection') from None
 
@@ -205,16 +209,24 @@ class DiasporaClient:
         if not isinstance(profile, dict) or profile.get("is_own_profile") is not True or not profile.get("guid"):
             raise ValueError("Nepavyko patvirtinti savo profilio; ankstesnė imtis nepakeista.")
         own_posts, profile_pages = self.stream("/people/" + quote(profile["guid"], safe="") + "/stream.json")
+        entries, seen = [], set()
+        for entry in raw_posts + own_posts:
+            if entry.get('guid') not in seen:
+                seen.add(entry['guid']); entries.append(entry)
+        packet = self.collect_entries(entries, previous=previous, compact=compact, workers=workers, conditional=conditional)
+        packet['limits']['pages_read'] = feed_pages + profile_pages
+        packet['account_scope'] = {'feed_posts': len(raw_posts), 'own_profile_posts': len(own_posts),
+            'feed_pages': feed_pages, 'profile_pages': profile_pages, 'pagination_complete': True}
+        return packet
+
+    def collect_entries(self, entries, *, previous=None, compact=True, workers=4, conditional=True):
+        """Reconcile only this bounded batch; callers own pagination/checkpointing."""
         source = urlsplit(self.base).hostname
         prior = {(r.get('source'), r.get('id')): r for r in (previous or {}).get('records', [])}
         prior_comments = {}
         for r in prior.values():
             if r.get('kind') == 'comment':
                 prior_comments.setdefault((r.get('source'), r.get('parent_id')), []).append(r)
-        entries, seen = [], set()
-        for entry in raw_posts + own_posts:
-            if entry.get('guid') not in seen:
-                seen.add(entry['guid']); entries.append(entry)
         local = threading.local()
         workers = max(1, min(4, workers))
 
@@ -302,10 +314,8 @@ class DiasporaClient:
         return {"collected_at": datetime.now(timezone.utc).isoformat(), "source": source,
                 "mode": "live_sample", "coverage": "account_stream_and_own_profile",
                 "stream_complete": False, "exercise_id": None, "membership": None,
-                "limits": {"post_limit": None, "pages_read": feed_pages + profile_pages, "comments_truncated": False},
-                "account_scope": {"feed_posts": len(raw_posts), "own_profile_posts": len(own_posts),
-                                  "feed_pages": feed_pages, "profile_pages": profile_pages,
-                                  "pagination_complete": True},
+                "limits": {"post_limit": None, "pages_read": 0, "comments_truncated": False},
+                "account_scope": {},
                 "post_count": sum(p["kind"] in ("post", "reshare") for p in records), "comment_count": sum(p["kind"] == "comment" for p in records),
                 "records": records, "warnings": warnings,
                 "collection_stats": {"detail_requests": len(entries), "not_modified": not_modified,

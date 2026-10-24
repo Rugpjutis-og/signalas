@@ -8,7 +8,7 @@ const source=fs.readFileSync('dist/manual-refresh.js','utf8');
   calls.push([url,options]);if(url.endsWith('/status'))return {ok:true,json:async()=>({available:true,csrf:'token'})};
   if(mode==='pending')await new Promise(r=>release=r);
   if(mode==='failure')throw Error('Network failed');
-  return {ok:true,json:async()=>mode==='running'?{status:'already_running'}:{status:'ok',posts:15,comments:115}};
+  return {ok:true,json:async()=>mode==='running'?{status:'already_running'}:mode==='checkpoint'?{status:'pending',processed_posts:4,discovered_posts:20}:{status:'ok',posts:15,comments:115}};
  }};
  vm.runInNewContext(source,runtime);
  assert.equal(calls.length,0,'mount must never collect');
@@ -17,6 +17,7 @@ const source=fs.readFileSync('dist/manual-refresh.js','utf8');
  mode='pending';const first=click();await new Promise(r=>setImmediate(r));const before=calls.length;
  await click();assert.equal(calls.length,before);assert(button.disabled);release();await first;assert(!button.disabled);
  mode='running';await click();assert(message.textContent.includes('jau vyksta'));
+ mode='checkpoint';const redrawBefore=redraws;await click();assert(message.textContent.includes('4 iš 20'));assert.equal(redraws,redrawBefore);
  mode='failure';await click();assert(message.textContent.includes('Network failed'));assert(!button.disabled);
  for(const file of fs.readdirSync('dist').filter(x=>x.endsWith('.js'))){assert(!/localStorage|sessionStorage|indexedDB/.test(fs.readFileSync('dist/'+file,'utf8')),file+' may not persist browser data');}
  console.log('Manual fetch only, duplicate-click protection, CSRF, errors and no browser persistence: OK');

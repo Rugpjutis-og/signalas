@@ -16,6 +16,10 @@
       const result=await response.json();
       if(!response.ok)throw Error(result.error||'Duomenų surinkti nepavyko.');
       if(result.status==='already_running')message.textContent='Duomenų surinkimas jau vyksta.';
+      else if(result.status==='pending'){
+        message.textContent=`Surinkimas tęsiamas fone: patikrinta ${result.processed_posts} iš ${result.discovered_posts} aptiktų įrašų. Paskutinė sėkminga imtis rodoma iki surinkimo pabaigos.`;
+        await window.SignalAnalysis?.run({...result,kind:'collection'});
+      }
       else{
         message.textContent=`Atnaujinta: ${result.posts} įrašų, ${result.comments} komentarų.${result.cloud_storage?.status==='error'?' Debesijos kopijos išsaugoti nepavyko; vietinė kopija išsaugota.':''}`;
         await window.SignalLiveData?.refresh();

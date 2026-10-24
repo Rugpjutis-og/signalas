@@ -30,7 +30,9 @@ def tick(repo, *, clock=None, monotonic=None):
     current = clock()
     previous_analysis = repo.read('analysis-job.json', {}) or {}
     schedule = repo.read('background-schedule.json', {}) or {}
-    due = collection_due(schedule, current)
+    from cloud_collection import status as collection_status
+    collection_job = collection_status(repo)
+    due = collection_due(schedule, current) or collection_job.get('status') == 'running'
     collection = 'not_due'
     if due:
         # Persist a retry/backoff deadline before network I/O. Failed collection must not
@@ -47,6 +49,10 @@ def tick(repo, *, clock=None, monotonic=None):
                 repo.write('background-schedule.json', {
                     'next_collection_at': current.isoformat(),
                     'last_attempt_at': current.isoformat(),
+                    'collection_waiting_until': (current + timedelta(minutes=6)).isoformat()})
+            if collection == 'pending':
+                repo.write('background-schedule.json', {
+                    'next_collection_at': current.isoformat(), 'last_attempt_at': current.isoformat(),
                     'collection_waiting_until': (current + timedelta(minutes=6)).isoformat()})
             if collection == 'ok':
                 repo.write('background-schedule.json', {
@@ -81,7 +87,7 @@ def tick(repo, *, clock=None, monotonic=None):
     if thermometer_recheck.active(repo):
         state = thermometer_recheck.status(repo)
     progressed = 0
-    if collection != 'already_running':
+    if collection not in ('already_running', 'pending'):
         while state.get('status') in ('pending', 'running') and monotonic() - started < MAX_ANALYSIS_SECONDS:
             before = (state.get('kind'), state.get('remaining'))
             state = step(repo, deadline=started + MAX_ANALYSIS_SECONDS, monotonic=monotonic)

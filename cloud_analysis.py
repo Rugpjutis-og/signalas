@@ -249,10 +249,17 @@ def drain(repo, *, seconds=235, monotonic=None):
     import thermometer_recheck
     from background_tick import collection_due, tick
     schedule = repo.read('background-schedule.json', {}) or {}
-    if schedule and collection_due(schedule, datetime.now(timezone.utc)):
+    from cloud_collection import status as collection_status
+    collection_job = collection_status(repo)
+    if collection_job.get('status') == 'running' or (schedule and collection_due(schedule, datetime.now(timezone.utc))):
         # An open authenticated app can service overdue collection before more paid calls.
         # The same shared lease and persisted retry deadline still protect all workers.
-        tick(repo, monotonic=clock)
+        outcome = tick(repo, monotonic=clock)
+        if collection_status(repo).get('status') == 'running':
+            current = collection_status(repo)
+            if outcome and outcome.get('collection') == 'already_running':
+                current['status']='already_running'
+            return current
         return (thermometer_recheck.status(repo) if thermometer_recheck.active(repo) else
                 repo.read(STATE, {}) or {'status':'idle','remaining':0})
     state = (thermometer_recheck.status(repo) if thermometer_recheck.active(repo) else

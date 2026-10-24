@@ -13,7 +13,7 @@ window.SignalAnalysis=(()=>{
     button.disabled=true;
     button.setAttribute('aria-busy','true');
     let stopped=false,polling=false;
-    const progress=(value=state)=>{message.textContent=`Analizuojamas turinys… Liko ${value.remaining ?? '…'} vnt. Neaiškūs vertinimai paliekami peržiūrai, eilė tęsiama.`;};
+    const progress=(value=state)=>{if(value.kind==='collection'){message.textContent=`Surinkimas tęsiamas: patikrinta ${value.processed_posts??0} iš ${value.discovered_posts??0} aptiktų įrašų. Paskutinė sėkminga imtis išlieka.`;return;}message.textContent=`Analizuojamas turinys… Liko ${value.remaining ?? '…'} vnt. Neaiškūs vertinimai paliekami peržiūrai, eilė tęsiama.`;};
     const timer=setInterval(async()=>{
       if(polling||stopped)return;polling=true;
       try{const latest=await request('status');if(!stopped&&['pending','running'].includes(latest.status)){progress(latest);}}

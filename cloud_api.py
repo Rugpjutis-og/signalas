@@ -174,6 +174,10 @@ class Handler(BaseHTTPRequestHandler):
             elif route == '/api/collection/refresh' and method == 'POST':
                 self.send(repository.collect())
             elif route == '/api/analysis/status' and method == 'GET':
+                import cloud_collection
+                if cloud_collection.status(repository).get('status')=='running':
+                    self.send(cloud_collection.status(repository))
+                    return
                 import thermometer_recheck
                 self.send(thermometer_recheck.status(repository) if thermometer_recheck.active(repository) else
                           repository.read('analysis-job.json', {}) or {'status': 'idle', 'remaining': 0})

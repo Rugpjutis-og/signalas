@@ -20,6 +20,7 @@ class CloudAnalysisTests(unittest.TestCase):
         self.repo.analysis_for_queue = self.queue_results
         self.repo.append_analysis = lambda result: self.db.setdefault(ca.RESULTS, []).append(copy.deepcopy(result))
         self.repo.refresh_snapshot = Mock()
+        self.repo.collection_progress=lambda: copy.deepcopy(self.db.get('collection-job.json',{}))
         self.version=ca.registry(self.repo)['version']
 
     def queue_results(self, context, version, model):
@@ -207,12 +208,20 @@ class CloudAnalysisTests(unittest.TestCase):
         self.assertEqual(self.db[ca.STATE]['status'], 'pending')
         self.assertIn('DELETE', self.repo.sql.call_args.args[0])
 
+    def test_incomplete_collection_does_not_enqueue_or_replace_snapshot(self):
+        old=copy.deepcopy(self.units)
+        with patch('diaspora_client.DiasporaClient'), patch('cloud_collection.run_step',return_value={
+                'status':'pending','phase':'details','processed_posts':4,'discovered_posts':20}), patch.object(ca,'enqueue') as enqueue:
+            result=self.repo.collect()
+        self.assertEqual(result['status'],'pending');enqueue.assert_not_called()
+        self.assertEqual(self.units,old)
+        self.assertEqual(self.db['collection-status.json']['status'],'running')
+
     def test_collection_enqueues_only_after_successful_save(self):
         packet={'records':self.units,'post_count':1,'comment_count':0,'collected_at':'2026-10-23T09:00:00Z'}
-        with patch('diaspora_client.DiasporaClient') as client, patch('cloud_repository.sync') as sync:
-            client.return_value.collect.return_value=packet
+        with patch('diaspora_client.DiasporaClient'), patch('cloud_collection.run_step', return_value=dict(packet,status='ok')) as run:
             self.assertEqual(self.repo.collect()['analysis']['remaining'],1)
-            sync.assert_called_once()
+            run.assert_called_once()
         self.assertEqual(self.db['collection-status.json']['status'],'ok')
 
 if __name__=='__main__':unittest.main()
