@@ -158,3 +158,15 @@ button.narrative-chevron{border:0;background:transparent;padding:2px;display:gri
 
 /* Timeline retains its chart and narrative switcher without a detail sidebar. */
 .time-layout{grid-template-columns:minmax(0,1fr)}
+
+/* Selected narrative's approved thematic branches, separate from claim-match edges. */
+.map-stack .graph-wrap.graph-wrap-subnarratives{height:640px;overflow:auto}
+.graph-svg.graph-svg-subnarratives{min-width:760px;max-width:none}
+.graph-subnarrative-edge{fill:none;stroke-width:2;stroke-dasharray:6 5;opacity:.6}
+.graph-subnarrative{cursor:pointer;outline:none}
+.graph-subnarrative rect{fill:var(--sub-soft,#f3f5fc);stroke:var(--sub-color,#7e8ee4);stroke-width:1.5}
+.graph-subnarrative:hover rect,.graph-subnarrative:focus-visible rect,.graph-subnarrative.selected rect{stroke-width:3;filter:drop-shadow(0 3px 5px #26375018)}
+.subnarrative-label{fill:#263750;font-size:12px;font-weight:600;pointer-events:none}
+.subnarrative-count{fill:#60718e;font-size:11px;pointer-events:none}
+.graph-wrap-subnarratives .graph-controls{position:sticky;bottom:12px;left:calc(100% - 128px);width:max-content;margin-left:auto}
+@media(max-width:600px){.map-stack .graph-wrap.graph-wrap-subnarratives{height:480px}.graph-svg.graph-svg-subnarratives{min-width:760px}}
