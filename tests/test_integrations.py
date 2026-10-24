@@ -217,6 +217,19 @@ class IntegrationTests(unittest.TestCase):
         client.json=lambda path: {'guid':'person','is_own_profile':True} if path=='/u/user' else (_ for _ in ()).throw(diaspora_client.DiasporaRequestError('source_http',500))
         with self.assertRaises(diaspora_client.DiasporaRequestError):client.collect(compact=True)
 
+    def test_large_candidate_history_is_bounded_and_reused_not_a_failed_assessment(self):
+        from types import SimpleNamespace
+        candidates=[{'title':'Tema '+str(i),'topic_id':'politics','claim_template':'Teiginys '+str(i)+' x'*300,
+                     'novelty_reason':'Paaiškinimas'} for i in range(300)]
+        provider=unittest.mock.Mock(return_value=candidates)
+        root=SimpleNamespace(config={},pending_claims=provider)
+        registry={'version':'test'}
+        values=openai_analysis.pending_claims({'text':'Teiginys 200','exercise_id':None},root,registry)
+        self.assertLessEqual(len(values),8)
+        self.assertLessEqual(len(json.dumps(values,ensure_ascii=False)),12020)
+        openai_analysis.pending_claims({'text':'Kitas teiginys','exercise_id':None},root,registry)
+        provider.assert_called_once()
+
     def test_previous_discussion_only_and_legacy_context(self):
         unit = {"id": "test", "text": "text", "published_at": "2026-10-21T10:00:00Z",
                 "conversation_context": [{"id": "past", "published_at": "2026-10-21T09:00:00Z"},

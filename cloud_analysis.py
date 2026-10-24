@@ -47,7 +47,9 @@ def pending(repo):
         needs_photo = (images and previous and
                        previous.get('thermometer_status') == 'waiting_data' and
                        previous.get('vision_revision') != VISION_REVISION)
-        if (not previous or previous.get('content_fingerprint') != content_hash or
+        recover_rollout = (previous and previous.get('vision_revision') == 'photos-2026-10-24.1' and
+                           previous.get('processing_reason') in ('analysis_validation','analysis_valueerror'))
+        if (not previous or previous.get('content_fingerprint') != content_hash or recover_rollout or
                 previous.get('exercise_id') != unit.get('exercise_id') or needs_photo):
             selected.append(unit)
     # Unprocessed/changed content first; bounded photo backfill cannot starve new units.

@@ -156,7 +156,8 @@ class Repository:
             'source_reference',jsonb_build_object('source',a->'source_reference'->'source',
                 'id',a->'source_reference'->'id'),'content_fingerprint',a->'content_fingerprint',
             'exercise_id',a->'exercise_id','vision_revision',a->'vision_revision',
-            'thermometer_status',a->'result'->'thermometer_status') ORDER BY ''' + ASSESSMENT_ORDER + '''), '[]'::jsonb)
+            'thermometer_status',a->'result'->'thermometer_status',
+            'processing_reason',a->'processing_reason') ORDER BY ''' + ASSESSMENT_ORDER + '''), '[]'::jsonb)
             FROM assessments WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
             AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
             AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb

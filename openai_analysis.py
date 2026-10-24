@@ -1,6 +1,7 @@
 """Explicit, bounded text-analysis pilot. Does not alter the demo dashboards."""
 import json
 import socket
+import re
 import time
 from vision_input import prepare as prepare_images, visual_evidence, REVISION as VISION_REVISION
 from datetime import datetime, timezone
@@ -171,6 +172,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         "Kai pagrindas yra vaizde, evidence rašyk VAIZDAS[id:indeksas] ir trumpą konkretaus matomo požymio aprašymą originalo kalba. "
         "Naratyvo įrodymui naudok tik vertinamo vieneto nuotrauką, ne pirminio įrašo vaizdą. Neatpažink asmenų tapatybės, "
         "nepriskirk ketinimų ar jautrių požymių iš išvaizdos. Nematomas garsas ir vaizdo klipas nėra peržiūrėti. "
+        "pending_claims yra tik ribota pagalbinė kandidatų atranka: kandidato nebuvimas nėra naujumo įrodymas. Visada lygink su visu patvirtintu registru. "
         "Ankstesnių komentarų neprisegta medija yra tik neprivalomas diskusijos kontekstas; vien jos buvimas nereikalauja laukti duomenų.")
     reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),
                  "directions": DEFINITIONS, "reason_codes": REASONS,
@@ -287,21 +289,31 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
 
 
 def pending_claims(unit, root, registry):
-    if hasattr(root, 'pending_claims'):
-        values = root.pending_claims(unit.get('exercise_id'), registry['version'])
-        drafts = {(p['topic_id'], p['claim_template']): p for p in values}
-        values = list(drafts.values())
-        if len(json.dumps(values, ensure_ascii=False)) > 60000:
-            raise ValueError('Laukiančių teiginių kontekstas per didelis; reikia peržiūros.')
-        return values
-    path = root / "var/openai-analysis-pilot.json"
-    if not path.exists(): return []
-    drafts = {}
-    for a in json.loads(path.read_text()):
-        if a.get("registry_version") != registry["version"] or a.get("exercise_id") != unit.get("exercise_id"): continue
-        for p in a.get("result", {}).get("narrative_analysis", {}).get("proposals", []):
-            drafts[(p["topic_id"], p["claim_template"])] = {k:p[k] for k in ("title", "topic_id", "claim_template", "novelty_reason")}
-    values = list(drafts.values())
-    if len(json.dumps(values, ensure_ascii=False)) > 60000:
-        raise ValueError("Laukiančių teiginių kontekstas per didelis vienam bandymui; reikia semantinės paieškos integracijos.")
-    return values
+    # Candidate hints are retrieval context, never the registry or a novelty proof.
+    cache_key = (unit.get('exercise_id'), registry['version'])
+    cache = getattr(root, '_pending_claim_cache', {})
+    if cache_key not in cache:
+        if hasattr(root, 'pending_claims'):
+            values = root.pending_claims(*cache_key)
+        else:
+            path = root / 'var/openai-analysis-pilot.json'
+            analyses = json.loads(path.read_text()) if path.exists() else []
+            values = [p for a in analyses if a.get('registry_version') == registry['version']
+                      and a.get('exercise_id') == unit.get('exercise_id')
+                      for p in a.get('result', {}).get('narrative_analysis', {}).get('proposals', [])]
+        drafts = {(p['topic_id'],p['claim_template']):{k:p[k] for k in
+                  ('title','topic_id','claim_template','novelty_reason')} for p in values}
+        cache[cache_key] = list(drafts.values())
+        if hasattr(root,'config'): root._pending_claim_cache = cache
+    terms = lambda text: {t for t in re.findall(r'\w+', text.casefold()) if len(t)>3}
+    query = terms((unit.get('text') or '') + ' ' + (unit.get('parent_post') or {}).get('text',''))
+    def score(p):
+        words=terms(p['title']+' '+p['claim_template'])
+        return (-len(words & query)/max(1,len(words))**0.5,p['topic_id'],p['claim_template'])
+    selected, size = [], 0
+    for candidate in sorted(cache[cache_key], key=score):
+        cost=len(json.dumps(candidate,ensure_ascii=False))
+        if size+cost>12000: continue
+        selected.append(candidate);size+=cost
+        if len(selected)==8:break
+    return selected

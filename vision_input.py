@@ -8,7 +8,7 @@ from content import normalize_media
 from diaspora_client import DiasporaClient
 from integration_config import settings
 
-REVISION = 'photos-2026-10-24.1'
+REVISION = 'photos-2026-10-24.2'
 MAX_IMAGES = 4
 MAX_BYTES = 12 * 1024 * 1024
 FETCH_SECONDS = 35
