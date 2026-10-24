@@ -70,6 +70,16 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
  for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
  assert(liveRoot.innerHTML.includes('Peržiūrėti ir priskirti kryptį'));
+ // D5 is offered only for the destabilizing direction, including correction forms.
+ const codeForm={elements:{category:{value:'destabilizing'},reason_code:{}}};
+ liveRoot.onchange({target:{name:'category',closest:()=>codeForm}});
+ assert(codeForm.elements.reason_code.innerHTML.includes('value="D5">D5 · Antisisteminis naratyvas'));
+ for(const category of ['neutral','stabilizing']){
+   codeForm.elements.category.value=category;
+   liveRoot.onchange({target:{name:'category',closest:()=>codeForm}});
+   assert(!codeForm.elements.reason_code.innerHTML.includes('value="D5"'));
+ }
+
  const manualButton={dataset:{thermoCategory:'manual_review'},closest:()=>null};
  liveRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
  const manualList=liveRoot.querySelector('#thermo-evidence');

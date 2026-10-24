@@ -24,6 +24,17 @@ class ThermometerPolicyTests(unittest.TestCase):
         self.assertEqual(validate_assessment({**value, "category": "destabilizing", "reason_codes": ["D1"]},
                                               require_evidence=False)["category"], "destabilizing")
 
+    def test_d5_requires_destabilizing_direction_and_content_evidence(self):
+        from thermometer_policy import REASONS, VERSION
+        self.assertEqual(VERSION, "1.0", "additive code must not invalidate historic decisions")
+        self.assertEqual(REASONS["D5"], "Antisisteminis naratyvas")
+        value = {"status": "classified", "category": "destabilizing", "reason_codes": ["D5"],
+                 "reason": "Raginama jėga panaikinti rinkimus.", "evidence": "Panaikinkime rinkimus jėga."}
+        self.assertEqual(validate_assessment(value), value)
+        for changes in ({"category": "neutral"}, {"category": "stabilizing"}, {"evidence": ""}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                validate_assessment({**value, **changes})
+
     def test_uncertainty_never_becomes_neutral(self):
         for status in ("needs_review", "waiting_data", "error"):
             validate_assessment({"status": status, "category": None, "reason_codes": []})

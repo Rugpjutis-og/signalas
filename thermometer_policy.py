@@ -15,12 +15,14 @@ REASONS = {
     "D2": "Smurto, diskriminacijos ir neapykantos kurstymas",
     "D3": "Kolektyvinis kaltinimas ar grupės pavertimas priešu",
     "D4": "Demokratinio dalyvavimo ar saugumo griovimas, visuotinio apleistumo ar bejėgiškumo formavimas",
+    "D5": "Antisisteminis naratyvas",
 }
 
 # Prompt guidance revision is recorded without invalidating saved human decisions
 # or silently creating a paid full-dataset reanalysis.
-GUIDANCE_REVISION = "2026-10-24.2"
+GUIDANCE_REVISION = "2026-10-24.3"
 COMMUNICATION_GUIDANCE = (
+    "D5 – Antisisteminis naratyvas: taikyk tik kai pats turinys ir pratybų kontekstas pagrindžia raginimą griauti demokratinius procesus, teises ar viešąjį saugumą (pvz., panaikinti rinkimus ar jėga užgniaužti pilietinį dalyvavimą). Pateik konkrečią turinio ištrauką ir paaiškink žalingą mechanizmą. Vien opozicija, nepasitikėjimas, antielitinė retorika, sistemos reformos siūlymas, taikus protestas ar autoriaus pratybų vaidmuo nėra D5 pagrindas; citavimo, pranešimo ir paneigimo neprilygink palaikymui.",
     "Viešai veikiančių institucijų, valdžios, savivaldybės, kariuomenės, žiniasklaidos, žurnalistų ir kitų organizacijų komunikaciją vertink gyventojų saugumo, informavimo, paaiškinimų bei tiesos lūkesčio kontekste. Sąrašas nėra baigtinis.",
     "Destabilizuojančiai krypčiai nebūtinas raginimas agresyviai veikti: D3 gali pagrįsti apibendrinantis kolektyvinės kaltės ar bendros piktybiškos veiklos primetimas; D4 gali pagrįsti visuotinio apleistumo, bejėgiškumo ar saugios išeities nebuvimo formavimas, kai tai aiškiai parodo turinys ir kontekstas.",
     "Atskirk konkretaus neveikimo, tylos ar neinformavimo kritiką bei reikalavimą atsiskaityti nuo visuotinio kaltinimo, kad visos institucijos sąmoningai paliko gyventojus be saugumo, pagalbos ir patikimos informacijos, o jokie paaiškinimai ar veiksmai nebeturi prasmės. Antrajam mechanizmui vertinti neapsiribok vien smurto, neapykantos ar susidorojimo požymiais.",
@@ -45,7 +47,7 @@ COMMUNICATION_EXAMPLES = (
 BY_CATEGORY = {
     "neutral": frozenset(("N0", "N1", "N2")),
     "stabilizing": frozenset(("S1", "S2", "S3", "S4")),
-    "destabilizing": frozenset(("D1", "D2", "D3", "D4")),
+    "destabilizing": frozenset(("D1", "D2", "D3", "D4", "D5")),
 }
 
 

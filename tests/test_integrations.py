@@ -286,7 +286,7 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(result["result"]["thermometer_category"], "neutral")
             self.assertEqual(result["model"], "gpt-6.1-sol")
             reference = json.loads(sent['input'][0]['content'][0]['text'])
-            self.assertEqual(reference['guidance_revision'], '2026-10-24.2')
+            self.assertEqual(reference['guidance_revision'], '2026-10-24.3')
             self.assertEqual(len(reference['communication_examples']), 8)
             self.assertIn('agresyviai veikti', sent['instructions'])
             self.assertIn('N1 nereikalauja pasitikėjimo valdžia', sent['instructions'])
@@ -297,7 +297,7 @@ class IntegrationTests(unittest.TestCase):
         unit = {"id": "context-test", "source": "test", "kind": "post", "text": "Pagalbos punktas uždarytas.",
                 "published_at": "2026-10-21T10:00:00Z", "media": []}
         context = {"initialSituation": "Veikia pagalbos punktas.", "confirmedFacts": "Pagalbos punktas atidarytas."}
-        for category, code in [("stabilizing", "S1"), ("destabilizing", "D1")]:
+        for category, code in [("stabilizing", "S1"), ("destabilizing", "D1"), ("destabilizing", "D5")]:
             with self.subTest(code=code):
                 valid = {"narrative_analysis": {"match_status": "no_narrative", "matches": [],
                          "proposals": [], "uncertainty_reason": ""}, "direction": category,

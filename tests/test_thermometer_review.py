@@ -47,7 +47,7 @@ class ReviewTests(unittest.TestCase):
 
     def test_all_manual_directions_save_without_separate_excerpt(self):
         import json
-        for category, code in [('stabilizing', 'S2'), ('neutral', 'N1'), ('destabilizing', 'D2'), ('destabilizing', 'D1'), ('stabilizing', 'S1')]:
+        for category, code in [('stabilizing', 'S2'), ('neutral', 'N1'), ('destabilizing', 'D2'), ('destabilizing', 'D5'), ('destabilizing', 'D1'), ('stabilizing', 'S1')]:
             with self.subTest(category=category):
                 result = review.save(self.repo, {**self.payload, 'category': category, 'reason_code': code})
                 self.assertEqual(result['status'], 'saved')
