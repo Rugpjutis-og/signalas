@@ -78,3 +78,16 @@ class AccountContextTests(unittest.TestCase):
     def test_context_revision_distinguishes_new_results_without_invalidating_old_bindings(self):
         original={'review_run_id':'same','source_reference':{'source':'pod','id':'p'}}
         self.assertNotEqual(analysis_result_name(original),analysis_result_name({**original,'exercise_actor_context_revision':'new'}))
+
+    def test_scoring_review_request_is_distinct_from_previous_role_review_and_idempotent(self):
+        self.repo.latest=lambda:{'records':[self.unit]};self.repo.expand_unit=lambda u:u
+        target={'source':self.unit['source'],'id':self.unit['id'],'content_fingerprint':fingerprint(self.unit),'exercise_id':None,'account_context_revision':self.state['revision']}
+        self.db[review.STATE]={'status':'pending','run_id':'existing','targets':[target],'cursor':0,'account_context_requests':[self.state['revision']]}
+        state=self.db[ea.STATE];state['scoring_review_request']='explicit-scoring-retro';state['scoring_rule']={'id':'rule-test'}
+        self.repo.sql=Mock(return_value={'rows':[[json.dumps([{'source':self.unit['source'],'id':self.unit['id'],'fingerprint':fingerprint(self.unit)}])]]})
+        ea.append_review(self.repo,state)
+        self.assertEqual(self.db[review.STATE]['targets'][0]['scoring_rule_id'],'rule-test')
+        self.assertEqual(self.db[review.STATE]['run_id'],'existing')
+        self.assertIn('explicit-scoring-retro',self.db[review.STATE]['account_context_requests'])
+        ea.append_review(self.repo,state)
+        self.assertEqual(len(self.db[review.STATE]['targets']),1)

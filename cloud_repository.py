@@ -44,6 +44,8 @@ def analysis_result_name(result):
         binding['vision_revision'] = result['vision_revision']
     if result.get('exercise_actor_context_revision'):
         binding['exercise_actor_context_revision']=result['exercise_actor_context_revision']
+    if result.get('exercise_scoring_rule_review'):
+        binding['exercise_scoring_rule_review'] = result['exercise_scoring_rule_review']
     if result.get('review_run_id'):
         binding['review_run_id'] = result['review_run_id']
     name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,

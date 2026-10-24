@@ -23,14 +23,15 @@ INSTRUCTIONS = (
 )
 
 
-def for_unit(repo, unit, *, thermometer_only=False):
+def for_unit(repo, unit, *, thermometer_only=False, review_rule_id=None):
     state = current(repo)
     rule = state.get('scoring_rule') if state else None
-    if (thermometer_only or not matches(state, unit) or not isinstance(rule, dict)
+    historical = bool(rule and review_rule_id == ID and rule.get("historical_review_enabled") is True)
+    if ((thermometer_only and not historical) or not matches(state, unit) or not isinstance(rule, dict)
             or rule.get('id') != ID or rule.get('enabled') is not True
             or not rule.get('effective_at') or not hasattr(repo, 'supplement_eligible')):
         return None
-    if not repo.supplement_eligible(unit, rule['effective_at']):
+    if not historical and not repo.supplement_eligible(unit, rule['effective_at']):
         return None
     return {'id': ID, 'provenance': 'exercise_organizer',
             'scope': 'fictional_exercise_only', 'category': 'destabilizing', 'reason_code': 'D5'}

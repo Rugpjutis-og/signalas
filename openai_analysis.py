@@ -138,7 +138,7 @@ def validate_result(result, catalog):
     return result
 
 
-def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=ANALYSIS_TIMEOUT_SECONDS, model_override=None, thermometer_only=False):
+def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=ANALYSIS_TIMEOUT_SECONDS, model_override=None, thermometer_only=False, scoring_rule_review=None):
     started = time.monotonic()
     catalog = narrative_registry.load(root)
     prepared = prepare_input(unit, context, expanded_narratives)
@@ -151,7 +151,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     if actor_context:
         prepared['exercise_actor_context'] = actor_context
     from exercise_rule import for_unit as scoring_rule_for_unit, INSTRUCTIONS as SCORING_INSTRUCTIONS, TRIGGERS
-    scoring_rule = scoring_rule_for_unit(root, unit, thermometer_only=thermometer_only)
+    scoring_rule = scoring_rule_for_unit(root, unit, thermometer_only=thermometer_only, review_rule_id=scoring_rule_review)
     if scoring_rule:
         prepared["exercise_scoring_rule"] = scoring_rule
     image_parts, vision = prepare_images(unit, root)

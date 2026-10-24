@@ -179,6 +179,12 @@ def step(repo, *, deadline=None, monotonic=None):
                    'registry_version': state['registry_version'], 'thermometer_rules_version': VERSION,
                    'requested_model': MODEL, 'review_run_id': state['run_id'], 'vision_revision': VISION_REVISION}
         if actor:binding['exercise_actor_context_revision']=actor['revision']
+        scoring_review = target.get('scoring_rule_id')
+        if scoring_review:
+            from exercise_rule import for_unit as scoring_for_unit
+            if not account_revision or not scoring_for_unit(repo, unit, thermometer_only=True, review_rule_id=scoring_review):
+                return advance(repo, state, 'skipped')
+            binding['exercise_scoring_rule_review'] = scoring_review
         result_name = analysis_result_name(binding)
         audit_name = 'account-recheck-result/'+state['run_id']+'/'+result_name.split('/')[-1] if account_revision else None
         state.update(status='category_running' if selected else 'running', inflight=audit_name or result_name, updated_at=now())
@@ -186,7 +192,7 @@ def step(repo, *, deadline=None, monotonic=None):
         repo.write(STATE, state)
         try:
             result = analyze(unit, state['exercise_context'], root=repo, timeout=timeout,
-                             model_override=MODEL, thermometer_only=True)
+                             model_override=MODEL, thermometer_only=True, **({"scoring_rule_review": scoring_review} if scoring_review else {}))
         except CloudStorageError:
             raise
         except AnalysisServiceError as error:

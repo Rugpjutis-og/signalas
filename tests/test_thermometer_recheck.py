@@ -54,6 +54,19 @@ class RecheckTests(unittest.TestCase):
         self.original['result'].update(thermometer_status='classified',thermometer_category='neutral')
         return job
 
+    def test_authorized_scoring_target_passes_explicit_rule_and_uses_distinct_receipt(self):
+        job=self.actor_job();job['targets'][0]['scoring_rule_id']='scenario-rule'
+        self.db[retry.STATE]=job
+        with patch('exercise_accounts.for_unit',return_value={'revision':'organizer-test'}), \
+             patch('exercise_rule.for_unit',return_value={'id':'scenario-rule'}), \
+             patch.object(retry,'analyze',side_effect=self.response) as analyze:
+            retry.step(self.repo)
+        self.assertEqual(analyze.call_args.kwargs['scoring_rule_review'],'scenario-rule')
+        result=next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(result['exercise_scoring_rule_review'],'scenario-rule')
+        other={k:v for k,v in result.items() if k!='exercise_scoring_rule_review'}
+        self.assertNotEqual(analysis_result_name(result),analysis_result_name(other))
+
     def test_account_review_keeps_previous_category_on_unclear_output(self):
         self.actor_job()
         response=self.response();response['result'].update(thermometer_status='needs_review',thermometer_category=None)

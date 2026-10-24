@@ -69,3 +69,11 @@ class ExerciseRuleTests(unittest.TestCase):
             self.assertEqual(result['result']['reason_codes'], ['D5'])
             self.assertEqual(result['exercise_rule_application']['content_direction'], 'neutral')
             self.assertNotIn('exercise_rule_trigger', result['result'])
+
+    def test_historic_rule_requires_explicit_saved_authorization_and_exact_request(self):
+        self.repo.supplement_eligible.return_value = False
+        self.assertIsNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.ID))
+        self.state['scoring_rule']['historical_review_enabled'] = True
+        self.assertEqual(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.ID)['id'], rule.ID)
+        self.assertIsNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id='other'))
+        self.assertIsNone(rule.for_unit(self.repo, {**self.unit, 'author_id': 'other'}, thermometer_only=True, review_rule_id=rule.ID))

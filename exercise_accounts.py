@@ -50,9 +50,11 @@ def append_review(repo,state):
     from narrative_registry import load as registry
     context=repo.read('live-context.json')
     job=repo.read(review.STATE,{}) or {}
-    if state['revision'] in job.get('account_context_requests',[]):
+    request_id = state.get('scoring_review_request') or state['revision']
+    scoring_rule_id = (state.get('scoring_rule') or {}).get('id') if state.get('scoring_review_request') else None
+    if request_id in job.get('account_context_requests',[]):
         state.update(status='complete',matched_accounts=len(state.get('account_ids',{})),
-            review_targets=sum(t.get('account_context_revision')==state['revision'] for t in job.get('targets',[])),
+            review_targets=sum(t.get('scoring_rule_id') == scoring_rule_id if scoring_rule_id else t.get('account_context_revision')==state['revision'] for t in job.get('targets',[])),
             updated_at=datetime.now(timezone.utc).isoformat())
         repo.write(STATE,state)
         return
@@ -76,14 +78,17 @@ def append_review(repo,state):
         digest=fingerprint(unit)
         if (unit['source'],unit['id'],digest) not in bindings:continue # Main queue handles new units.
         targets.append({'source':unit['source'],'id':unit['id'],'content_fingerprint':digest,
-            'exercise_id':unit.get('exercise_id'),'account_context_revision':state['revision']})
+            'exercise_id':unit.get('exercise_id'),'account_context_revision':state['revision'],
+            **({'scoring_rule_id':scoring_rule_id} if scoring_rule_id else {})})
     # An existing pending target for this same unit can perform the requested new pass.
     pending={(t['source'],t['id'],t['content_fingerprint']):t
              for t in job.get('targets',[])[job.get('cursor',0)+bool(job.get('inflight')):]}
     extra=[]
     for target in targets:
         existing=pending.get((target['source'],target['id'],target['content_fingerprint']))
-        if existing is not None:existing['account_context_revision']=state['revision']
+        if existing is not None:
+            existing['account_context_revision']=state['revision']
+            if scoring_rule_id:existing['scoring_rule_id']=scoring_rule_id
         else:extra.append(target)
     if not job or job.get('status')=='complete':
         # Keep completed pass metadata as the existing review subsystem already does.
@@ -95,7 +100,7 @@ def append_review(repo,state):
             'started_at':datetime.now(timezone.utc).isoformat()}
     else:
         job['targets'].extend(extra)
-    job.setdefault('account_context_requests',[]).append(state['revision'])
+    job.setdefault('account_context_requests',[]).append(request_id)
     job['total']=len(job['targets']);job['remaining']=job['total']-job.get('cursor',0)
     job['updated_at']=datetime.now(timezone.utc).isoformat()
     if not job['remaining']:job['status']='complete'

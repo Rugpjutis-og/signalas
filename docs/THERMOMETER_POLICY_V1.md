@@ -29,3 +29,7 @@ Tik privačiame `exercise-account-context.json` esančioms, tiksliais šaltinio 
 `exercise_rule.py` taikomas tik įprastai naujo / iki aktyvavimo neįvertinto turinio analizei. Tikslinio seno turinio Sol peržiūros režime jis išjungtas. Ankstesnius AI / rankinius sprendimus nuo pakeitimo saugo aktyvavimo laikas ir esamas `supplement_eligible` patikrinimas; jokia nauja analizės eilė nekuriama. Taisyklė saugoma toje pačioje Neon būsenoje lauke `scoring_rule`; visos 50 paskyrų lieka privačioje bazėje.
 
 AI nustato aiškų paties autoriaus turinio požymį ir pateikia tikslią ištrauką, o serveris taiko organizatoriaus D5 priskyrimą. `none`, neaiškus turinys, trūkstama medija ir svetimos ištraukos priverstinio priskyrimo nesukuria. Rezultato `exercise_rule_application` išsaugo taisyklės ID, kilmę, požymį ir nepriklausomo turinio vertinimo kryptį; vartotojui paaiškinime rodoma, kad kategorija skirta pagal organizatoriaus pratybų taisyklę. Rankinis sprendimas išlieka viršesnis. Naratyvų atpažinimas nekeičiamas.
+
+### Patvirtinta retrospektyvi pratybų taisyklės peržiūra
+
+Organizatoriui atskirai patvirtinus `historical_review_enabled`, vienkartinė baigtinė peržiūra gali taikyti taisyklę anksčiau vertintiems tų pačių paskyrų vienetams. Reikia ir tikslinio `scoring_rule_id`; bendrosios senų įrašų Sol peržiūros savaime šios išimties neįjungia. Išsaugoma sena kategorija iki tinkamo klasifikuoto rezultato; klaida ar neaiškumas jos neperrašo, rankiniai sprendimai apsaugomi. Atskiru užklausos ID neleidžiama pakartotinai kurti tos pačios peržiūros eilės.
