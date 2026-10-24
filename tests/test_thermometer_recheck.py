@@ -21,7 +21,12 @@ class RecheckTests(unittest.TestCase):
         self.repo.latest = lambda: {'records': [self.unit]}
         self.repo.refresh_snapshot = Mock()
         def sql(statement, params=None):
-            if 'INSERT INTO signalas_state' in statement:
+            if 'WITH previous AS' in statement:
+                old = self.db.get(params[1], {})
+                if old.get('status') == 'complete' and old.get('run_id') == params[3]:
+                    self.db['thermometer-recheck-history/'+params[3]] = copy.deepcopy(old)
+                    self.db[params[1]] = json.loads(params[2])
+            elif 'INSERT INTO signalas_state' in statement:
                 self.db.setdefault(params[1], json.loads(params[2]))
             return {'rows': [['owner']]}
         self.repo.sql = Mock(side_effect=sql)
@@ -54,6 +59,59 @@ class RecheckTests(unittest.TestCase):
             self.assertEqual(first['total'], 2)
             self.assertNotIn('targets', first)
             self.assertEqual(retry.start(self.repo)['run_id'], first['run_id'])
+
+    def test_neutral_selection_excludes_manual_and_other_categories_and_archives_previous_job(self):
+        self.db[retry.STATE] = dict(self.job(), status='complete', cursor=1, remaining=0)
+        units = [{**self.unit, 'assessment': {'status': state, 'category': category, 'method': method}}
+                 for state, category, method in [('assessed','neutral','openai_text_pilot'),
+                    ('assessed','neutral','manual_review'), ('assessed','stabilizing','openai_text_pilot'),
+                    ('needs_review',None,'openai_text_pilot'), ('not_analyzed',None,'not_analyzed')]]
+        with patch.object(retry, 'thermometer', return_value={'units':units,'start':'a','end':'b'}), patch.object(
+                retry, 'load', return_value=({'records':[self.unit]},None,{})):
+            first = retry.start(self.repo, category='neutral', request_id='neutral-audit')
+            self.assertEqual(first['total'], 1)
+            self.assertEqual(first['selection_category'], 'neutral')
+            self.assertEqual(self.db[retry.STATE]['status'], 'category_pending')
+            self.assertTrue(retry.active(self.repo))
+            self.assertIn('thermometer-recheck-history/one-pass', self.db)
+            self.assertEqual(retry.start(self.repo, category='neutral', request_id='neutral-audit')['run_id'], first['run_id'])
+
+    def test_neutral_audit_reassigns_without_replacing_narratives(self):
+        self.db[retry.STATE] = dict(self.job(), selection_category='neutral')
+        self.original['result'].update(thermometer_status='classified', thermometer_category='neutral')
+        response = self.response()
+        response['result']['thermometer_category'] = 'destabilizing'
+        with patch.object(retry, 'analyze', return_value=response):
+            state = retry.step(self.repo)
+        self.assertEqual(state['reassigned'], 1)
+        self.assertEqual(state['classified'], 1)
+        saved_result = next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(saved_result['result']['narrative_analysis'], {'original':True})
+
+    def test_neutral_audit_alternates_with_normal_analysis(self):
+        self.db[retry.STATE] = dict(self.job(), selection_category='neutral', targets=self.job()['targets']*2,
+                                   remaining=2, total=2)
+        self.original['result'].update(thermometer_status='classified', thermometer_category='neutral')
+        primary = {'status':'pending','remaining':20,'completed':0,'updated_at':'before'}
+        self.db[cloud_analysis.STATE] = primary
+        with patch.object(retry, 'analyze', side_effect=self.response) as sol, patch.object(
+                cloud_analysis, '_primary_step', return_value=primary) as luna:
+            cloud_analysis.step(self.repo)
+            self.assertEqual(sol.call_count, 1)
+            cloud_analysis.step(self.repo)
+            luna.assert_called_once()
+            self.db[cloud_analysis.STATE] = dict(primary,remaining=19,completed=1,updated_at='after')
+            cloud_analysis.step(self.repo)
+            self.assertEqual(sol.call_count, 2)
+
+    def test_invalid_neutral_reassessment_becomes_review_error_not_a_guessed_direction(self):
+        self.db[retry.STATE] = dict(self.job(), selection_category='neutral')
+        self.original['result'].update(thermometer_status='classified', thermometer_category='neutral')
+        with patch.object(retry, 'analyze', side_effect=ValueError('invalid')):
+            self.assertEqual(retry.step(self.repo)['failed'], 1)
+        result = next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(result['result']['thermometer_status'], 'error')
+        self.assertIsNone(result['result']['thermometer_category'])
 
     def test_sol_only_changes_direction_and_never_mutates_default_or_repeats(self):
         self.db[retry.STATE] = self.job()

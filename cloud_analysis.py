@@ -120,7 +120,16 @@ def step(repo, *, deadline=None, monotonic=None):
     """At most one paid call per request, no hidden retries after provider failure."""
     import thermometer_recheck
     if thermometer_recheck.active(repo):
-        return thermometer_recheck.step(repo, deadline=deadline, monotonic=monotonic)
+        trial = repo.read(thermometer_recheck.STATE, {}) or {}
+        primary = repo.read(STATE, {}) or {}
+        # A category audit alternates with the normal queue instead of pausing it.
+        if (not trial.get('selection_category') or primary.get('status') not in ('pending', 'running') or
+                trial.get('after_primary') != thermometer_recheck.primary_marker(repo)):
+            return thermometer_recheck.step(repo, deadline=deadline, monotonic=monotonic)
+    return _primary_step(repo, deadline=deadline, monotonic=monotonic)
+
+
+def _primary_step(repo, *, deadline=None, monotonic=None):
     state = repo.read(STATE, {}) or {}
     if state.get('status') not in ('pending', 'running'):
         return state or {'status': 'idle', 'remaining': 0}
@@ -215,8 +224,8 @@ def drain(repo, *, seconds=235, monotonic=None):
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
         state = recover_validation_failure(repo)
     while state.get('status') in ('pending', 'running') and clock() + 60 < deadline:
-        before = state.get('remaining')
+        before = (state.get('kind'), state.get('remaining'))
         state = step(repo, deadline=deadline, monotonic=clock)
-        if state.get('status') == 'already_running' or state.get('remaining') == before:
+        if state.get('status') == 'already_running' or (state.get('kind'), state.get('remaining')) == before:
             break
     return state

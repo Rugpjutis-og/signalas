@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from live_data import load, thermometer, fingerprint
 from thermometer_review import saved, applicable
-from thermometer_policy import VERSION
+from thermometer_policy import VERSION, CATEGORIES, GUIDANCE_REVISION
 from narrative_registry import load as registry
 from openai_analysis import analyze, AnalysisServiceError
 from cloud_repository import analysis_result_name
@@ -24,32 +24,43 @@ def now():
 
 def active(repo):
     state = repo.read(STATE, {}) or {}
-    return state.get('status') in ('pending', 'running')
+    return state.get('status') in ('pending', 'running', 'category_pending', 'category_running')
 
 
 def status(repo):
-    return {k: v for k, v in (repo.read(STATE, {}) or {}).items()
-            if k not in ('targets', 'exercise_context', 'inflight')}
+    value = {k: v for k, v in (repo.read(STATE, {}) or {}).items()
+             if k not in ('targets', 'exercise_context', 'inflight')}
+    value['status'] = {'category_pending':'pending', 'category_running':'running'}.get(value.get('status'), value.get('status'))
+    return value
 
 
-def start(repo):
+def start(repo, *, category=None, request_id=None):
     """Administrative start, never a paid local call. Repeat starts are idempotent."""
     old = repo.read(STATE, {}) or {}
-    if old:
+    if category is not None and category not in CATEGORIES:
+        raise ValueError('Invalid review category')
+    if old and (not request_id or old.get('request_id') == request_id):
         return status(repo)
+    if old and old.get('status') != 'complete':
+        return dict(status(repo), reason='another_review_not_complete')
     report = thermometer(root=repo)
     records, context, _ = load(repo)
     by_id = {(r['source'], r['id']): r for r in records['records']}
     targets = []
     for unit in report['units']:
-        if unit['assessment']['status'] not in ELIGIBLE:
+        assessment = unit['assessment']
+        eligible = (assessment['status'] == 'assessed' and assessment.get('category') == category
+                    and assessment.get('method') != 'manual_review') if category else assessment['status'] in ELIGIBLE
+        if not eligible:
             continue
         original = repo.expand_unit(by_id[unit['source'], unit['id']])
         targets.append({'source': unit['source'], 'id': unit['id'],
                         'content_fingerprint': fingerprint(original),
                         'exercise_id': original.get('exercise_id')})
-    job = {'status': 'pending' if targets else 'complete', 'run_id': uuid.uuid4().hex,
+    job = {'status': ('category_pending' if category else 'pending') if targets else 'complete', 'run_id': uuid.uuid4().hex,
            'processing_model': MODEL, 'kind': 'thermometer_recheck',
+           'selection_category': category, 'request_id': request_id, 'guidance_revision': GUIDANCE_REVISION,
+           'reassigned': 0, 'retained': 0,
            'targets': targets, 'exercise_context': context, 'rules_version': VERSION,
            'registry_version': registry(repo)['version'], 'cursor': 0,
            'total': len(targets), 'remaining': len(targets), 'completed': 0,
@@ -59,18 +70,40 @@ def start(repo):
     # Freeze the snapshot without interrupting an in-flight primary assessment.
     # Atomic insert makes competing starts idempotent; per-unit execution still
     # uses the shared six-minute lease and revalidates every frozen fingerprint.
-    repo.sql("""INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,$3::jsonb)
-        ON CONFLICT(scope,name) DO NOTHING""", [repo.scope, STATE, json.dumps(job)])
+    if old:
+        repo.sql("""WITH previous AS (
+            SELECT value FROM signalas_state WHERE scope=$1 AND name=$2
+              AND value->>'run_id'=$4 AND value->>'status'='complete' FOR UPDATE
+        ), archived AS (
+            INSERT INTO signalas_state(scope,name,value)
+            SELECT $1,'thermometer-recheck-history/'||$4,value FROM previous
+            ON CONFLICT(scope,name) DO NOTHING
+        ) UPDATE signalas_state SET value=$3::jsonb WHERE scope=$1 AND name=$2
+            AND EXISTS(SELECT 1 FROM previous)""", [repo.scope, STATE, json.dumps(job), old['run_id']])
+    else:
+        repo.sql("""INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,$3::jsonb)
+            ON CONFLICT(scope,name) DO NOTHING""", [repo.scope, STATE, json.dumps(job)])
     repo.values.pop(STATE, None)
     return status(repo)
 
-def advance(repo, state, outcome):
+def primary_marker(repo):
+    primary = repo.read('analysis-job.json', {}) or {}
+    return {k: primary.get(k) for k in ('updated_at', 'completed', 'remaining')}
+
+
+def advance(repo, state, outcome, result=None):
     state[outcome] = state.get(outcome, 0) + 1
+    if outcome == 'classified' and state.get('selection_category') and result:
+        changed = result['result'].get('thermometer_category') != state['selection_category']
+        counter = 'reassigned' if changed else 'retained'
+        state[counter] = state.get(counter, 0) + 1
     state['cursor'] += 1
     state['remaining'] = len(state['targets']) - state['cursor']
     state['completed'] = state['cursor']
-    state['status'] = 'pending' if state['remaining'] else 'complete'
+    state['status'] = ('category_pending' if state.get('selection_category') else 'pending') if state['remaining'] else 'complete'
     state['updated_at'] = now()
+    if state.get('selection_category'):
+        state['after_primary'] = primary_marker(repo)
     state.pop('inflight', None)
     repo.write(STATE, state)
     return status(repo)
@@ -88,7 +121,7 @@ def step(repo, *, deadline=None, monotonic=None):
         repo.values.clear()
         repo.refresh_snapshot()
         state = repo.read(STATE, {}) or {}
-        if state.get('status') not in ('pending', 'running'):
+        if state.get('status') not in ('pending', 'running', 'category_pending', 'category_running'):
             return status(repo)
         waiting = (repo.read('background-schedule.json', {}) or {}).get('collection_waiting_until')
         if waiting and datetime.fromisoformat(waiting.replace('Z', '+00:00')) > datetime.now(timezone.utc):
@@ -96,9 +129,10 @@ def step(repo, *, deadline=None, monotonic=None):
         if state.get('inflight'):
             # A result saved just before interruption must not be paid for again.
             result = repo.read(state['inflight'])
-            outcome = ('classified' if result['result']['thermometer_status'] == 'classified'
+            outcome = ('failed' if result.get('processing_disposition') == 'needs_review'
+                       else 'classified' if result['result']['thermometer_status'] == 'classified'
                        else 'review_required') if result else 'failed'
-            return advance(repo, state, outcome)
+            return advance(repo, state, outcome, result)
         from openai_analysis import context_data
         if (state['exercise_context'] != context_data(repo.read('live-context.json')) or
                 state['rules_version'] != VERSION or state['registry_version'] != registry(repo)['version']):
@@ -119,7 +153,11 @@ def step(repo, *, deadline=None, monotonic=None):
             return advance(repo, state, 'skipped')
         # Preserve the original narrative result; this pass only revisits direction.
         original = repo.analysis_for_unit(unit['source'], unit['id'], target['content_fingerprint'], state['exercise_context'])
-        if not original or original['result'].get('thermometer_status') not in ELIGIBLE:
+        selected = state.get('selection_category')
+        still_eligible = original and ((original['result'].get('thermometer_status') == 'classified' and
+            original['result'].get('thermometer_category') == selected) if selected else
+            original['result'].get('thermometer_status') in ELIGIBLE)
+        if not still_eligible:
             return advance(repo, state, 'skipped')
         timeout = min(180, deadline - (monotonic or time.monotonic)() - 30) if deadline else 180
         if timeout < 30:
@@ -129,7 +167,7 @@ def step(repo, *, deadline=None, monotonic=None):
                    'exercise_id': unit.get('exercise_id'), 'exercise_context': state['exercise_context'],
                    'registry_version': state['registry_version'], 'thermometer_rules_version': VERSION,
                    'requested_model': MODEL, 'review_run_id': state['run_id']}
-        state.update(status='running', inflight=analysis_result_name(binding), updated_at=now())
+        state.update(status='category_running' if selected else 'running', inflight=analysis_result_name(binding), updated_at=now())
         repo.write(STATE, state)
         try:
             result = analyze(unit, state['exercise_context'], root=repo, timeout=timeout,
@@ -153,6 +191,19 @@ def step(repo, *, deadline=None, monotonic=None):
                 'analysis_validation')
             failures = state.setdefault('failure_reasons', {})
             failures[reason] = failures.get(reason, 0) + 1
+            if selected:
+                fallback = {**binding, 'model': MODEL, 'analysis_executed': False,
+                    'processing_disposition': 'needs_review', 'processing_reason': reason,
+                    'method': 'openai_validation_failed', 'recorded_at': now(),
+                    'result': {'narrative_analysis': copy.deepcopy(original['result']['narrative_analysis']),
+                        'direction': 'needs_review', 'thermometer_status': 'error', 'thermometer_category': None,
+                        'reason': 'Pakartotinis vertinimas nepraėjo patikros; reikia analitiko peržiūros.',
+                        'missing_context': 'Pakartotinis vertinimas nepraėjo patikros.',
+                        'reason_codes': [], 'evidence': ''}}
+                for field in ('candidate_cluster_id', 'candidate_cluster_ids'):
+                    if field in original:
+                        fallback[field] = copy.deepcopy(original[field])
+                repo.append_analysis(fallback)
             return advance(repo, state, 'failed')
         result.update(binding)
         result['method'] = 'openai_thermometer_recheck'
@@ -162,6 +213,6 @@ def step(repo, *, deadline=None, monotonic=None):
         result['result']['narrative_analysis'] = copy.deepcopy(original['result']['narrative_analysis'])
         repo.append_analysis(result)
         outcome = 'classified' if result['result']['thermometer_status'] == 'classified' else 'review_required'
-        return advance(repo, state, outcome)
+        return advance(repo, state, outcome, result)
     finally:
         repo.sql('DELETE FROM signalas_jobs WHERE scope=$1 AND owner=$2', [repo.scope, owner])

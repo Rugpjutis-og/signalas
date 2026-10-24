@@ -376,3 +376,9 @@ Tikro turinio sąraše prie kiekvieno įvertinto įrašo ar komentaro yra suskle
 ### Kolektyvinis kaltinimas ir visuotinis apleistumas
 
 2026-10-24 gairėse tikslinama, kad D3 / D4 gali būti nustatomi ir be agresyvių veiksmų raginimo, kai turinys ir kontekstas rodo kolektyvinės piktybiškos veiklos primetimą, visuotinį apleistumą, bejėgiškumą ar patikimos išeities nebuvimą. Vien aštri kritika, nepasitikėjimas, neigiama nuomonė apie Lietuvą ar institucijas nėra automatinis D kriterijus; N1 nereikalauja institucijų palaikymo. Palaikymo taip pat nepakanka S kategorijai. Šios gairės taikomos visų originalo kalbų turiniui tiek Luna, tiek baigtinei Sol peržiūrai. Nauji rezultatai pažymimi `thermometer_guidance_revision`, o ankstesni rezultatai ir rankiniai sprendimai automatiškai neperrašomi.
+
+### Neutralios kategorijos Sol auditas
+
+Administratoriui aiškiai pavedus, `thermometer_recheck.start(repo, category='neutral', request_id=...)` užfiksuoja dabartinio pasirinkto laikotarpio AI priskirtus neutralius vienetus; rankiniai sprendimai neįtraukiami. Baigta ankstesnė užduotis archyvuojama toje pačioje Neon saugykloje ir pakeičiama atominiu palyginimu pagal paleidimo ID. Tas pats `request_id` negali pakartotinai sukurti mokamos eilės. Vykstanti ankstesnė peržiūra neperrašoma.
+
+Prieš kvietimą tikrinama, ar turinys nepasikeitė, nėra naujo rankinio sprendimo ir kategorija vis dar neutrali. Naujai klasifikuoti vienetai perskirstomi, išlikę neutralūs taip ir pažymimi, neaiškūs rezultatai grąžinami peržiūrai. Validacijos klaida neutralios kategorijos audite tampa aiškia vertinimo klaida, o ne spėjama nauja kryptimi. Naratyvų rezultatai neliečiami. Šis auditas kaitalioja Sol ir įprastos Luna eilės vienetus, kad pagrindinė analizė tęstųsi; rinkimo grafikas ir pasirinktas laikotarpis nekeičiami.
