@@ -204,7 +204,7 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
             assessment = {"category": manual['category'], "status": "assessed", "method": "manual_review",
                           "reason": manual['reason'], "context_version": None,
                           "reviewed_parts": ["analitiko peržiūra"],
-                          "reason_codes": [manual['reason_code']], "rules_version": manual['rules_version'],
+                          "reason_codes": [manual['reason_code']] if manual.get('reason_code') else [], "rules_version": manual['rules_version'],
                           "evidence": [{"kind": "text", "quote": manual['evidence']}] if manual['evidence'] else []}
         rows.append({**record, "attachments": [], "conversation_context": record.get("conversation_context", []),
                      "assessment": assessment})

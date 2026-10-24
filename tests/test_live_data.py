@@ -82,6 +82,25 @@ class LiveDataTests(unittest.TestCase):
                    "source": "pod.test", "coverage": "account_visible_stream_first_page", "records": self.records})
         self.assertEqual(live_data.thermometer(7, self.root)["assessed"], 0)
 
+    def test_direction_only_manual_decisions_count_without_changing_narratives(self):
+        unit = self.records[0]
+        self.write('openai-analysis-pilot.json', [self.analysis(unit)])
+        narratives_before = live_data.bootstrap(self.root)['narratives']
+        for category in ('stabilizing', 'neutral', 'destabilizing'):
+            for code_fields in ({}, {'reason_code': None}):
+                self.write('thermometer-reviews.json', {thermometer_review.key(unit['source'], unit['id']): {
+                    'content_fingerprint': live_data.fingerprint(unit), 'exercise_id': None,
+                    'exercise_context': None, 'rules_version': thermometer_review.VERSION,
+                    'category': category, 'reason': 'Analitiko sprendimas.', 'evidence': '', **code_fields}})
+                for _ in range(2):
+                    report = live_data.thermometer(7, self.root)
+                    self.assertEqual((report['total'], report['assessed']), (2, 1))
+                    self.assertEqual(next(c for c in report['categories'] if c['id'] == category)['percent'], 100)
+                    row = next(r for r in report['units'] if r['id'] == unit['id'])
+                    self.assertEqual(row['assessment']['reason_codes'], [])
+                    self.assertEqual(report['days'][-1]['assessed'], 1)
+                    self.assertEqual(live_data.bootstrap(self.root)['narratives'], narratives_before)
+
     def test_correcting_an_assessed_direction_moves_category_without_increasing_coverage(self):
         unit = self.records[0]
         analysis = self.analysis(unit)

@@ -72,15 +72,12 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
  for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
  assert(liveRoot.innerHTML.includes('Peržiūrėti ir priskirti kryptį'));
- // D5 is offered only for the destabilizing direction, including correction forms.
- const codeForm={elements:{category:{value:'destabilizing'},reason_code:{}}};
- liveRoot.onchange({target:{name:'category',closest:()=>codeForm}});
- assert(codeForm.elements.reason_code.innerHTML.includes('value="D5">D5 · Antisisteminis naratyvas'));
- for(const category of ['neutral','stabilizing']){
-   codeForm.elements.category.value=category;
-   liveRoot.onchange({target:{name:'category',closest:()=>codeForm}});
-   assert(!codeForm.elements.reason_code.innerHTML.includes('value="D5"'));
- }
+ // Manual classification asks only for direction; changing it keeps editing state.
+ assert(!reviewMarkup.includes('name="reason_code"'));
+ const directionForm={elements:{category:{value:'destabilizing'}}};
+ liveRoot.onchange({target:{name:'category',closest:()=>directionForm}});
+ assert.equal(liveRoot.reviewEditing,true);
+ liveRoot.reviewEditing=false;
 
  const manualButton={dataset:{thermoCategory:'manual_review'},closest:()=>null};
  liveRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
@@ -109,9 +106,10 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  savingRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
  const pendingUnit=shown.units.find(u=>u.assessment.status!=='assessed');
  const form=node();form.dataset={source:pendingUnit.source,id:pendingUnit.id};
- form.reportValidity=()=>true;form.values={category:'neutral',reason_code:'N1'};
+ form.reportValidity=()=>true;form.values={category:'neutral'};
  await savingRoot.onsubmit({preventDefault(){},target:{closest:()=>form}});
  assert.equal(savedPayload.category,'neutral');
+ assert(!Object.hasOwn(savedPayload,'reason_code'));
  assert(savingRoot.innerHTML.includes(`Aprėptis: ${shown.assessed} iš ${shown.total}`));
  assert(savingRoot.querySelector('[data-thermo-review-confirmation]').textContent.includes('įskaityta'));
  assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Laukia rankinio patvirtinimo'));

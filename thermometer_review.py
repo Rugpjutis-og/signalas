@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from content import source_reference
 from live_data import fingerprint
 from openai_analysis import context_data
-from thermometer_policy import BY_CATEGORY, VERSION, REASONS, validate_assessment
+from thermometer_policy import BY_CATEGORY, VERSION, REASONS
 
 NAME = 'thermometer-reviews.json'
 
@@ -35,16 +35,18 @@ def save(repo, payload):
     reason, evidence = payload.get('reason', ''), payload.get('evidence', '')
     if not all(isinstance(s, str) and 0 < len(s) <= 256 for s in (source, unit_id)):
         raise ValueError('Nenurodytas turinio vienetas.')
-    if category not in BY_CATEGORY or code not in BY_CATEGORY[category]:
+    if not isinstance(category, str) or category not in BY_CATEGORY:
+        raise ValueError('Netinkama komunikacinė kryptis.')
+    # Older clients may still supply a code; new manual decisions need only direction.
+    if code is not None and (not isinstance(code, str) or code not in BY_CATEGORY[category]):
         raise ValueError('Kategorija ir pagrindo kodas nesutampa.')
     if not isinstance(reason, str) or len(reason.strip()) > 2000:
         raise ValueError('Netinkamas vertinimo pagrindas.')
-    reason = reason.strip() or 'Rankiniu būdu patvirtinta kryptis: ' + REASONS[code] + '.'
+    label = REASONS[code] if code else {'stabilizing': 'stabilizuojantis turinys',
+            'neutral': 'neutralus turinys', 'destabilizing': 'destabilizuojantis turinys'}[category]
+    reason = reason.strip() or 'Rankiniu būdu patvirtinta kryptis: ' + label + '.'
     if not isinstance(evidence, str) or len(evidence) > 2000:
         raise ValueError('Netinkama pagrindžianti ištrauka.')
-    validate_assessment({'status': 'classified', 'category': category,
-                         'reason_codes': [code], 'reason': reason.strip(),
-                         'evidence': evidence.strip()}, require_evidence=False)
     unit = next((u for u in repo.latest()['records'] if u.get('source') == source and u.get('id') == unit_id), None)
     if unit is None:
         raise ValueError('Turinio vieneto nėra surinktoje imtyje.')

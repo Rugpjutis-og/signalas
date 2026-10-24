@@ -71,3 +71,23 @@ class ReviewTests(unittest.TestCase):
         self.assertIn('previous_reasons',statement)
         self.assertNotIn('DELETE',statement)
         self.assertIn('Rankiniu būdu patvirtinta',json.loads(params[3])['reason'])
+
+    def test_direction_only_decisions_are_saved_without_inventing_a_code(self):
+        import json
+        for category in ('stabilizing', 'neutral', 'destabilizing'):
+            with self.subTest(category=category):
+                result = review.save(self.repo, {'source': 'pod.test', 'id': 'p1', 'category': category})
+                decision = json.loads(self.repo.written[-1][1][3])
+                self.assertEqual(result['status'], 'saved')
+                self.assertEqual(decision['category'], category)
+                self.assertIsNone(decision['reason_code'])
+                self.assertTrue(review.applicable(decision, self.repo.unit, None))
+                self.assertTrue(decision['reason'])
+
+    def test_direction_only_still_rejects_invalid_category_and_legacy_code(self):
+        for changes in ({'category': 'unknown'}, {'category': None}, {'category': []},
+                        {'reason_code': []}, {'reason_code': 'D5'}):
+            payload = {'source': 'pod.test', 'id': 'p1', 'category': 'neutral', **changes}
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                review.save(self.repo, payload)
+        self.assertEqual(self.repo.written, [])
