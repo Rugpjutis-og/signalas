@@ -100,6 +100,27 @@ def append_review(repo,state):
             'started_at':datetime.now(timezone.utc).isoformat()}
     else:
         job['targets'].extend(extra)
+    # This approved finite pass revisits only these accounts; keep unrelated work.
+    # Cheap text units first, newest first within each media tier. New/unassessed
+    # units remain in the independent primary queue with its existing 3:1 share.
+    from exercise_rule import CONTENT_RULE_ID
+    if scoring_rule_id == CONTENT_RULE_ID:
+        from vision_input import has_images
+        source_units = {(r['source'], r['id']): r for r in records}
+        targets.sort(key=lambda t: (
+            bool(source_units[(t['source'], t['id'])].get('media') or
+                 source_units[(t['source'], t['id'])].get('attachments') or
+                 has_images(repo.expand_unit(source_units[(t['source'], t['id'])]))),
+            -datetime.fromisoformat(source_units[(t['source'], t['id'])]['published_at'].replace('Z', '+00:00')).timestamp(),
+            t['source'], t['id']))
+        prefix_end = job.get('cursor', 0) + bool(job.get('inflight'))
+        selected = {(t['source'], t['id'], t['content_fingerprint']) for t in targets}
+        tail = job['targets'][prefix_end:]
+        current = {(t['source'], t['id'], t['content_fingerprint']): t for t in tail}
+        ordered = [current.get((t['source'], t['id'], t['content_fingerprint']), t) for t in targets]
+        job['targets'] = job['targets'][:prefix_end] + ordered + [
+            t for t in tail if (t['source'], t['id'], t['content_fingerprint']) not in selected]
+        job['ordering_policy'] = 'primary_3_to_1_review; reviewed_accounts_text_first_newest_first'
     job.setdefault('account_context_requests',[]).append(request_id)
     job['total']=len(job['targets']);job['remaining']=job['total']-job.get('cursor',0)
     job['updated_at']=datetime.now(timezone.utc).isoformat()

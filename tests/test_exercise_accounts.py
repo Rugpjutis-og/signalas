@@ -91,3 +91,27 @@ class AccountContextTests(unittest.TestCase):
         self.assertIn('explicit-scoring-retro',self.db[review.STATE]['account_context_requests'])
         ea.append_review(self.repo,state)
         self.assertEqual(len(self.db[review.STATE]['targets']),1)
+
+    def test_v2_orders_text_then_newest_preserves_other_work_and_is_idempotent(self):
+        from exercise_rule import CONTENT_RULE_ID
+        units = [{**self.unit, 'id': 'old', 'published_at': '2026-10-23T10:00:00Z'},
+                 {**self.unit, 'id': 'photo', 'published_at': '2026-10-25T10:00:00Z', 'media': [{'kind':'image'}]},
+                 {**self.unit, 'id': 'new', 'published_at': '2026-10-24T10:00:00Z'}]
+        self.repo.latest = lambda: {'records': units}
+        self.repo.expand_unit = lambda u: u
+        def target(u):
+            return {'source':u['source'], 'id':u['id'], 'content_fingerprint':fingerprint(u), 'exercise_id':None}
+        self.db[review.STATE] = {'status':'pending', 'run_id':'existing', 'cursor':1,
+                                'targets':[{'id':'completed'}, target(units[0]), {'source':'other','id':'retain','content_fingerprint':'x'}]}
+        bindings = [{'source':u['source'], 'id':u['id'], 'fingerprint':fingerprint(u)} for u in units]
+        self.repo.sql = Mock(return_value={'rows':[[json.dumps(bindings)]]})
+        state = self.db[ea.STATE]
+        state.update(scoring_review_request='v2-approved-once', scoring_rule={'id':CONTENT_RULE_ID})
+        ea.append_review(self.repo, state)
+        job = self.db[review.STATE]
+        self.assertEqual(job['run_id'], 'existing')
+        self.assertEqual([t['id'] for t in job['targets']], ['completed','new','old','photo','retain'])
+        self.assertEqual(job['remaining'], 4)
+        self.assertTrue(all(t['scoring_rule_id']==CONTENT_RULE_ID for t in job['targets'][1:4]))
+        ea.append_review(self.repo, state)
+        self.assertEqual(self.db[review.STATE]['targets'], job['targets'])

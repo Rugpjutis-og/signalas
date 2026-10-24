@@ -88,3 +88,83 @@ class ExerciseRuleTests(unittest.TestCase):
             result=openai_analysis.analyze(unit,thermometer_only=True,scoring_rule_review=rule.ID)
             self.assertEqual(result['result']['thermometer_category'],'destabilizing')
             self.assertTrue(result['exercise_rule_application']['applied'])
+
+    def content_rule(self):
+        self.state['scoring_rule']['id'] = rule.CONTENT_RULE_ID
+        return rule.for_unit(self.repo, self.unit)
+
+    def test_new_content_rule_is_explicitly_versioned_and_does_not_replace_legacy(self):
+        legacy = rule.for_unit(self.repo, self.unit)
+        self.assertEqual(rule.triggers(legacy), rule.TRIGGERS)
+        self.assertEqual(rule.instructions(legacy), rule.INSTRUCTIONS)
+        scoring = self.content_rule()
+        self.assertEqual(scoring['id'], rule.CONTENT_RULE_ID)
+        self.assertEqual(rule.triggers(scoring), rule.CONTENT_TRIGGERS)
+        self.assertIn('kasdien', rule.instructions(scoring))
+        self.assertIsNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.ID))
+        self.state['scoring_rule']['historical_review_enabled'] = True
+        self.assertIsNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.ID))
+        self.assertIsNotNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.CONTENT_RULE_ID))
+
+    def test_content_rule_overrides_direction_but_preserves_independent_assessment(self):
+        scoring = self.content_rule()
+        for original in ('neutral', 'stabilizing', 'destabilizing'):
+            result = {**self.result, 'direction': original}
+            application = rule.apply(result, scoring, 'not_unrelated_daily_life', self.unit)
+            self.assertEqual(result['direction'], 'destabilizing')
+            self.assertEqual(application['content_direction'], original)
+            self.assertEqual(application['id'], rule.CONTENT_RULE_ID)
+            self.assertEqual(result['reason_codes'], ['D5'])
+
+    def test_content_rule_daily_exception_preserves_normal_assessment(self):
+        scoring = self.content_rule()
+        unit = {**self.unit, 'text': 'Šiandien kepiau pyragą.'}
+        for original in ('neutral', 'stabilizing', 'destabilizing'):
+            result = {**self.result, 'direction': original, 'evidence': unit['text']}
+            before = copy.deepcopy(result)
+            self.assertIsNone(rule.apply(result, scoring, 'unrelated_daily_life', unit))
+            self.assertEqual(result, before)
+
+    def test_content_rule_uncertainty_missing_media_and_foreign_evidence_do_not_force(self):
+        scoring = self.content_rule()
+        for trigger in ('unclear', 'none', 'unknown'):
+            result = copy.deepcopy(self.result)
+            self.assertIsNone(rule.apply(result, scoring, trigger, self.unit))
+            self.assertEqual(result['direction'], 'needs_review')
+        result = {**self.result, 'direction': 'needs_review', 'reason_codes': []}
+        self.assertIsNone(rule.apply(result, scoring, 'not_unrelated_daily_life', self.unit))
+        self.assertEqual(result['direction'], 'needs_review')
+        result = {**self.result, 'evidence': 'Kito autoriaus politinis komentaras'}
+        self.assertIsNone(rule.apply(result, scoring, 'not_unrelated_daily_life', self.unit))
+        self.assertEqual(result['direction'], 'needs_review')
+
+    def test_content_rule_does_not_expand_account_scope_or_bypass_existing_assessments(self):
+        self.content_rule()
+        for changes in ({'source': 'other'}, {'author_id': 'other'}, {'exercise_id': 'other'}):
+            self.assertIsNone(rule.for_unit(self.repo, {**self.unit, **changes}))
+        self.repo.supplement_eligible.return_value = False
+        self.assertIsNone(rule.for_unit(self.repo, self.unit))
+
+    def test_content_rule_api_uses_its_own_schema_and_attributes_override(self):
+        import io, json, openai_analysis
+        scoring = self.content_rule()
+        unit = {**self.unit, 'text': 'Institucija paskelbė sprendimą.', 'kind': 'post',
+                'media': [], 'published_at': '2026-10-25T07:00:00Z'}
+        decoded = {**self.result, 'evidence': unit['text'],
+                   'exercise_rule_trigger': 'not_unrelated_daily_life', 'narrative_analysis': {
+                       'match_status': 'no_narrative', 'matches': [], 'proposals': [], 'uncertainty_reason': ''}}
+        response = {'status': 'completed', 'output': [{'type': 'message', 'content': [
+            {'type': 'output_text', 'text': json.dumps(decoded)}]}]}
+        with patch('exercise_rule.for_unit', return_value=scoring), \
+             patch('exercise_accounts.for_unit', return_value=None), \
+             patch('scenario_supplement.for_unit', return_value=[]), \
+             patch.object(openai_analysis, 'pending_claims', return_value=[]), \
+             patch.object(openai_analysis, 'api_key', return_value='synthetic'), \
+             patch.object(openai_analysis, 'build_opener') as opener:
+            opener.return_value.open.return_value.__enter__.return_value = io.BytesIO(json.dumps(response).encode())
+            result = openai_analysis.analyze(unit)
+            sent = json.loads(opener.return_value.open.call_args.args[0].data)
+            self.assertEqual(sent['text']['format']['schema']['properties']['exercise_rule_trigger']['enum'], list(rule.CONTENT_TRIGGERS))
+            self.assertIn('visas turinys', sent['instructions'])
+            self.assertEqual(result['result']['thermometer_category'], 'destabilizing')
+            self.assertEqual(result['exercise_rule_application']['content_direction'], 'neutral')

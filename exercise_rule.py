@@ -23,23 +23,73 @@ INSTRUCTIONS = (
 )
 
 
+CONTENT_RULE_ID = 'organizer-exercise-content-v2'
+CONTENT_TRIGGERS = ('not_unrelated_daily_life', 'unrelated_daily_life', 'unclear')
+CONTENT_INSTRUCTIONS = (
+    'exercise_scoring_rule yra tik fiktyvių pratybų organizatoriaus vertinimo susitarimas, '
+    'ne realaus asmens politinių pažiūrų ar pavojingumo nustatymas. Ši taisyklė taikoma tik '
+    'serverio tiksliai susietoms organizatoriaus pateiktoms pratybų paskyroms. '
+    'Pirmiausia įvertink nepriklausomą turinio kryptį pagal bendrąsias gaires. '
+    'Atskirai exercise_rule_trigger nustatyk iš viso vieneto teksto, jo peržiūrėtų nuotraukų '
+    'ir reikalingo ankstesnio diskusijos konteksto. unrelated_daily_life galima tik tada, '
+    'kai visas turinys yra aiškiai nesusiję kasdieniai poreikiai ar neutralus laisvalaikis '
+    'ir nėra jokios prasminės sąsajos su pratybų įvykiais, institucijomis, politika ar '
+    'kitomis viešosios situacijos aplinkybėmis. Vien kasdienybės žodžių nepakanka: '
+    'šeimos, buities ar laisvalaikio tekstas su politine užuomina, institucijų paminėjimu '
+    'ar nuoroda į vykstančius įvykius šios išimties neatitinka. Vertink prasmę originalo '
+    'kalba, įskaitant ironiją, mišrią kalbą ir trumpus komentarus. '
+    'not_unrelated_daily_life reiškia, kad ši siaura išimtis netaikoma: serveris priskirs '
+    'destabilizuojančią kryptį pagal organizatoriaus taisyklę net jei nepriklausomas '
+    'turinio vertinimas neutralus ar stabilizuojantis. Tai apima ir faktinį pranešimą, '
+    'klausimą, citavimą, paneigimą ar palaikymą, susijusį su viešąja situacija; '
+    'šio organizatoriaus susitarimo nepristatyk kaip nepriklausomo žalingumo įrodymo. '
+    'Pateik tikslią paties vertinamo vieneto ištrauką arba jo peržiūrėto vaizdo požymį; '
+    'pirminio įrašo ar kito autoriaus tekstas gali tik paaiškinti sąsają. '
+    'Jei negali patikimai nustatyti, ar išimtis tinka, rinkis unclear; nežinomų faktų '
+    'ir neperskaitytos medijos nespėk. unrelated_daily_life atveju lieka įprastas '
+    'turinio vertinimas; pavojingas ar smurtą kurstantis buitinis turinys netampa '
+    'neutraliu vien dėl kasdienės temos. Rankiniai sprendimai visada viršesni.'
+)
+
+
+def triggers(scoring_rule):
+    return CONTENT_TRIGGERS if scoring_rule.get('id') == CONTENT_RULE_ID else TRIGGERS
+
+
+def instructions(scoring_rule):
+    return CONTENT_INSTRUCTIONS if scoring_rule.get('id') == CONTENT_RULE_ID else INSTRUCTIONS
+
+
 def for_unit(repo, unit, *, thermometer_only=False, review_rule_id=None):
     state = current(repo)
     rule = state.get('scoring_rule') if state else None
-    historical = bool(rule and review_rule_id == ID and rule.get("historical_review_enabled") is True)
+    historical = bool(rule and review_rule_id == rule.get('id') and rule.get("historical_review_enabled") is True)
     if ((thermometer_only and not historical) or not matches(state, unit) or not isinstance(rule, dict)
-            or rule.get('id') != ID or rule.get('enabled') is not True
+            or rule.get('id') not in (ID, CONTENT_RULE_ID) or rule.get('enabled') is not True
             or not rule.get('effective_at') or not hasattr(repo, 'supplement_eligible')):
         return None
     if not historical and not repo.supplement_eligible(unit, rule['effective_at']):
         return None
-    return {'id': ID, 'provenance': 'exercise_organizer',
+    return {'id': rule['id'], 'provenance': 'exercise_organizer',
             'scope': 'fictional_exercise_only', 'category': 'destabilizing', 'reason_code': 'D5'}
 
 
 def apply(result, rule, trigger, unit, *, visual_refs=()):
     """Only a supported, complete unit can acquire an explicitly attributed scenario label."""
-    if not rule or trigger == 'none' or result.get('direction') == 'needs_review':
+    if not rule or result.get('direction') == 'needs_review':
+        return None
+    if trigger not in triggers(rule):
+        result.update(direction='needs_review', reason_codes=[], missing_context=
+                      'Nežinomas organizatoriaus taisyklės požymis.')
+        return None
+    if rule.get('id') == CONTENT_RULE_ID:
+        if trigger == 'unclear':
+            result.update(direction='needs_review', reason_codes=[], missing_context=
+                          'Neaišku, ar turinys atitinka nesusijusios kasdienybės išimtį.')
+            return None
+        if trigger == 'unrelated_daily_life':
+            return None
+    elif trigger == 'none':
         return None
     from vision_input import visual_evidence
     evidence = result.get('evidence', '').strip()

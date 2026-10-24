@@ -150,7 +150,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     actor_context = account_context_for_unit(root, unit)
     if actor_context:
         prepared['exercise_actor_context'] = actor_context
-    from exercise_rule import for_unit as scoring_rule_for_unit, INSTRUCTIONS as SCORING_INSTRUCTIONS, TRIGGERS
+    from exercise_rule import for_unit as scoring_rule_for_unit, instructions as scoring_instructions, triggers as scoring_triggers
     scoring_rule = scoring_rule_for_unit(root, unit, thermometer_only=thermometer_only, review_rule_id=scoring_rule_review)
     if scoring_rule:
         prepared["exercise_scoring_rule"] = scoring_rule
@@ -213,8 +213,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         schema["properties"].pop("narrative_analysis")
         schema["required"].remove("narrative_analysis")
     if scoring_rule:
-        instructions += "\n" + SCORING_INSTRUCTIONS
-        schema["properties"]["exercise_rule_trigger"] = {"type": "string", "enum": list(TRIGGERS)}
+        instructions += "\n" + scoring_instructions(scoring_rule)
+        schema["properties"]["exercise_rule_trigger"] = {"type": "string", "enum": list(scoring_triggers(scoring_rule))}
         schema["required"].append("exercise_rule_trigger")
     payload = {
         "model": model, "service_tier": ANALYSIS_SERVICE_TIER, "store": False, "max_output_tokens": 6000,
@@ -271,7 +271,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         rule_trigger = "none"
         if scoring_rule:
             rule_trigger = decoded.pop("exercise_rule_trigger", None) if isinstance(decoded, dict) else None
-            if rule_trigger not in TRIGGERS:
+            if rule_trigger not in scoring_triggers(scoring_rule):
                 raise ValueError("Netinkamas pratybų taisyklės požymis")
         if thermometer_only:
             if not isinstance(decoded, dict) or set(decoded) != (set(schema["required"]) - {"exercise_rule_trigger"}):
