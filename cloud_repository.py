@@ -181,6 +181,25 @@ class Repository:
             [self.scope, name, json.dumps(result)])
         self.values.pop('openai-analysis-pilot.json', None)
 
+    def supplement_eligible(self, unit, effective_at):
+        # Return a boolean, never transfer historical content or assessment bodies.
+        # Missing legacy timestamps conservatively count as earlier assessments.
+        from thermometer_review import key
+        rows = self.sql(ASSESSMENTS + '''SELECT NOT (EXISTS (
+            SELECT 1 FROM assessments WHERE a->>'analysis_executed'='true'
+              AND a->'source_reference'->>'source'=$2 AND a->'source_reference'->>'id'=$3
+              AND COALESCE(a->'exercise_id','null'::jsonb)=$4::jsonb
+              AND COALESCE(NULLIF(COALESCE(a->>'classified_at',a->>'analyzed_at',
+                    a->>'recorded_at'),''),'-infinity')::timestamptz < $5::timestamptz
+            ) OR EXISTS (
+            SELECT 1 FROM signalas_state WHERE scope=$1 AND name='thermometer-reviews.json'
+              AND value ? $6
+              AND COALESCE(value->$6->'exercise_id','null'::jsonb)=$4::jsonb
+              AND COALESCE(NULLIF(value->$6->>'reviewed_at',''),'-infinity')::timestamptz < $5::timestamptz
+            ))''', [self.scope, unit['source'], unit['id'], json.dumps(unit.get('exercise_id')),
+                     effective_at, key(unit['source'], unit['id'])])['rows']
+        return bool(rows and rows[0][0] in (True, 'true', 't'))
+
     def pending_claims(self, exercise_id, version):
         rows = self.sql(ASSESSMENTS + '''SELECT COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
             'title',p->'title','topic_id',p->'topic_id','claim_template',p->'claim_template',
@@ -195,7 +214,8 @@ class Repository:
         rows = self.sql('''SELECT md5(COALESCE(string_agg(name||md5(value::text),'' ORDER BY name),''))
             FROM signalas_state WHERE scope=$1 AND (name LIKE 'analysis-result/%' OR
                 name IN ('openai-analysis-pilot.json','live-context.json','dashboard-period.json',
-                         'thermometer-reviews.json','narrative-registry-state.json','narrative-subnarratives.json'))''', [self.scope])['rows']
+                         'thermometer-reviews.json','narrative-registry-state.json','narrative-subnarratives.json',
+                         'analysis-context-supplement.json'))''', [self.scope])['rows']
         return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):

@@ -161,7 +161,9 @@ class Handler(BaseHTTPRequestHandler):
             elif route == '/api/dashboard/context':
                 if method == 'POST':
                     repository.save_context(payload.get('context'))
-                self.send({'context': repository.read('live-context.json')})
+                from scenario_supplement import public as scenario_supplements
+                self.send({'context': repository.read('live-context.json'),
+                           'supplements': scenario_supplements(repository)})
             elif route == '/api/dashboard/period' and method == 'POST':
                 live_data.store_period(payload['end_date'], repository, start_date=payload['start_date'])
                 revision = repository.dashboard_revision()

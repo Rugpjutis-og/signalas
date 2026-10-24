@@ -33,6 +33,19 @@ class CloudAnalysisTests(unittest.TestCase):
                 'registry_version':self.version,'thermometer_rules_version':ca.VERSION,
                 'exercise_id':unit.get('exercise_id'),'exercise_context':None,'model':'test-model'}
 
+    def test_prospective_supplement_does_not_requeue_completed_content(self):
+        import scenario_supplement
+        old = dict(self.result(self.units[0]), content_fingerprint=ca.fingerprint(self.units[0]))
+        self.db[ca.RESULTS] = [old]
+        self.assertEqual(ca.pending(self.repo)[0], [])
+        self.db[scenario_supplement.STATE] = {'id': 'test', 'text': 'Additional scenario fact',
+            'base_context_digest': scenario_supplement.context_digest(None),
+            'effective_at': '2026-10-24T12:00:00Z'}
+        self.assertEqual(ca.pending(self.repo)[0], [])
+        self.assertEqual(self.db[ca.RESULTS], [old])
+        self.units.append({**self.units[0], 'id': 'new'})
+        self.assertEqual([u['id'] for u in ca.pending(self.repo)[0]], ['new'])
+
     def test_photo_waiting_data_requeues_once_and_manual_decisions_are_excluded(self):
         from vision_input import REVISION
         from thermometer_review import key

@@ -1,7 +1,7 @@
 // Context persists through the authenticated database API, never Web Storage.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
-let stored=null,fail=false;
+let stored=null,fail=false,supplements=[];
 async function runtime(){
  const nodes=new Map(),events={};
  function node(id){if(!nodes.has(id))nodes.set(id,{id,innerHTML:'',textContent:'',value:'',dataset:{},classList:{toggle(){},add(){},remove(){}},addEventListener(){},focus(){},querySelector(s){return node(id+s)},querySelectorAll(){return []}});return nodes.get(id);}
@@ -15,7 +15,7 @@ async function runtime(){
     if(stored)return {ok:false,json:async()=>({error:'Kontekstas jau išsaugotas'})};
     stored=JSON.parse(options.body).context;
    }
-   return {ok:true,json:async()=>({context:structuredClone(stored)})};
+   return {ok:true,json:async()=>({context:structuredClone(stored),supplements:structuredClone(supplements)})};
   }
   return {ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,url.includes('metrics')?'dist/metrics-context.json':url.includes('platform')?'dist/demo/platform-7.json':'dist/demo/thermometer-7.json')))};
  }};
@@ -67,6 +67,14 @@ const plain=x=>JSON.parse(JSON.stringify(x));
  assert.equal(narrative.content.conversation_context.length,1);assert.equal(narrative.content.sourceUrl,unit.sourceUrl);
  stored={initialSituation:'Legacy',confirmedFacts:'Facts'};
  const legacy=await runtime();assert.deepEqual(plain(legacy.window.SignalExerciseContext.get().nameMappings),[]);
+ supplements=[{id:'test-valare',text:'VALARE <script>test</script>',effective_at:'2026-10-24T12:00:00Z'}];
+ const clarified=await runtime();
+ const clarifiedHTML=clarified.node('exercise-context-root').innerHTML;
+ assert(clarifiedHTML.includes('Papildomas analizės kontekstas'));
+ assert(clarifiedHTML.includes('Taikomas tik dar nevertintam ir naujam turiniui'));
+ assert(!clarifiedHTML.includes('<script>test</script>'));
+ assert.deepEqual(plain(clarified.window.SignalExerciseContext.get()),{...stored,nameMappings:[]});
+ supplements=[];
  stored=null;fail=true;const broken=await runtime();assert.throws(()=>broken.window.SignalExerciseContext.get());
  await assert.rejects(broken.window.SignalExerciseContext.save(input));assert.equal(stored,null);
  console.log('Database context save/reload, immutability, mappings, fail-closed reads and shared analysis: OK');

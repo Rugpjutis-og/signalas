@@ -142,6 +142,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     started = time.monotonic()
     catalog = narrative_registry.load(root)
     prepared = prepare_input(unit, context, expanded_narratives)
+    from scenario_supplement import for_unit
+    supplements = for_unit(root, unit, prepared['exercise_context'])
+    if supplements:
+        prepared['scenario_supplements'] = supplements
     image_parts, vision = prepare_images(unit, root)
     prepared["coverage"].update(images=bool(vision["reviewed_image_refs"]), image_review=vision)
     model = model_override or settings(root).get("OPENAI_MODEL") or DEFAULT_ANALYSIS_MODEL
@@ -175,6 +179,11 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         "Patvirtinti subnarratives yra temos pagrindinio naratyvo teminės atšakos, ne automatinė jo tikslaus teiginio atitiktis. Jei atpažįsti atšaką, proposals naudok tikslų išsaugotą claim_template, topic_id ir title, nearest_type_ids nurodyk jos parent_type_id; novelty_reason paaiškink, kad tai patvirtinta teminė atšaka. Pagrindinio tipo matches teik tik jeigu jo tikslūs priskyrimo kriterijai tenkinami. "
         "pending_claims yra tik ribota pagalbinė kandidatų atranka: kandidato nebuvimas nėra naujumo įrodymas. Visada lygink su visu patvirtintu registru. "
         "Ankstesnių komentarų neprisegta medija yra tik neprivalomas diskusijos kontekstas; vien jos buvimas nereikalauja laukti duomenų.")
+    if supplements:
+        instructions += ("\nscenario_supplements yra administratoriaus patvirtintas šių pratybų situacijos patikslinimas. "
+            "Naudok jį kartu su pradiniu kontekstu. Idėjos paminėjimas, citavimas, klausimas ar paneigimas nėra jos palaikymas. "
+            "Scenarijaus veikėjų apibūdinimas savaime nenustato konkretaus autoriaus priklausomybės ar turinio krypties; "
+            "spręsk pagal paties įrašo turinį, poziciją ir diskusijos kontekstą.")
     reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),
                  "directions": DEFINITIONS, "reason_codes": REASONS,
                  "rules_version": THERMOMETER_RULES_VERSION, "guidance_revision": GUIDANCE_REVISION,
@@ -286,6 +295,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "response_id": raw.get("id"), "analyzed_at": classified_at,
             "source_reference": source_reference(unit), "original_text": unit.get("text", ""),
             "exercise_context": prepared["exercise_context"], "coverage": prepared["coverage"],
+            "scenario_supplement_ids": [s['id'] for s in supplements],
             "result": result, "usage": raw.get("usage"), "automatically_applied": False}
 
 
