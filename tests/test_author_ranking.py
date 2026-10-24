@@ -42,6 +42,24 @@ class WeightedAuthorsTests(unittest.TestCase):
         self.assertEqual(result['normalization_maxima']['originals'],3)
         self.assertEqual(result['items'][0]['score'],80)
 
+    def test_care_organizations_excluded_without_verified_account_type(self):
+        from author_ranking import name_type
+        for name in ['Social Care Center “Happy Ninety-Year-Olds”',
+                     'Social Care Centre Happy Seniors', 'Social Welfare Center',
+                     'Residential Care Centre', 'Nursing Home Sunrise',
+                     'Socialinės globos namai', 'Socialinės rūpybos centras']:
+            with self.subTest(name=name):
+                self.assertEqual(name_type(name)[0], 'organization')
+                records = posts(name, 6, 10, 2)
+                for record in records:
+                    record.pop('author_classification')
+                report = author_ranking(records + posts('Gabija V.'))
+                self.assertEqual([a['author_name'] for a in report['items']], ['Gabija V.'])
+                self.assertEqual(report['normalization_maxima']['originals'], 3)
+        for name in ['Carey Center', 'Social Butterfly', 'Juodas Vanagas', 'Елена Белова', 'User508']:
+            with self.subTest(name=name):
+                self.assertEqual(name_type(name)[0], 'person')
+
     def test_duplicate_content_and_duplicate_actions_do_not_add_score(self):
         records=posts('p',3,1,1)
         copy=deepcopy(records[0]);copy['id']='copy';records.append(copy)

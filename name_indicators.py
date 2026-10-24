@@ -33,6 +33,10 @@ MULTILINGUAL_INDICATORS = {
         r'stiftung\w*|verein|partei|fondation|association|fundacion|asociacion|partido',
     ],
     'education_health_community': [
+        # Compound care-provider names; bare 'care'/'center' can occur in personal names.
+        r'(?:social\s+(?:care|welfare)|residential\s+care|elderly\s+care|nursing)\s+cent(?:er|re)',
+        r'(?:nursing|care|retirement)\s+home',
+        r'(?:socialines\s+globos|socialines\s+rupybos)\s+(?:namai|centr\w*)',
         r'university|school|college|hospital|clinic|library|museum|community\s+cent(?:er|re)|church|parish',
         r'университет\w*|університет\w*|школ\w*|больниц\w*|лікарн\w*|клиник\w*|клінік\w*|библиотек\w*|бібліотек\w*|музе\w*|церков\w*|церкв\w*|приход|парафі\w*',
         r'uniwersytet\w*|szkol\w*|szpital\w*|bibliotek\w*|parafi\w*|universitat\w*|skola|slimnic\w*|draudz\w*',
