@@ -103,5 +103,5 @@ def status(root=ROOT, *, collected_at=None, now=None):
         reason = "status_unavailable"
     return {"state": "stopped" if reason else "watching",
             "label": "Srauto stebėjimas sustabdytas" if reason else "Stebimas srautas",
-            "reason": reason, "description": REASONS.get(reason, "Duomenų surinkimas numatytas kas 15 minučių."),
+            "reason": reason, "description": REASONS.get(reason, "Duomenų surinkimas numatytas kas valandą."),
             "collected_at": collected_at}
