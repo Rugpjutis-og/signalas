@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from content import source_reference
 from live_data import fingerprint
 from openai_analysis import context_data
-from thermometer_policy import BY_CATEGORY, VERSION, validate_assessment
+from thermometer_policy import BY_CATEGORY, VERSION, REASONS, validate_assessment
 
 NAME = 'thermometer-reviews.json'
 
@@ -32,13 +32,14 @@ def applicable(review, unit, context):
 def save(repo, payload):
     source, unit_id = payload.get('source'), payload.get('id')
     category, code = payload.get('category'), payload.get('reason_code')
-    reason, evidence = payload.get('reason'), payload.get('evidence', '')
+    reason, evidence = payload.get('reason', ''), payload.get('evidence', '')
     if not all(isinstance(s, str) and 0 < len(s) <= 256 for s in (source, unit_id)):
         raise ValueError('Nenurodytas turinio vienetas.')
     if category not in BY_CATEGORY or code not in BY_CATEGORY[category]:
         raise ValueError('Kategorija ir pagrindo kodas nesutampa.')
-    if not isinstance(reason, str) or not 5 <= len(reason.strip()) <= 2000:
-        raise ValueError('Trumpai pagrįskite pasirinktą kategoriją.')
+    if not isinstance(reason, str) or len(reason.strip()) > 2000:
+        raise ValueError('Netinkamas vertinimo pagrindas.')
+    reason = reason.strip() or 'Rankiniu būdu patvirtinta kryptis: ' + REASONS[code] + '.'
     if not isinstance(evidence, str) or len(evidence) > 2000:
         raise ValueError('Netinkama pagrindžianti ištrauka.')
     validate_assessment({'status': 'classified', 'category': category,
@@ -58,7 +59,14 @@ def save(repo, payload):
               'method': 'manual_review'}
     review_key = key(source, unit_id)
     repo.sql('''INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,jsonb_build_object($3::text,$4::jsonb))
-        ON CONFLICT(scope,name) DO UPDATE SET value=signalas_state.value || EXCLUDED.value''',
+        ON CONFLICT(scope,name) DO UPDATE SET value=signalas_state.value ||
+        jsonb_build_object($3::text,$4::jsonb || jsonb_build_object('previous_reasons',
+          COALESCE(signalas_state.value->$3->'previous_reasons','[]'::jsonb) ||
+          CASE WHEN COALESCE(signalas_state.value->$3->>'reason','')<>''
+            AND signalas_state.value->$3->>'reason'<>$4::jsonb->>'reason'
+            AND NOT COALESCE(signalas_state.value->$3->'previous_reasons','[]'::jsonb)
+                    @> jsonb_build_array(signalas_state.value->$3->>'reason')
+          THEN jsonb_build_array(signalas_state.value->$3->>'reason') ELSE '[]'::jsonb END))''',
              [repo.scope, NAME, review_key, json.dumps(review, ensure_ascii=False)])
     repo.values.pop(NAME, None)
     return {'status': 'saved', 'category': category, 'reviewed_at': review['reviewed_at']}

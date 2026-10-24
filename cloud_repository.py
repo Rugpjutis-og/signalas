@@ -153,6 +153,40 @@ class Repository:
             if not rows or instant(rows[0][0]) != instant(self.packet['collected_at']):
                 self.packet = None
 
+    def analysis_queue_page(self, generation, offset, limit):
+        rows = self.sql("""SELECT COALESCE((SELECT jsonb_agg(t.v ORDER BY t.n)
+            FROM jsonb_array_elements(value->'units') WITH ORDINALITY t(v,n)
+            WHERE t.n>$3 AND t.n<=$3+$4),'[]'::jsonb)
+            FROM signalas_state WHERE scope=$1 AND name='analysis-queue.json'
+              AND value->>'generation'=$2""", [self.scope,generation,offset,limit])['rows']
+        return json.loads(rows[0][0]) if rows else None
+
+    def analysis_queue_results(self, units, context, version, model):
+        identities = json.dumps([[u['source'],u['id']] for u in units])
+        rows = self.sql(ASSESSMENTS + """SELECT COALESCE(jsonb_agg(jsonb_build_object(
+            'source_reference',a->'source_reference','content_fingerprint',a->'content_fingerprint',
+            'exercise_id',a->'exercise_id','vision_revision',a->'vision_revision',
+            'thermometer_status',a->'result'->'thermometer_status','processing_reason',a->'processing_reason')
+            ORDER BY """ + ASSESSMENT_ORDER + """),'[]'::jsonb) FROM assessments
+            WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
+              AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
+              AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb
+              AND COALESCE(a->>'requested_model',a->>'model')=$5
+              AND EXISTS(SELECT 1 FROM jsonb_array_elements($6::jsonb) ref
+                WHERE ref->>0=a->'source_reference'->>'source' AND ref->>1=a->'source_reference'->>'id')""",
+            [self.scope,version,VERSION,json.dumps(context),model,identities])['rows']
+        return json.loads(rows[0][0]) if rows else []
+
+    def analysis_worker(self, index):
+        workers = getattr(self, '_analysis_worker_pool', {})
+        if index not in workers:
+            workers[index] = Repository(self.config)
+            self._analysis_worker_pool = workers
+        worker = workers[index]
+        worker.packet = self.packet  # Immutable snapshot; photos/cookies/caches remain per worker.
+        worker.values = dict(self.values)
+        return worker
+
     def analysis_for_queue(self, context, version, model):
         # Filter in Postgres and transfer only identities/fingerprints, not every
         # original text, discussion, evidence and historic result on every unit.

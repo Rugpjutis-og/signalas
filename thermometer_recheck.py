@@ -107,6 +107,10 @@ def advance(repo, state, outcome, result=None):
     state.pop('inflight', None)
     state.pop('inflight_analysis', None)
     repo.write(STATE, state)
+    from optimized_analysis import enabled
+    if enabled(repo):
+        repo.sql("UPDATE signalas_state SET value=jsonb_set(value,'{primary_since_review}','0'::jsonb) WHERE scope=$1 AND name='analysis-job.json'",[repo.scope])
+        repo.values.pop('analysis-job.json',None)
     return status(repo)
 
 

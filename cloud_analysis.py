@@ -37,6 +37,13 @@ def pending(repo):
     manual = saved(repo)
     selected = []
     for k, unit in units.items():
+        previous = good.get(k)
+        manual_decision = manual.get(key(*k))
+        if manual_decision and applicable(manual_decision, repo.expand_unit(unit), context):
+            continue
+        if not previous:
+            selected.append(unit)
+            continue  # No prior assessment: do not hash a full discussion merely to queue it.
         if k not in bindings:
             expanded = repo.expand_unit(unit)
             bindings[k] = (fingerprint(expanded), has_images(expanded))
@@ -60,8 +67,12 @@ def pending(repo):
 
 
 def enqueue(repo, *, reset_error=True):
-    units, _ = pending(repo)
     old = repo.read(STATE, {}) or {}
+    if old.get('inflight_batch'):
+        return old  # Collection cannot discard receipts for interrupted parallel work.
+    from optimized_analysis import enabled, candidates
+    optimized = enabled(repo)
+    units = candidates(repo) if optimized else pending(repo)[0]
     if old.get('status') == 'error' and not reset_error:
         state = dict(old, remaining=len(units), updated_at=now())
     else:
@@ -69,6 +80,10 @@ def enqueue(repo, *, reset_error=True):
                  'completed': 0, 'updated_at': now()}
         if units and old.get('inflight'):
             state.update(status='running', inflight=old['inflight'])
+    from optimized_analysis import enabled, build_plan
+    if enabled(repo) and not state.get('inflight'):
+        build_plan(repo, state, units)
+        state['remaining_kind']='candidate_checks'
     repo.write(STATE, state)
     return state
 
@@ -80,12 +95,24 @@ def review_required(repo, state, units, context, *, unit=None, reason_code='anal
         repo.write(STATE, state)
         return state
     unit = repo.expand_unit(unit or units[0])
+    recorded = now()
+    repo.append_analysis(failure_result(repo, unit, context, reason_code, recorded=recorded))
+    state.update(status='pending' if len(units) > 1 else 'complete',
+                 remaining=len(units)-1, review_required=state.get('review_required', 0)+1,
+                 updated_at=recorded)
+    state.pop('reason', None)
+    state.pop('inflight', None)
+    repo.write(STATE, state)
+    return state
+
+
+def failure_result(repo, unit, context, reason_code, *, recorded=None):
     model = repo.config.get('OPENAI_MODEL') or DEFAULT_ANALYSIS_MODEL
     reason = {
         'analysis_timeout': 'Automatinis vertinimas viršijo laukimo laiką; reikia analitiko peržiūros.',
         'analysis_interrupted': 'Vertinimo vykdymas nutrūko neišsaugojus rezultato; reikia analitiko peržiūros.',
     }.get(reason_code, 'Automatinis vertinimas neatitiko tikrinimo taisyklių; reikia analitiko peržiūros.')
-    recorded = now()
+    recorded = recorded or now()
     result = {
         'analysis_executed': False, 'processing_disposition': 'needs_review',
         'method': 'openai_validation_failed', 'processing_reason': reason_code,
@@ -101,15 +128,7 @@ def review_required(repo, state, units, context, *, unit=None, reason_code='anal
                    'evidence': '', 'reason_codes': [],
                    'thermometer_status': 'needs_review', 'thermometer_category': None},
     }
-    repo.append_analysis(result)
-    state.update(status='pending' if len(units) > 1 else 'complete',
-                 remaining=len(units)-1, review_required=state.get('review_required', 0)+1,
-                 updated_at=recorded)
-    state.pop('reason', None)
-    state.pop('inflight', None)
-    repo.write(STATE, state)
-    return state
-
+    return result
 
 def recover_validation_failure(repo):
     """Advance an already failed validation item without paying for another call."""
@@ -144,8 +163,15 @@ def receipt(unit, context, repo):
 
 
 def step(repo, *, deadline=None, monotonic=None):
-    """At most one paid call per request, no hidden retries after provider failure."""
+    """Bounded paid work; optimized primary batches have at most two calls and no hidden retry."""
     import thermometer_recheck
+    from optimized_analysis import enabled, ensure_plan, PRIMARY_PER_REVIEW
+    if enabled(repo):
+        ensure_plan(repo)
+        primary = repo.read(STATE, {}) or {}
+        if thermometer_recheck.active(repo) and (primary.get('status') not in ('pending','running') or primary.get('primary_since_review',0) >= PRIMARY_PER_REVIEW):
+            return thermometer_recheck.step(repo, deadline=deadline, monotonic=monotonic)
+        return _primary_step(repo, deadline=deadline, monotonic=monotonic)
     if thermometer_recheck.active(repo):
         trial = repo.read(thermometer_recheck.STATE, {}) or {}
         primary = repo.read(STATE, {}) or {}
@@ -179,6 +205,9 @@ def _primary_step(repo, *, deadline=None, monotonic=None):
             # A continuously open browser must yield between items so the
             # hourly collector can obtain the shared lease instead of starving.
             return dict(state, status='already_running', reason='collection_pending')
+        from optimized_analysis import enabled, run_locked
+        if (enabled(repo) or state.get('inflight_batch')) and state.get('queue_generation'):
+            return run_locked(repo, state, deadline=deadline, monotonic=monotonic)
         units, context = pending(repo)
         if not units:
             state.update(status='complete', remaining=0, updated_at=now())

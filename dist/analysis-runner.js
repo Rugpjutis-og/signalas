@@ -13,7 +13,7 @@ window.SignalAnalysis=(()=>{
     button.disabled=true;
     button.setAttribute('aria-busy','true');
     let stopped=false,polling=false;
-    const progress=(value=state)=>{if(value.kind==='collection'){message.textContent=`Surinkimas tęsiamas: patikrinta ${value.processed_posts??0} iš ${value.discovered_posts??0} aptiktų įrašų. Paskutinė sėkminga imtis išlieka.`;return;}message.textContent=`Analizuojamas turinys… Liko ${value.remaining ?? '…'} vnt. Neaiškūs vertinimai paliekami peržiūrai, eilė tęsiama.`;};
+    const progress=(value=state)=>{if(value.kind==='collection'){message.textContent=`Surinkimas tęsiamas: patikrinta ${value.processed_posts??0} iš ${value.discovered_posts??0} aptiktų įrašų. Paskutinė sėkminga imtis išlieka.`;return;}message.textContent=`${value.remaining_kind==='candidate_checks'?'Tikrinama analizės eilė…':'Analizuojamas turinys…'} Liko ${value.remaining ?? '…'} ${value.remaining_kind==='candidate_checks'?'patikrinti kandidatų':'vnt.'}. Neaiškūs vertinimai paliekami peržiūrai, eilė tęsiama.`;};
     const timer=setInterval(async()=>{
       if(polling||stopped)return;polling=true;
       try{const latest=await request('status');if(!stopped&&['pending','running'].includes(latest.status)){progress(latest);}}
@@ -28,7 +28,7 @@ window.SignalAnalysis=(()=>{
       }
       if(state.status==='error'){
         const reason=state.reason==='api_quota'?'Patikrinkite AI API kreditus.':state.reason==='api_access'?'Patikrinkite AI API rakto ir modelio prieigą.':'Patikrinkite ryšį, modelio nustatymus ar vertinimo klaidą.';
-        message.textContent=`Duomenys išsaugoti. Analizė sustabdyta; liko ${state.remaining} vnt. ${reason} Pakartoti galima mygtuku „Atnaujinti duomenis“.`;
+        message.textContent=`Duomenys išsaugoti. Analizė sustabdyta; liko ${state.remaining} ${state.remaining_kind==='candidate_checks'?'patikrinti kandidatų':'vnt.'}. ${reason} Pakartoti galima mygtuku „Atnaujinti duomenis“.`;
       }else if(state.status==='complete')message.textContent='Duomenys atnaujinti. Teksto analizė baigta; neaiškius ir medijos vertinimus reikia peržiūrėti.';
     }catch(error){message.textContent=(error.message||'Ryšys nutrūko.')+' Išsaugota analizė neprarasta. Atverkite aplikaciją iš naujo, kad tęstumėte eilę.';}
     finally{stopped=true;clearInterval(timer);button.disabled=false;button.removeAttribute('aria-busy');await window.SignalMonitoring?.refresh();}

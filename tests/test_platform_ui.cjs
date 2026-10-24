@@ -66,6 +66,8 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  assert(reviewMarkup.includes('Išsaugoti vertinimą'));
  assert(!reviewMarkup.includes('name="verified_claim_source"'));
  assert(!reviewMarkup.includes('name="evidence"'));
+ assert(!reviewMarkup.includes('name="reason"'));
+ assert(!reviewMarkup.includes('Trumpas vertinimo pagrindas'));
  assert(!reviewMarkup.includes('Turinio ištrauka arba peržiūrėtos medijos aprašymas'));
  assert(reviewMarkup.includes('Rankinis krypties patvirtinimas'));
  for(const category of ['stabilizing','neutral','destabilizing'])assert(reviewMarkup.includes(`value="${category}"`));
@@ -107,7 +109,7 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  savingRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
  const pendingUnit=shown.units.find(u=>u.assessment.status!=='assessed');
  const form=node();form.dataset={source:pendingUnit.source,id:pendingUnit.id};
- form.reportValidity=()=>true;form.values={category:'neutral',reason_code:'N1',reason:'Taiki nuomonė.'};
+ form.reportValidity=()=>true;form.values={category:'neutral',reason_code:'N1'};
  await savingRoot.onsubmit({preventDefault(){},target:{closest:()=>form}});
  assert.equal(savedPayload.category,'neutral');
  assert(savingRoot.innerHTML.includes(`Aprėptis: ${shown.assessed} iš ${shown.total}`));

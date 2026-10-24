@@ -63,6 +63,11 @@ class ReviewTests(unittest.TestCase):
                 review.save(self.repo, {**self.payload, **changes})
         self.assertEqual(self.repo.written, [])
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_reason_is_optional_and_previous_reasons_are_preserved_atomically(self):
+        import json
+        payload={k:v for k,v in self.payload.items() if k!='reason'}
+        review.save(self.repo,payload)
+        statement,params=self.repo.written[-1]
+        self.assertIn('previous_reasons',statement)
+        self.assertNotIn('DELETE',statement)
+        self.assertIn('Rankiniu būdu patvirtinta',json.loads(params[3])['reason'])
