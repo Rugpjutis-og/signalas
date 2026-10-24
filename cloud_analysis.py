@@ -7,7 +7,7 @@ from live_data import fingerprint
 from content import source_reference
 from vision_input import has_images, REVISION as VISION_REVISION
 from openai_analysis import (analyze, context_data, DEFAULT_ANALYSIS_MODEL, ANALYSIS_SERVICE_TIER,
-                             ANALYSIS_TIMEOUT_SECONDS, AnalysisItemError, AnalysisServiceError)
+                             ANALYSIS_TIMEOUT_SECONDS, AnalysisItemError, AnalysisServiceError, item_failure_reason)
 from cloud_storage import CloudStorageError
 from narrative_registry import load as registry
 from thermometer_policy import VERSION
@@ -224,7 +224,7 @@ def _primary_step(repo, *, deadline=None, monotonic=None):
             return state
         except (ValueError, TypeError, KeyError) as error:
             return review_required(repo, state, units, context,
-                                   reason_code=error.reason if isinstance(error, AnalysisItemError) else 'analysis_validation')
+                                   reason_code=item_failure_reason(error))
         result['content_fingerprint'] = fingerprint(unit)
         result['requested_model'] = repo.config.get('OPENAI_MODEL') or DEFAULT_ANALYSIS_MODEL
         # Keep historical versions. Latest compatible result is selected by projections.

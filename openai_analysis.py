@@ -35,6 +35,20 @@ class AnalysisServiceError(ValueError):
         super().__init__('AI paslauga laikinai negali tęsti analizės.')
 
 
+def item_failure_reason(error):
+    if isinstance(error, AnalysisItemError): return error.reason
+    message = str(error).casefold()
+    for fragment, code in (
+        ('60 000', 'content_too_large'), ('savarankiško teiginio', 'narrative_evidence'),
+        ('atskirų savarankiškų', 'narrative_overlap'), ('naratyvo būsena', 'narrative_status'),
+        ('ištrauka', 'missing_evidence'), ('įrodymo', 'missing_evidence'),
+        ('neužbaigtas', 'incomplete_output'), ('json', 'invalid_json'),
+        ('priežast', 'reason_codes'), ('tipo lauk', 'field_type'),
+        ('strukt', 'response_schema')):
+        if fragment in message: return code
+    return 'analysis_' + type(error).__name__.casefold() if type(error) in (ValueError, TypeError, KeyError) else 'analysis_validation'
+
+
 def analysis_schema(catalog):
     properties = {
         "narrative_analysis": narrative_registry.schema(catalog if "types" in catalog else narrative_registry.load()),
