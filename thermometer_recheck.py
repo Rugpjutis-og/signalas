@@ -12,6 +12,7 @@ from narrative_registry import load as registry
 from openai_analysis import analyze, AnalysisServiceError
 from cloud_repository import analysis_result_name
 from cloud_storage import CloudStorageError
+from vision_input import REVISION as VISION_REVISION
 
 STATE = 'thermometer-recheck-job.json'
 MODEL = 'gpt-6.1-sol'
@@ -165,7 +166,7 @@ def step(repo, *, deadline=None, monotonic=None):
                    'content_fingerprint': target['content_fingerprint'],
                    'exercise_id': unit.get('exercise_id'), 'exercise_context': state['exercise_context'],
                    'registry_version': state['registry_version'], 'thermometer_rules_version': VERSION,
-                   'requested_model': MODEL, 'review_run_id': state['run_id']}
+                   'requested_model': MODEL, 'review_run_id': state['run_id'], 'vision_revision': VISION_REVISION}
         state.update(status='category_running' if selected else 'running', inflight=analysis_result_name(binding), updated_at=now())
         repo.write(STATE, state)
         try:

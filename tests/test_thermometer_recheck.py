@@ -87,6 +87,7 @@ class RecheckTests(unittest.TestCase):
         self.assertEqual(state['classified'], 1)
         saved_result = next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
         self.assertEqual(saved_result['result']['narrative_analysis'], {'original':True})
+        self.assertEqual(saved_result['vision_revision'],retry.VISION_REVISION)
 
     def test_neutral_audit_alternates_with_normal_analysis(self):
         self.db[retry.STATE] = dict(self.job(), selection_category='neutral', targets=self.job()['targets']*2,
