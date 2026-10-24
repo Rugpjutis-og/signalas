@@ -228,4 +228,6 @@ def drain(repo, *, seconds=235, monotonic=None):
         state = step(repo, deadline=deadline, monotonic=clock)
         if state.get('status') == 'already_running' or (state.get('kind'), state.get('remaining')) == before:
             break
+    if thermometer_recheck.active(repo):
+        return thermometer_recheck.status(repo)
     return state
