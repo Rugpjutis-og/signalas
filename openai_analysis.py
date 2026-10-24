@@ -172,6 +172,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         "Kai pagrindas yra vaizde, evidence rašyk VAIZDAS[id:indeksas] ir trumpą konkretaus matomo požymio aprašymą originalo kalba. "
         "Naratyvo įrodymui naudok tik vertinamo vieneto nuotrauką, ne pirminio įrašo vaizdą. Neatpažink asmenų tapatybės, "
         "nepriskirk ketinimų ar jautrių požymių iš išvaizdos. Nematomas garsas ir vaizdo klipas nėra peržiūrėti. "
+        "Patvirtinti subnarratives yra temos pagrindinio naratyvo teminės atšakos, ne automatinė jo tikslaus teiginio atitiktis. Jei atpažįsti atšaką, proposals naudok tikslų išsaugotą claim_template, topic_id ir title, nearest_type_ids nurodyk jos parent_type_id; novelty_reason paaiškink, kad tai patvirtinta teminė atšaka. Pagrindinio tipo matches teik tik jeigu jo tikslūs priskyrimo kriterijai tenkinami. "
         "pending_claims yra tik ribota pagalbinė kandidatų atranka: kandidato nebuvimas nėra naujumo įrodymas. Visada lygink su visu patvirtintu registru. "
         "Ankstesnių komentarų neprisegta medija yra tik neprivalomas diskusijos kontekstas; vien jos buvimas nereikalauja laukti duomenų.")
     reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),

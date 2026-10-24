@@ -169,7 +169,7 @@
       "id": "N007",
       "topic_id": "T09",
       "topic_name": "Žiniasklaida ir informacinė aplinka",
-      "title": "Valdžia ir žiniasklaida slepia tiesą",
+      "title": "Sąmoningai slepiama ir nutylima tiesa",
       "claim_template": "{institucijos ar žiniasklaida} sąmoningai slepia informaciją arba cenzūruoja nepatogias nuomones.",
       "include_when": "Tiesos slėpimas, valdomos informacijos ar kritikų nutildymo teiginys.",
       "exclude_when": "Vien techninis prieigos sutrikimas; individuali turinio moderavimo užklausa be cenzūros teiginio.",

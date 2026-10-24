@@ -2,6 +2,14 @@
 window.SignalLiveData=(()=>{
   const source=window.SignalSourceContent,esc=source.escape;
   let data=null,token=null,selectionRevision=0;
+  function hydrateSubnarratives(value){
+    const pool=new Map((value.units||[]).map(u=>[JSON.stringify([u.source,u.id]),u]));
+    const hydrate=c=>({...c,evidence:(c.evidence||[]).map(ref=>({...pool.get(JSON.stringify([ref.source,ref.id])),...ref}))});
+    value.subnarratives=(value.subnarratives||[]).map(hydrate);
+    const branches=new Map(value.subnarratives.map(c=>[c.id,c]));
+    (value.narratives||[]).forEach(n=>{n.subnarratives=(n.subnarratives||[]).map(c=>branches.get(c.id)||hydrate(c));});
+    return value;
+  }
   const dateKey=value=>new Date(value).toLocaleDateString('sv-SE',{timeZone:'Europe/Vilnius'});
   const active=()=>data?.mode==='live';
   async function image(source,id,index){
@@ -36,7 +44,7 @@ window.SignalLiveData=(()=>{
     if(latest.mode!=='live'||revision!==selectionRevision)return;
     token=latest.csrf;
     if(latest.data_revision!==data.data_revision||latest.collected_at!==data.collected_at||latest.start!==data.start||latest.end!==data.end||latest.analysis_revision!==data.analysis_revision){
-      data=latest;window.SignalDemo?.refreshLive(data,{preserveDay:true});
+      data=hydrateSubnarratives(latest);window.SignalDemo?.refreshLive(data,{preserveDay:true});
     }
   }
   function periodBounds(period){return {start:data.days[data.days.length-period],end:dateKey(new Date(Date.parse(data.end)-1))};}
@@ -50,7 +58,7 @@ window.SignalLiveData=(()=>{
     if(!active())return data;
     const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
     if(!response.ok)throw Error('Konteksto būsenos įkelti nepavyko.');
-    data=await response.json();token=data.csrf;return data;
+    data=hydrateSubnarratives(await response.json());token=data.csrf;return data;
   }
   async function setPeriod(start,end){
     ++selectionRevision;
@@ -62,7 +70,7 @@ window.SignalLiveData=(()=>{
       if(bootstrap.ok){const latest=await bootstrap.json();token=latest.csrf;response=await request();}
     }
     if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Nepavyko išsaugoti pasirinkto laikotarpio.');}
-    data=await response.json();return data;
+    data=hydrateSubnarratives(await response.json());return data;
   }
   async function saveThermometerReview(value){
     await ready;
@@ -83,7 +91,7 @@ window.SignalLiveData=(()=>{
     await window.SignalExerciseContext?.ready;
     const response=await fetch('/api/dashboard/bootstrap',{cache:'no-store'});
     if(!response.ok){const detail=await response.json().catch(()=>({}));throw Error(detail.error||'Nepavyko įkelti duomenų iš serverio.');}
-    data=await response.json();token=data.csrf;
+    data=hydrateSubnarratives(await response.json());token=data.csrf;
     return data;
   }
   const ready=initialize();
@@ -111,15 +119,24 @@ window.SignalLiveData=(()=>{
     if(!data.registry)return '';
     const topics=new Map(data.registry.topics.map(t=>[t.id,t]));
     const types=data.registry.types.filter(t=>(state.theme==='all'||topics.get(t.topic_id)?.app_id===state.theme)&&(!state.query||[t.id,t.title,t.claim_template].join(' ').toLocaleLowerCase('lt-LT').includes(state.query.toLocaleLowerCase('lt-LT'))));
-    return `<section class="panel registry-panel"><details><summary>Patvirtintų tipų registras <span class="compact-count">${types.length}</span></summary><p class="detail-description">Tema → naratyvo tipas → pratybų atmaina → įrašai ir komentarai. Registras apibrėžia teiginius, o ne patvirtintus faktus.</p>${types.map(t=>`<details class="registry-type"><summary>${esc(t.id)} · ${esc(t.title)}</summary><p class="detail-description">${esc(topics.get(t.topic_id)?.name)}</p>${criteria(t)}</details>`).join('')||'<p>Šiai temai tipų dar nėra.</p>'}</details>${data.requires_reanalysis_count?`<p class="detail-description">${data.requires_reanalysis_count} ankstesnių vertinimų reikia pakartotinai patikrinti pagal šį registrą.</p>`:''}</section>`;
+    return `<section class="panel registry-panel"><details><summary>Patvirtintų tipų registras <span class="compact-count">${types.length}</span></summary><p class="detail-description">Tema → pagrindinis naratyvas → subnaratyvas arba pratybų atmaina → įrašai ir komentarai. Registras apibrėžia teiginius, o ne patvirtintus faktus.</p>${types.map(t=>`<details class="registry-type"><summary>${esc(t.id)} · ${esc(t.title)}</summary><p class="detail-description">${esc(topics.get(t.topic_id)?.name)}</p>${criteria(t)}</details>`).join('')||'<p>Šiai temai tipų dar nėra.</p>'}</details>${data.requires_reanalysis_count?`<p class="detail-description">${data.requires_reanalysis_count} ankstesnių vertinimų reikia pakartotinai patikrinti pagal šį registrą.</p>`:''}</section>`;
+  }
+  function subnarrativeRows(rows){
+    return rows.map(c=>`<details class="registry-type"><summary><span class="tag confirmed">Subnaratyvas</span> ${esc(c.title)} <span class="compact-count">${c.unit_count}</span></summary><p>${esc(c.claim_template)}</p><p class="detail-description">Patvirtinta teminė atšaka. Priskyrimas pagrindiniam naratyvui nepatvirtina jo teiginio, įrašo pozicijos ar termometro krypties.</p><div class="evidence-grid">${c.evidence.map(u=>`<div><blockquote class="narrative-excerpt">${esc(u.narrative_evidence)}</blockquote>${window.SignalDemo.evidenceCard(u)}</div>`).join('')}</div></details>`).join('');
   }
   function candidatePanel(state){
-    if(state.status==='confirmed')return '';
     const topics=new Map((data.registry?.topics||[]).map(t=>[t.id,t]));
-    const rows=(data.candidates||[]).filter(c=>(state.theme==='all'||topics.get(c.topic_id)?.app_id===state.theme)&&(!state.query||[c.title,c.claim_template].join(' ').toLocaleLowerCase('lt-LT').includes(state.query.toLocaleLowerCase('lt-LT'))));
-    if(!rows.length)return state.status==='candidate'?'<section class="panel empty-state"><h2>Naujų kandidatų nėra</h2><p>Vienas nepriskirtas įrašas savaime nėra naujo tipo kandidatas.</p></section>':'';
-    return `<section class="panel registry-panel"><h2>Nauji kandidatai <span class="compact-count">${rows.length}</span></h2><p class="detail-description">Laukia administratoriaus sprendimo. Į patvirtintą žemėlapį dar neįtraukti.</p>${rows.map(c=>`<details class="registry-type"><summary><span class="tag candidate">Naujas kandidatas</span> ${esc(c.title)}</summary><p>${esc(c.claim_template)}</p><p>${esc(topics.get(c.topic_id)?.name)} · ${c.unit_count} savarankiški vienetai · ${c.author_count} autoriai · ${c.thread_count} gijos</p><p class="detail-description">${c.audience===null?'Auditorija nežinoma':`Auditorija: ${c.audience}`} · reikia bent ${c.required_authors} autorių. Bandomieji kriterijai, ne statistinis reikšmingumas.</p><p class="detail-description">Langas: ${source.date(c.window_start)} – ${source.date(c.window_end)}. Pirmas: ${source.date(c.first_seen)} · paskutinis: ${source.date(c.last_seen)}</p><p>Skirtumas nuo ${esc(c.nearest_type_ids.join(', '))}: ${esc(c.novelty_reason)}</p><div class="evidence-grid">${c.evidence.slice(0,3).map(window.SignalDemo.evidenceCard).join('')}</div><p class="detail-description">${esc(c.id)}${c.exercise_known?'':' · pratybų ID nepateiktas'}</p></details>`).join('')}</section>`;
+    const types=new Map((data.registry?.types||[]).map(t=>[t.id,t]));
+    const visible=c=>(state.theme==='all'||topics.get(c.topic_id)?.app_id===state.theme)&&(!state.query||[c.title,c.claim_template,types.get(c.parent_type_id)?.title].join(' ').toLocaleLowerCase('lt-LT').includes(state.query.toLocaleLowerCase('lt-LT')));
+    const approved=(data.subnarratives||[]).filter(visible);
+    const proposed=state.status==='confirmed'?[]:(data.candidates||[]).filter(visible);
+    if(!approved.length&&!proposed.length)return state.status==='candidate'?'<section class="panel empty-state"><h2>Subnaratyvų nėra</h2><p>Pasirinktoje temoje ir laikotarpyje subnaratyvų turinio nėra.</p></section>':'';
+    const grouped=new Map();approved.forEach(c=>{if(!grouped.has(c.parent_type_id))grouped.set(c.parent_type_id,[]);grouped.get(c.parent_type_id).push(c);});
+    const confirmed=[...grouped].map(([parent,rows])=>`<section class="subnarrative-group"><h3>${esc(topics.get(rows[0].topic_id)?.name)} → ${esc(types.get(parent)?.title||parent)}</h3><p class="detail-description">Pagrindinis naratyvas: ${esc(parent)} · patvirtintos teminės atšakos</p>${subnarrativeRows(rows)}</section>`).join('');
+    const suggestions=proposed.length?`<h3>Siūlomi subnaratyvai</h3><p class="detail-description">Ryšį su pagrindiniu naratyvu dar turi patvirtinti administratorius.</p>${proposed.map(c=>`<details class="registry-type"><summary><span class="tag candidate">Siūlomas subnaratyvas</span> ${esc(c.title)}</summary><p>${esc(c.claim_template)}</p><p>${esc(topics.get(c.topic_id)?.name)} · ${c.unit_count} savarankiški vienetai · ${c.author_count} autoriai · ${c.thread_count} gijos</p><p class="detail-description">${c.audience===null?'Auditorija nežinoma':`Auditorija: ${c.audience}`} · reikia bent ${c.required_authors} autorių.</p><p>Artimi tipai: ${esc(c.nearest_type_ids.join(', '))}. ${esc(c.novelty_reason)}</p><div class="evidence-grid">${c.evidence.slice(0,3).map(window.SignalDemo.evidenceCard).join('')}</div></details>`).join('')}`:'';
+    return `<section class="panel registry-panel"><h2>Subnaratyvai <span class="compact-count">${approved.length+proposed.length}</span></h2>${confirmed}${suggestions}</section>`;
   }
+
   function note(){
     return `<p><strong>Tikri „Diasporos“ duomenys · ${data.collection_scope?.full_platform_export?'administratoriaus eksportas':'nepilna platformos aprėptis'}.</strong> Nuskaityta ${source.date(data.collected_at)}.
       ${data.collection_scope?.full_platform_export?'Naudojamas administratoriaus pateiktas platformos eksportas; jo datos nekeičiamos pagal pasirinktą laikotarpį.':accountDescription()+' Tai nėra visa platforma.'}
@@ -135,10 +152,12 @@ window.SignalLiveData=(()=>{
   function detail(n,inline,state,ui){
     if(!n)return '';
     const selected=evidence(n,state),t=ui.themeOf(n.theme),tabs=[['evidence','Reprezentatyvūs įrašai'],['relations','Ryšiai'],['history','Istorija']];
+    const branches=(n.subnarratives||[]).map(c=>({...c,evidence:c.evidence.filter(u=>inPeriod(u,state.period))})).filter(c=>c.evidence.length);
+    const branchMarkup=branches.length?`<section class="subnarrative-group"><h3>Subnaratyvai</h3>${subnarrativeRows(branches)}</section>`:'';
     const groups=(n.variants||[]).map(v=>({...v,evidence:v.evidence.filter(u=>selected.some(s=>s.source===u.source&&s.id===u.id))})).filter(v=>v.evidence.length);
     const labels={subject:'Subjektas',object:'Objektas',place:'Vieta',event:'Įvykis',time:'Laikas'};
-    const content=state.tab==='evidence'?`${stanceCoverage(n)}${groups.map(v=>`<details class="registry-variant" open><summary>${esc(Object.entries(v.entities).filter(([,value])=>value).map(([k,value])=>labels[k]+': '+value).join(' · ')||'Atmaina be patikslintų parametrų')} <span class="compact-count">${v.evidence.length}</span></summary><div class="evidence-grid">${v.evidence.map(u=>`<div><blockquote class="narrative-excerpt">${esc(u.narrative_evidence)}</blockquote>${window.SignalDemo.evidenceCard(u)}</div>`).join('')}</div></details>`).join('')||'<p class="detail-description">Šiai dienai turinio nėra.</p>'}<p class="detail-caution">Pozicija vertinama teiginio, ne žmogaus lygiu. Analizė gali apimti tekstą ir peržiūrėtas nuotraukas. Vaizdinis pagrindas žymimas VAIZDAS[įrašo ID:nuotraukos indeksas]; tai matomo turinio aprašymas, ne teksto citata.</p>`:
-      state.tab==='relations'?`${criteria(n)}${(data.registry?.types||[]).filter(t=>t.broader_type===n.id).map(t=>`<p>Konkretesnis tipas: ${esc(t.id)} · ${esc(t.title)}</p>`).join('')}<p class="detail-description">Registro hierarchija neįrodo koordinavimo. Patikrintų ryšių tarp šaltinio įrašų nėra.</p>`:
+    const content=state.tab==='evidence'?`${branchMarkup}${stanceCoverage(n)}${groups.map(v=>`<details class="registry-variant" open><summary>${esc(Object.entries(v.entities).filter(([,value])=>value).map(([k,value])=>labels[k]+': '+value).join(' · ')||'Atmaina be patikslintų parametrų')} <span class="compact-count">${v.evidence.length}</span></summary><div class="evidence-grid">${v.evidence.map(u=>`<div><blockquote class="narrative-excerpt">${esc(u.narrative_evidence)}</blockquote>${window.SignalDemo.evidenceCard(u)}</div>`).join('')}</div></details>`).join('')||'<p class="detail-description">Šiai dienai turinio nėra.</p>'}<p class="detail-caution">Pozicija vertinama teiginio, ne žmogaus lygiu. Analizė gali apimti tekstą ir peržiūrėtas nuotraukas. Vaizdinis pagrindas žymimas VAIZDAS[įrašo ID:nuotraukos indeksas]; tai matomo turinio aprašymas, ne teksto citata.</p>`:
+      state.tab==='relations'?`${criteria(n)}${branchMarkup}${(data.registry?.types||[]).filter(t=>t.broader_type===n.id).map(t=>`<p>Konkretesnis tipas: ${esc(t.id)} · ${esc(t.title)}</p>`).join('')}<p class="detail-description">Registro hierarchija neįrodo koordinavimo. Patikrintų ryšių tarp šaltinio įrašų nėra.</p>`:
       `<p class="detail-description">Registro versija: ${esc(n.registry_version)}. Senieji N-… priskyrimai automatiškai neperkelti. Tipo patvirtinimas nepatvirtina jo teiginio teisingumo.</p>`;
     const body=`<div class="detail-tabs" role="tablist" aria-label="Naratyvo informacija">${tabs.map(([key,label])=>`<button role="tab" id="narrative-tab-${n.id}-${key}" aria-selected="${state.tab===key}" aria-controls="narrative-tabpanel-${n.id}" tabindex="${state.tab===key?0:-1}" class="${state.tab===key?'active':''}" data-tab="${key}">${label}</button>`).join('')}</div><div class="detail-body" id="narrative-tabpanel-${n.id}" role="tabpanel" aria-labelledby="narrative-tab-${n.id}-${state.tab}">${content}</div>`;
     if(inline)return `<div class="narrative-expanded" id="narrative-content-${n.id}" role="region" aria-labelledby="narrative-title-${n.id}"><div class="inline-narrative-overview"><div class="inline-definition"><span>PATVIRTINTAS TIPAS · AI PRISKYRIMAI</span><p>${esc(n.description)}</p></div><button class="button" data-view="time">Tirti laiko eigą</button></div>${body}</div>`;

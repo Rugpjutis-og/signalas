@@ -31,7 +31,7 @@ const root=path.resolve(__dirname,'..');
  ui.state.sort='newest';ui.render();assert.equal(ui.state.expanded,'N001');
  assert.equal((node('view').innerHTML.match(/class="registry-type"/g)||[]).length,14);
  ui.selectTheme('identity','map');
- assert(node('view').innerHTML.includes('Naujas kandidatas'));assert(node('view').innerHTML.includes('Auditorija nežinoma'));
+ assert(node('view').innerHTML.includes('Siūlomas subnaratyvas'));assert(node('view').innerHTML.includes('Auditorija nežinoma'));
  assert(!node('view').innerHTML.includes('class="graph-node'));
  assert.equal((node('view').innerHTML.match(/class="registry-type"/g)||[]).length,4); // 1 candidate and 3 fixed types, collapsed parents
  ui.selectTheme('health','map');
@@ -47,6 +47,16 @@ const root=path.resolve(__dirname,'..');
  snapshot={...snapshot,analysis_revision:'test-2'};await window.SignalLiveData.refresh();
  assert.equal(window.SignalLiveData.get().analysis_revision,'test-2');assert.equal(ui.state.expanded,'N001');
  assert(requests.every(([url,options])=>!options.method||options.method==='GET'),'reading the map never writes or runs AI');
+ // Official thematic branches retain their parent and original source URL without claiming parent support.
+ const branch={id:'Cofficial',title:'Informacijos per mažai',claim_template:'Pateikiama mažai informacijos.',
+   topic_id:'T09',parent_type_id:'N007',unit_count:1,evidence:[snapshot.units[0]],status:'confirmed'};
+ snapshot.subnarratives=[branch];snapshot.analysis_revision='official-branches';
+ await window.SignalLiveData.syncContext();
+ const branches=window.SignalLiveData.candidatePanel({theme:'all',status:'all',query:''});
+ assert(branches.includes('Subnaratyvai'));assert(branches.includes('Pagrindinis naratyvas: N007'));
+ assert(branches.includes('Patvirtinta teminė atšaka'));assert(branches.includes('https://example.test/source/'));
+ assert(!branches.includes('Naujas kandidatas'));
+ assert(!window.SignalLiveData.candidatePanel({theme:'health',status:'all',query:''}).includes('Informacijos per mažai'));
  // Model/source strings are escaped in all new markup.
  snapshot.registry.types[0].title='<script>alert(1)</script>';
  await window.SignalLiveData.syncContext();

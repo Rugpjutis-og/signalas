@@ -195,7 +195,7 @@ class Repository:
         rows = self.sql('''SELECT md5(COALESCE(string_agg(name||md5(value::text),'' ORDER BY name),''))
             FROM signalas_state WHERE scope=$1 AND (name LIKE 'analysis-result/%' OR
                 name IN ('openai-analysis-pilot.json','live-context.json','dashboard-period.json',
-                         'thermometer-reviews.json','narrative-registry-state.json'))''', [self.scope])['rows']
+                         'thermometer-reviews.json','narrative-registry-state.json','narrative-subnarratives.json'))''', [self.scope])['rows']
         return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):

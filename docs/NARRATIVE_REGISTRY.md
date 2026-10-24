@@ -67,3 +67,8 @@ Pasirenkama headless vizualinė patikra: `NODE_PATH=<playwright paketų kataloga
 
 
 2026-10-23 papildymas: po rankinio Vercel surinkimo prijungta Neon teksto analizės eilė (`cloud_analysis.py`). Ją tęsia atidaryta autentifikuota aplikacija; media tebėra nevertinama. Žr. aktualų README skyrių „Analizė po duomenų surinkimo“. Ankstesnės pastabos apie neprijungtą automatinį paleidimą aprašo būseną iki šio papildymo.
+
+
+## Patvirtinti subnaratyvai (2026-10-24)
+
+Vartotojo patvirtintas ryšys „pagrindinis naratyvas → subnaratyvas“ saugomas atskirai nuo 35 tipų registro Neon bazėje. N007 pavadinimas atnaujintas į „Sąmoningai slepiama ir nutylima tiesa“. Informacijos trūkumo teiginys gali būti teminė N007 atšaka, bet savaime neįrodo sąmoningo slėpimo. Pagrindinio teiginio tiesioginė atitiktis ir teminis grupavimas neskaičiuojami kaip tas pats rodiklis; palaikymas ir termometro kryptis nepaveldimi. Nauji vėliau pasiūlyti subnaratyvai vis tiek laukia administratoriaus patvirtinimo. Duomenų rinkimo ar pakartotinės mokamos analizės vien priskyrimui nereikia.

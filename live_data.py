@@ -129,6 +129,9 @@ def bootstrap(root=ROOT):
     registry = narrative_registry.load(root)
     days = [(start.date() + timedelta(days=i)).isoformat() for i in range(duration)]
     projection = narrative_projection.project(records, analyses, registry, days, ZONE, context, packet.get("exercise_id"))
+    import subnarratives
+    branches = subnarratives.compact(subnarratives.project(records, analyses, registry))
+    projection['narratives'] = subnarratives.attach(projection['narratives'],branches,registry,days,packet.get('exercise_id'))
     first_seen = {}
     for record in packet["records"]:
         current = narrative_projection.valid_analysis(record, analyses.get(narrative_projection.key(record)), registry)
@@ -139,10 +142,10 @@ def bootstrap(root=ROOT):
     for narrative in projection["narratives"]:
         narrative["firstSeenAt"] = first_seen[narrative["id"]]
     proposed = narrative_projection.candidates(packet, analyses, registry,
-        decisions=narrative_registry.state(root).get("decisions", {}))
+        decisions={**narrative_registry.state(root).get("decisions", {}), **{b['id']:b for b in registry.get('subnarratives',[])}})
     # The queue covers the last 24 h; do not display candidates outside the chosen interval.
     proposed = [c for c in proposed if any(start <= instant(u["published_at"]) < end for u in c["evidence"])]
-    revision = narrative_registry.digest([registry["version"], list(analyses.values()), proposed])
+    revision = narrative_registry.digest([registry["version"], list(analyses.values()), proposed, registry.get("subnarratives",[])])
     return {"mode": "live", "source": packet["source"], "collected_at": packet["collected_at"],
             "monitoring": monitoring.status(root, collected_at=packet["collected_at"]),
             "coverage": packet["coverage"], "collection_scope": coverage(packet,start,end),
@@ -151,7 +154,7 @@ def bootstrap(root=ROOT):
             "range_saved": bool(json.loads((root / "var/dashboard-period.json").read_text()).get("start_date")),
             "context_available": context is not None,
             **projection, "registry": narrative_registry.public_registry(registry),
-            "candidates": proposed, "candidate_policy": narrative_registry.CANDIDATE_POLICY,
+            "subnarratives": branches, "candidates": proposed, "candidate_policy": narrative_registry.CANDIDATE_POLICY,
             "analysis_revision": revision,
             "analysis_count": sum(u["analysis_executed"] for u in projection["units"])}
 

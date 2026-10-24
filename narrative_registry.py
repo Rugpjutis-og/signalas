@@ -31,12 +31,14 @@ def load(root=None):
     registry = json.loads((ROOT / 'data/narrative-registry.json').read_text())
     saved = state(root)
     registry['types'] += copy.deepcopy(saved.get('approved_types', []))
+    from subnarratives import STATE as SUB_STATE
+    registry['subnarratives'] = list((root.read(SUB_STATE, {}) or {}).get('definitions', {}).values()) if hasattr(root,'read') else []
     registry['version'] += '+' + str(saved.get('revision', 0))
     return registry
 
 
 def public_registry(registry):
-    return {key: registry[key] for key in ('version', 'topics', 'types')}
+    return {key: registry[key] for key in ('version', 'topics', 'types')} | {'subnarratives':registry.get('subnarratives',[])}
 
 
 def prompt_registry(registry):
