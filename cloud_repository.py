@@ -117,6 +117,8 @@ class Repository:
         return self.packet
 
     def expand_unit(self, unit):
+        if 'conversation_context' in unit or 'parent_post' in unit or getattr(self,'_bounded_analysis_units',{}).get((unit.get('source'),unit.get('id'))) is unit:
+            return unit
         from discussion_context import DiscussionIndex
         records = self.latest()['records']
         if getattr(self, '_discussion_records', None) is not records:
@@ -153,6 +155,48 @@ class Repository:
             if not rows or instant(rows[0][0]) != instant(self.packet['collected_at']):
                 self.packet = None
 
+    def analysis_units(self, identities):
+        from discussion_context import DiscussionIndex
+        wanted={tuple(k) for k in identities}
+        if self.packet is not None:
+            index=DiscussionIndex(self.packet['records'])
+            result={k:index.expand(index.units[k]) for k in wanted if k in index.units}
+        else:
+            rows=self.sql("""WITH latest AS(SELECT packet FROM signalas_fetches
+                WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1),
+                inventory AS(SELECT ref.k,ref.n FROM latest,
+                  jsonb_array_elements(COALESCE(packet->'record_keys','[]'::jsonb)) WITH ORDINALITY ref(k,n)),
+                requested AS(SELECT c.source,c.content_id,c.payload FROM signalas_content c
+                  JOIN inventory i ON i.k->>'source'=c.source AND i.k->>'id'=c.content_id
+                  WHERE c.scope=$1 AND EXISTS(SELECT 1 FROM jsonb_array_elements($2::jsonb) ref
+                    WHERE ref->>0=c.source AND ref->>1=c.content_id)),
+                needed AS(SELECT ref->>0 AS source,ref->>1 AS content_id FROM jsonb_array_elements($2::jsonb) ref
+                  UNION SELECT source,payload->>'parent_id' FROM requested WHERE payload->>'kind'='comment'
+                  UNION SELECT c.source,c.content_id FROM signalas_content c JOIN requested r
+                    ON c.source=r.source AND c.payload->>'parent_id'=r.payload->>'parent_id'
+                    AND r.payload->>'kind'='comment' AND c.payload->>'kind'='comment'
+                    AND (c.payload->>'published_at')::timestamptz<=(r.payload->>'published_at')::timestamptz
+                    WHERE c.scope=$1)
+                SELECT COALESCE(jsonb_agg(c.payload ORDER BY i.n),'[]'::jsonb),
+                  (SELECT count(*) FROM needed n2 JOIN inventory i2 ON i2.k->>'source'=n2.source AND i2.k->>'id'=n2.content_id)
+                FROM needed n JOIN inventory i ON i.k->>'source'=n.source AND i.k->>'id'=n.content_id
+                JOIN signalas_content c ON c.scope=$1 AND c.source=n.source AND c.content_id=n.content_id""",
+                [self.scope,json.dumps(list(wanted))])['rows']
+            records=json.loads(rows[0][0]) if rows else []
+            if rows and len(records)!=int(rows[0][1]):
+                raise CloudStorageError('Trūksta surinkimo sąraše nurodytų įrašų. Ankstesni duomenys nepakeisti.')
+            index=DiscussionIndex(records)
+            result={k:index.expand(index.units[k]) for k in wanted if k in index.units}
+            # Legacy snapshots predate canonical records; keep their existing safe reader.
+            if not result and wanted:
+                metadata=self.sql("SELECT packet->>'storage_version' FROM signalas_fetches WHERE scope=$1 ORDER BY collected_at DESC LIMIT 1",[self.scope])['rows']
+                if metadata and metadata[0][0]!='2':
+                    index=DiscussionIndex(self.latest()['records'])
+                    result={k:index.expand(index.units[k]) for k in wanted if k in index.units}
+        self._bounded_analysis_units=getattr(self,'_bounded_analysis_units',{})
+        self._bounded_analysis_units.update(result)
+        return result
+
     def analysis_queue_page(self, generation, offset, limit):
         rows = self.sql("""SELECT COALESCE((SELECT jsonb_agg(t.v ORDER BY t.n)
             FROM jsonb_array_elements(value->'units') WITH ORDINALITY t(v,n)
@@ -171,7 +215,8 @@ class Repository:
             WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
               AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
               AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb
-              AND COALESCE(a->>'requested_model',a->>'model')=$5
+              AND (COALESCE(a->>'requested_model',a->>'model')=$5 OR
+                   (a->>'review_run_id' IS NOT NULL AND a->>'analysis_executed'='true' AND a->'result'->>'thermometer_status'='classified'))
               AND EXISTS(SELECT 1 FROM jsonb_array_elements($6::jsonb) ref
                 WHERE ref->>0=a->'source_reference'->>'source' AND ref->>1=a->'source_reference'->>'id')""",
             [self.scope,version,VERSION,json.dumps(context),model,identities])['rows']
@@ -187,7 +232,7 @@ class Repository:
         worker.values = dict(self.values)
         return worker
 
-    def analysis_for_queue(self, context, version, model):
+    def analysis_for_queue(self, context, version, model, *, include_reviews=False):
         # Filter in Postgres and transfer only identities/fingerprints, not every
         # original text, discussion, evidence and historic result on every unit.
         rows = self.sql(ASSESSMENTS + '''SELECT COALESCE(jsonb_agg(jsonb_build_object(
@@ -199,8 +244,9 @@ class Repository:
             FROM assessments WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
             AND a->>'registry_version'=$2 AND a->>'thermometer_rules_version'=$3
             AND COALESCE(a->'exercise_context','null'::jsonb)=$4::jsonb
-            AND COALESCE(a->>'requested_model',a->>'model')=$5''',
-            [self.scope, version, VERSION, json.dumps(context), model])['rows']
+            AND (COALESCE(a->>'requested_model',a->>'model')=$5 OR
+                ($6::boolean AND a->>'review_run_id' IS NOT NULL AND a->>'analysis_executed'='true' AND a->'result'->>'thermometer_status'='classified'))''',
+            [self.scope, version, VERSION, json.dumps(context), model,include_reviews])['rows']
         return json.loads(rows[0][0]) if rows else []
 
     def analysis_for_unit(self, source, identity, content_fingerprint, context):

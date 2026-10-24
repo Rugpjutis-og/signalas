@@ -26,7 +26,7 @@ def bindings(repo, context):
     import cloud_analysis as ca
     return {'context':context_digest(context),'registry':ca.registry(repo)['version'],'rules':ca.VERSION,
             'model':repo.config.get('OPENAI_MODEL') or ca.DEFAULT_ANALYSIS_MODEL,
-            'snapshot':repo.latest().get('collected_at')}
+            'snapshot':repo.collected_at()}
 
 
 def candidates(repo):
@@ -34,7 +34,7 @@ def candidates(repo):
     import cloud_analysis as ca
     context=ca.context_data(repo.read('live-context.json'))
     binding=bindings(repo,context)
-    prior=repo.analysis_for_queue(context,binding['registry'],binding['model'])
+    prior=repo.analysis_for_queue(context,binding['registry'],binding['model'],include_reviews=True)
     known={(a['source_reference']['source'],a['source_reference']['id']) for a in prior}
     repo._known_queue_keys=known
     unique={(u['source'],u['id']):u for u in repo.latest()['records']}
@@ -73,7 +73,7 @@ def ensure_plan(repo):
         state=repo.read(ca.STATE,{}) or {}
         if state.get('inflight'):
             receipt=state['inflight'];ref=receipt.get('source_reference',{})
-            record=next((u for u in repo.latest()['records'] if (u['source'],u['id'])==(ref.get('source'),ref.get('id'))),None)
+            record=repo.analysis_units([[ref.get('source'),ref.get('id')]]).get((ref.get('source'),ref.get('id')))
             context=ca.context_data(repo.read('live-context.json'))
             if record:
                 unit=repo.expand_unit(record)
@@ -105,11 +105,6 @@ def run_locked(repo,state,*,deadline=None,monotonic=None):
     clock=monotonic or time.monotonic
     context=ca.context_data(repo.read('live-context.json'))
     current=bindings(repo,context)
-    records=repo.latest()['records']
-    if getattr(repo,'_optimized_record_pool',None) is not records:
-        repo._optimized_record_pool=records
-        repo._optimized_units={(u['source'],u['id']):u for u in records}
-    pool=repo._optimized_units
     model=current['model'];version=current['registry']
     def prior(units):
         return {(a['source_reference']['source'],a['source_reference']['id']):a
@@ -118,8 +113,9 @@ def run_locked(repo,state,*,deadline=None,monotonic=None):
         state['updated_at']=ca.now();repo.write(ca.STATE,state)
     # Recover precisely the unfinished receipts; saved successes are never repaid.
     if state.get('status')=='running' and state.get('inflight_batch'):
-        receipts=state['inflight_batch'];raw=[pool[(t['source_reference']['source'],t['source_reference']['id'])] for t in receipts
-            if (t['source_reference']['source'],t['source_reference']['id']) in pool]
+        receipts=state['inflight_batch']
+        pool=repo.analysis_units([[t['source_reference']['source'],t['source_reference']['id']] for t in receipts])
+        raw=list(pool.values())
         previous=prior(raw)
         for record in raw:
             unit=repo.expand_unit(record);k=(record['source'],record['id'])
@@ -142,13 +138,16 @@ def run_locked(repo,state,*,deadline=None,monotonic=None):
     page=repo.analysis_queue_page(state['queue_generation'],offset,PAGE_SIZE)
     if page is None or (not page and offset<state['queue_total']):
         state.update(reason='queue_refresh_required',status='pending');persist();return state
-    raw=[pool[tuple(k)] for k in page if tuple(k) in pool]
-    previous=prior(raw) if raw else {}
+    previous=prior([{'source':k[0],'id':k[1]} for k in page]) if page else {}
+    repo._bounded_analysis_units={}
+    pool={}
     import thermometer_recheck
     count=(min(MAX_WORKERS,max(1,PRIMARY_PER_REVIEW-state.get('primary_since_review',0)))
            if thermometer_recheck.active(repo) else MAX_WORKERS)
     selected=[];end=offset
     for index,key in enumerate(page):
+        if index % count == 0:
+            pool.update(repo.analysis_units(page[index:index+count]))
         end=offset+index+1
         record=pool.get(tuple(key))
         if record:

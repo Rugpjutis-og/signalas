@@ -12,8 +12,16 @@ class OptimizedTests(unittest.TestCase):
         legacy.CloudAnalysisTests.setUp(self)
         self.db[opt.POLICY]={'enabled':True}
         self.units=[{**self.units[0],'id':str(i)} for i in range(1,5)]
+        def compatible(context,version,model,*,include_reviews=False):
+            out=self.queue_results(context,version,model)
+            if include_reviews:
+                out += [copy.deepcopy(a) for a in self.db.get(ca.RESULTS,[]) if a.get('review_run_id') and a.get('analysis_executed') and a.get('result',{}).get('thermometer_status')=='classified' and a.get('registry_version')==version and a.get('exercise_context')==context and a.get('requested_model',a.get('model'))!=model]
+            return out
+        self.repo.analysis_for_queue=compatible
         self.repo.analysis_queue_page=lambda generation,offset,limit:copy.deepcopy(self.db[opt.PLAN]['units'][offset:offset+limit]) if self.db.get(opt.PLAN,{}).get('generation')==generation else None
-        self.repo.analysis_queue_results=lambda units,context,version,model:[a for a in self.queue_results(context,version,model) if (a['source_reference']['source'],a['source_reference']['id']) in {(u['source'],u['id']) for u in units}]
+        self.repo.analysis_queue_results=lambda units,context,version,model:[a for a in compatible(context,version,model,include_reviews=True) if (a['source_reference']['source'],a['source_reference']['id']) in {(u['source'],u['id']) for u in units}]
+        self.repo.collected_at=lambda:self.repo.latest().get('collected_at')
+        self.repo.analysis_units=lambda refs:{(u['source'],u['id']):self.repo.expand_unit(u) for u in self.units if [u['source'],u['id']] in refs}
         self.repo.analysis_worker=lambda index:self.repo # Tests replace AI entirely; no shared live sessions.
 
     # Legacy engine cases run separately under its disabled-by-default rollout policy.
@@ -123,6 +131,22 @@ class OptimizedTests(unittest.TestCase):
         self.assertEqual(state['remaining_kind'],'candidate_checks')
         self.assertEqual(self.db[opt.PLAN]['units'][-1],['test','1'])
 
+    def test_primary_context_fetch_stops_after_two_eligible_units(self):
+        ca.enqueue(self.repo)
+        with patch.object(self.repo,'analysis_units',wraps=self.repo.analysis_units) as fetch,patch.object(ca,'analyze',side_effect=self.result):
+            ca.step(self.repo)
+        fetch.assert_called_once()
+        self.assertEqual(len(fetch.call_args.args[0]),2)
+
+    def test_valid_completed_sol_review_is_not_repaid_or_downgraded(self):
+        self.units=self.units[:1]
+        self.db[ca.RESULTS]=[{**self.result(self.units[0]),'model':'gpt-6.1-sol','review_run_id':'explicit-review',
+                            'content_fingerprint':ca.fingerprint(self.units[0]),'result':{'thermometer_status':'classified','thermometer_category':'destabilizing'},'thermometer_status':'classified'}]
+        ca.enqueue(self.repo)
+        with patch.object(ca,'analyze') as paid:state=ca.step(self.repo)
+        paid.assert_not_called();self.assertEqual(state['status'],'complete')
+        self.assertEqual(self.db[ca.RESULTS][0]['result']['thermometer_category'],'destabilizing')
+
     def test_existing_lease_prevents_any_new_parallel_calls(self):
         ca.enqueue(self.repo);self.repo.sql.return_value={'rows':[]}
         with patch.object(ca,'analyze') as paid:state=ca.step(self.repo)
@@ -164,3 +188,36 @@ class OptimizedTests(unittest.TestCase):
         opt.ensure_plan(self.repo)
         self.assertEqual(len(self.db[ca.RESULTS]),1)
         self.assertTrue(self.db[ca.RESULTS][0]['analysis_executed'])
+
+
+class BoundedContextReaderTests(unittest.TestCase):
+    def test_own_post_and_comment_context_match_full_index_without_full_reader(self):
+        import json
+        from cloud_repository import Repository
+        from discussion_context import DiscussionIndex
+        records=[{'source':'test','id':'p','kind':'post','text':'Parent','published_at':'2026-10-24T10:00:00Z','media':[]},
+                 {'source':'test','id':'before','kind':'comment','parent_id':'p','text':'Before','published_at':'2026-10-24T10:01:00Z'},
+                 {'source':'test','id':'target','kind':'comment','parent_id':'p','text':'Target','published_at':'2026-10-24T10:01:00Z'},
+                 {'source':'test','id':'after','kind':'comment','parent_id':'p','text':'After','published_at':'2026-10-24T10:01:00Z'}]
+        repo=Repository({});repo.sql=Mock(return_value={'rows':[[json.dumps(records),len(records)]]})
+        repo.latest=Mock(side_effect=AssertionError('full snapshot must not be loaded'))
+        got=repo.analysis_units([['test','p'],['test','target']]);index=DiscussionIndex(records)
+        for key,unit in got.items():
+            self.assertEqual(ca.fingerprint(unit),ca.fingerprint(index.expand(index.units[key])))
+            self.assertIs(repo.expand_unit(unit),unit)
+        self.assertEqual([c['id'] for c in got[('test','target')]['conversation_context']],['before'])
+        repo.latest.assert_not_called()
+
+    def test_missing_canonical_context_is_not_silently_treated_as_empty(self):
+        from cloud_repository import Repository
+        from cloud_storage import CloudStorageError
+        repo=Repository({});repo.sql=Mock(return_value={'rows':[['[]',1]]})
+        with self.assertRaises(CloudStorageError):repo.analysis_units([['test','missing']])
+
+    def test_queue_page_reads_only_requested_slice(self):
+        from cloud_repository import Repository
+        repo=Repository({});repo.sql=Mock(return_value={'rows':[['[["test","one"]]']]})
+        self.assertEqual(repo.analysis_queue_page('generation',32,16),[['test','one']])
+        statement,params=repo.sql.call_args.args
+        self.assertIn('t.n>$3 AND t.n<=$3+$4',statement)
+        self.assertEqual(params[1:],['generation',32,16])

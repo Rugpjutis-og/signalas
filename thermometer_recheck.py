@@ -147,8 +147,9 @@ def step(repo, *, deadline=None, monotonic=None):
             repo.write(STATE, state)
             return status(repo)
         target = state['targets'][state['cursor']]
-        unit = next((r for r in repo.latest()['records']
-                     if (r['source'], r['id']) == (target['source'], target['id'])), None)
+        from optimized_analysis import enabled
+        unit = (repo.analysis_units([[target['source'],target['id']]]).get((target['source'],target['id'])) if enabled(repo) else
+                next((r for r in repo.latest()['records'] if (r['source'],r['id'])==(target['source'],target['id'])),None))
         if not unit:
             return advance(repo, state, 'skipped')
         unit = repo.expand_unit(unit)
