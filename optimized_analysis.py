@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from scenario_supplement import context_digest
 from cloud_storage import CloudStorageError
 
+REVISION = 'bounded-primary-2026-10-24'
 POLICY = 'analysis-runtime.json'
 PLAN = 'analysis-queue.json'
 PRIMARY_PER_REVIEW = 3
@@ -166,8 +167,15 @@ def run_locked(repo,state,*,deadline=None,monotonic=None):
                  processing_model=model,processing_tier=ca.ANALYSIS_SERVICE_TIER)
     state.pop('inflight',None);persist()
     service_error=None;failed_positions=[]
+    batch_id=uuid.uuid4().hex
+    def call(index,unit):
+        began=time.monotonic()
+        result=ca.analyze(unit,context,root=repo.analysis_worker(index),timeout=timeout)
+        result.update(analysis_execution_revision=REVISION,analysis_batch_id=batch_id,
+                      analysis_batch_size=len(selected),analysis_elapsed_seconds=round(time.monotonic()-began,3))
+        return result
     with ThreadPoolExecutor(max_workers=len(selected)) as executor:
-        pending={executor.submit(ca.analyze,u,context,root=repo.analysis_worker(n),timeout=timeout):(i,u)
+        pending={executor.submit(call,n,u):(i,u)
                  for n,(i,u) in enumerate(selected)}
         for future in as_completed(pending):
             index,unit=pending[future]
