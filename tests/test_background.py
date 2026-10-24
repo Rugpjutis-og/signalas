@@ -102,6 +102,16 @@ class BackgroundTickTests(unittest.TestCase):
         self.assertEqual(outcome['collection'],'pending');paid.assert_not_called()
         self.assertEqual(self.db['background-schedule.json']['next_collection_at'],self.current.isoformat())
 
+    def test_account_directory_failure_does_not_stop_normal_analysis(self):
+        from diaspora_client import DiasporaRequestError
+        self.db['background-schedule.json']={'next_collection_at':(self.current+timedelta(hours=1)).isoformat()}
+        self.db['analysis-job.json']={'status':'pending','remaining':1}
+        with patch('exercise_accounts.needs_service',return_value=True),patch('exercise_accounts.service',side_effect=DiasporaRequestError('source_http',503)), \
+                patch('exercise_accounts.current',return_value={'revision':'test'}),patch.object(background_tick,'step',return_value={'status':'complete','remaining':0}) as normal:
+            background_tick.tick(self.repo,clock=self.clock,monotonic=self.monotonic)
+        normal.assert_called_once()
+        self.assertEqual(self.db['exercise-account-context.json']['status'],'resolution_error')
+
     def test_existing_short_deadline_adopts_hourly_cadence(self):
         self.db['background-schedule.json'] = {
             'last_success_at': self.current.isoformat(),

@@ -50,7 +50,12 @@ def append_review(repo,state):
     from narrative_registry import load as registry
     context=repo.read('live-context.json')
     job=repo.read(review.STATE,{}) or {}
-    if state['revision'] in job.get('account_context_requests',[]):return
+    if state['revision'] in job.get('account_context_requests',[]):
+        state.update(status='complete',matched_accounts=len(state.get('account_ids',{})),
+            review_targets=sum(t.get('account_context_revision')==state['revision'] for t in job.get('targets',[])),
+            updated_at=datetime.now(timezone.utc).isoformat())
+        repo.write(STATE,state)
+        return
     records=repo.latest()['records'];manuals=saved(repo)
     version=registry(repo)['version']
     rows=repo.sql(ASSESSMENTS+'''SELECT COALESCE(jsonb_agg(jsonb_build_object(

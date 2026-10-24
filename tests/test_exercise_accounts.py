@@ -70,7 +70,9 @@ class AccountContextTests(unittest.TestCase):
         self.assertEqual(saved['targets'][0]['account_context_revision'],'organizer-test')
         self.assertEqual(self.db[ea.STATE]['manual_skips'],1)
         self.assertEqual(self.db[ea.STATE]['review_targets'],1)
+        self.db[ea.STATE]['status']='queue_pending' # Recovery after job saved but setup completion interrupted.
         ea.append_review(self.repo,self.db[ea.STATE])
+        self.assertEqual(self.db[ea.STATE]['status'],'complete')
         self.assertEqual(len(self.db[review.STATE]['targets']),1,'repeat setup is idempotent')
 
     def test_context_revision_distinguishes_new_results_without_invalidating_old_bindings(self):

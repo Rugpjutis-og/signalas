@@ -30,7 +30,7 @@ def active(repo):
 
 def status(repo):
     value = {k: v for k, v in (repo.read(STATE, {}) or {}).items()
-             if k not in ('targets', 'exercise_context', 'inflight')}
+             if k not in ('targets', 'exercise_context', 'inflight', 'inflight_analysis')}
     value['status'] = {'category_pending':'pending', 'category_running':'running'}.get(value.get('status'), value.get('status'))
     return value
 
