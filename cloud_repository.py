@@ -42,6 +42,8 @@ def analysis_result_name(result):
     binding['model'] = result.get('requested_model', result.get('model'))
     if result.get('vision_revision'):
         binding['vision_revision'] = result['vision_revision']
+    if result.get('exercise_actor_context_revision'):
+        binding['exercise_actor_context_revision']=result['exercise_actor_context_revision']
     if result.get('review_run_id'):
         binding['review_run_id'] = result['review_run_id']
     name = 'analysis-result/' + hashlib.sha256(json.dumps(binding, sort_keys=True,

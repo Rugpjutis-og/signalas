@@ -34,7 +34,7 @@ def adapt_diaspora_post(raw, *, source, exercise_id, sourceUrl=None, parentSourc
                                  'account_id': actor.get('guid'), 'published_at': action.get('created_at')})
     return {'id': raw.get('guid'), 'source': source, 'exercise_id': exercise_id,
             'kind': 'reshare' if raw.get('post_type') == 'Reshare' else 'post' if raw.get('post_type') == 'StatusMessage' else 'unknown',
-            'author_id': author.get('guid'), 'author_name': author.get('name') or author.get('diaspora_id'),
+            'author_id': author.get('guid'), 'author_handle': author.get('diaspora_id'), 'author_name': author.get('name') or author.get('diaspora_id'),
             'published_at': raw.get('created_at'), 'text': raw.get('text', ''), 'is_demo': False,
             'sourceUrl': source_reference({'sourceUrl': sourceUrl or raw.get('sourceUrl') or raw.get('url')})['sourceUrl'],
             'parentSourceUrl': source_reference({'parentSourceUrl': parentSourceUrl or raw.get('parentSourceUrl')})['parentSourceUrl'],
@@ -52,7 +52,7 @@ def adapt_diaspora_comment(raw, *, source, exercise_id, sourceUrl=None, parentSo
     data = raw.get('interactions') or {}
     likes = data.get('likes')
     return {'id': raw.get('guid'), 'source': source, 'exercise_id': exercise_id, 'kind': 'comment',
-            'author_id': author.get('guid'), 'author_name': author.get('name') or author.get('diaspora_id'),
+            'author_id': author.get('guid'), 'author_handle': author.get('diaspora_id'), 'author_name': author.get('name') or author.get('diaspora_id'),
             'published_at': raw.get('created_at'), 'text': raw.get('text', ''), 'is_demo': False,
             'sourceUrl': source_reference({'sourceUrl': sourceUrl or raw.get('sourceUrl') or raw.get('url')})['sourceUrl'],
             'parentSourceUrl': source_reference({'parentSourceUrl': parentSourceUrl or raw.get('parentSourceUrl')})['parentSourceUrl'],

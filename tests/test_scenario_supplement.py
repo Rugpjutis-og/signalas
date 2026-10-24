@@ -53,6 +53,24 @@ class SupplementTests(unittest.TestCase):
         repo.sql.return_value = {'rows': [['t']]}
         self.assertTrue(repo.supplement_eligible(self.unit, self.value['effective_at']))
 
+    def test_known_exercise_role_is_context_and_neutral_classification_remains_valid(self):
+        decoded={'direction':'neutral','reason':'Kasdienis klausimas.','reason_codes':['N1'],
+            'evidence':'','missing_context':''}
+        response={'status':'completed','output':[{'type':'message','content':[{'type':'output_text','text':json.dumps(decoded)}]}]}
+        actor={'revision':'test-role','scenario_role':'organizer_identified_adversarial_exercise_account'}
+        with patch('exercise_accounts.for_unit',return_value=actor), patch('scenario_supplement.for_unit',return_value=[]), \
+             patch.object(openai_analysis,'api_key',return_value='synthetic'),patch.object(openai_analysis,'build_opener') as opener:
+            opener.return_value.open.return_value.__enter__.return_value=io.BytesIO(json.dumps(response).encode())
+            result=openai_analysis.analyze(self.unit,self.context,thermometer_only=True)
+            sent=json.loads(opener.return_value.open.call_args.args[0].data)
+            prepared=json.loads(sent['input'][1]['content'][0]['text'])['analysis_input']
+            self.assertEqual(prepared['exercise_actor_context'],actor)
+            self.assertEqual(result['result']['thermometer_category'],'neutral')
+            self.assertEqual(result['exercise_actor_context_revision'],'test-role')
+            self.assertEqual(result['exercise_context'],self.context)
+            self.assertIn('vien vaidmuo nėra destabilizuojančio turinio įrodymas',sent['instructions'])
+            self.assertIn('Nenustatyk privalomos',sent['instructions'])
+
     def test_both_analysis_modes_send_clarification_but_keep_original_context_binding(self):
         normal = {'direction': 'neutral', 'reason': 'Klausimas.', 'reason_codes': ['N1'],
                   'evidence': '', 'missing_context': '', 'narrative_analysis': {

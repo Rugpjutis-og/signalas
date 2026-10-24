@@ -105,6 +105,7 @@ def advance(repo, state, outcome, result=None):
     state['updated_at'] = now()
     state['after_primary'] = primary_marker(repo)
     state.pop('inflight', None)
+    state.pop('inflight_analysis', None)
     repo.write(STATE, state)
     return status(repo)
 
@@ -129,6 +130,8 @@ def step(repo, *, deadline=None, monotonic=None):
         if state.get('inflight'):
             # A result saved just before interruption must not be paid for again.
             result = repo.read(state['inflight'])
+            if not result and state.get('inflight_analysis'):
+                result = repo.read(state['inflight_analysis'])
             outcome = ('failed' if result.get('processing_disposition') == 'needs_review'
                        else 'classified' if result['result']['thermometer_status'] == 'classified'
                        else 'review_required') if result else 'failed'
@@ -153,10 +156,18 @@ def step(repo, *, deadline=None, monotonic=None):
             return advance(repo, state, 'skipped')
         # Preserve the original narrative result; this pass only revisits direction.
         original = repo.analysis_for_unit(unit['source'], unit['id'], target['content_fingerprint'], state['exercise_context'])
-        selected = state.get('selection_category')
+        account_revision = target.get('account_context_revision')
+        from exercise_accounts import for_unit as actor_context
+        actor = actor_context(repo, unit)
+        if account_revision:
+            if not actor or actor['revision'] != account_revision:
+                return advance(repo, state, 'skipped')
+        selected = None if account_revision else state.get('selection_category')
         still_eligible = original and ((original['result'].get('thermometer_status') == 'classified' and
             original['result'].get('thermometer_category') == selected) if selected else
             original['result'].get('thermometer_status') in ELIGIBLE)
+        if account_revision:
+            still_eligible = bool(original and original.get('result'))
         if not still_eligible:
             return advance(repo, state, 'skipped')
         timeout = min(180, deadline - (monotonic or time.monotonic)() - 30) if deadline else 180
@@ -167,7 +178,11 @@ def step(repo, *, deadline=None, monotonic=None):
                    'exercise_id': unit.get('exercise_id'), 'exercise_context': state['exercise_context'],
                    'registry_version': state['registry_version'], 'thermometer_rules_version': VERSION,
                    'requested_model': MODEL, 'review_run_id': state['run_id'], 'vision_revision': VISION_REVISION}
-        state.update(status='category_running' if selected else 'running', inflight=analysis_result_name(binding), updated_at=now())
+        if actor:binding['exercise_actor_context_revision']=actor['revision']
+        result_name = analysis_result_name(binding)
+        audit_name = 'account-recheck-result/'+state['run_id']+'/'+result_name.split('/')[-1] if account_revision else None
+        state.update(status='category_running' if selected else 'running', inflight=audit_name or result_name, updated_at=now())
+        if audit_name:state['inflight_analysis']=result_name
         repo.write(STATE, state)
         try:
             result = analyze(unit, state['exercise_context'], root=repo, timeout=timeout,
@@ -177,6 +192,7 @@ def step(repo, *, deadline=None, monotonic=None):
         except AnalysisServiceError as error:
             state.update(status='error', reason=error.reason, updated_at=now())
             state.pop('inflight', None)
+            state.pop('inflight_analysis', None)
             repo.write(STATE, state)
             return status(repo)
         except (ValueError, TypeError, KeyError) as error:
@@ -191,6 +207,10 @@ def step(repo, *, deadline=None, monotonic=None):
                 'analysis_validation')
             failures = state.setdefault('failure_reasons', {})
             failures[reason] = failures.get(reason, 0) + 1
+            if audit_name:
+                repo.write(audit_name, {'processing_disposition':'needs_review', 'processing_reason':reason,
+                    'source_reference':original['source_reference'],'account_context_revision':account_revision,
+                    'kept_previous':True,'recorded_at':now(),'result':{'thermometer_status':'error','thermometer_category':None}})
             if selected:
                 fallback = {**binding, 'model': MODEL, 'analysis_executed': False,
                     'processing_disposition': 'needs_review', 'processing_reason': reason,
@@ -211,7 +231,14 @@ def step(repo, *, deadline=None, monotonic=None):
             if field in original:
                 result[field] = copy.deepcopy(original[field])
         result['result']['narrative_analysis'] = copy.deepcopy(original['result']['narrative_analysis'])
-        repo.append_analysis(result)
+        classified = result['result']['thermometer_status'] == 'classified'
+        if not account_revision or classified:
+            repo.append_analysis(result)
+        if audit_name:
+            repo.write(audit_name, {'source_reference':result['source_reference'],
+                'account_context_revision':account_revision,'recorded_at':now(),
+                'kept_previous':not classified, 'reason':result['result'].get('reason'),
+                'result':{k:result['result'].get(k) for k in ('thermometer_status','thermometer_category')}})
         outcome = 'classified' if result['result']['thermometer_status'] == 'classified' else 'review_required'
         return advance(repo, state, outcome, result)
     finally:

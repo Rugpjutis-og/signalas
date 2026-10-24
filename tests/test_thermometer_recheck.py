@@ -48,6 +48,59 @@ class RecheckTests(unittest.TestCase):
         return {'result': {'thermometer_status': 'classified', 'thermometer_category': 'neutral',
                            'narrative_analysis': {'must_not_replace_original': True}}, 'usage': {'total_tokens': 10}}
 
+    def actor_job(self):
+        job=self.job();job['targets'][0]['account_context_revision']='organizer-test'
+        self.db[retry.STATE]=job
+        self.original['result'].update(thermometer_status='classified',thermometer_category='neutral')
+        return job
+
+    def test_account_review_keeps_previous_category_on_unclear_output(self):
+        self.actor_job()
+        response=self.response();response['result'].update(thermometer_status='needs_review',thermometer_category=None)
+        with patch('exercise_accounts.for_unit',return_value={'revision':'organizer-test'}),patch.object(retry,'analyze',return_value=response):
+            state=retry.step(self.repo)
+        self.assertEqual(state['review_required'],1)
+        self.assertFalse(any(k.startswith('analysis-result/') for k in self.db))
+        audit=next(v for k,v in self.db.items() if k.startswith('account-recheck-result/'))
+        self.assertTrue(audit['kept_previous'])
+        self.assertEqual(self.original['result']['thermometer_category'],'neutral')
+
+    def test_account_review_keeps_previous_category_on_validation_failure(self):
+        self.actor_job()
+        with patch('exercise_accounts.for_unit',return_value={'revision':'organizer-test'}),patch.object(retry,'analyze',side_effect=ValueError('synthetic validation')):
+            state=retry.step(self.repo)
+        self.assertEqual(state['failed'],1)
+        self.assertFalse(any(k.startswith('analysis-result/') for k in self.db))
+        self.assertEqual(self.original['result']['thermometer_category'],'neutral')
+
+    def test_account_review_applies_classification_only_after_success_and_keeps_narratives(self):
+        self.actor_job()
+        response=self.response();response['result']['thermometer_category']='destabilizing'
+        with patch('exercise_accounts.for_unit',return_value={'revision':'organizer-test'}),patch.object(retry,'analyze',return_value=response):
+            state=retry.step(self.repo)
+        self.assertEqual(state['classified'],1)
+        result=next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(result['result']['thermometer_category'],'destabilizing')
+        self.assertEqual(result['result']['narrative_analysis'],{'original':True})
+        self.assertEqual(result['exercise_actor_context_revision'],'organizer-test')
+
+    def test_account_review_never_overwrites_applicable_manual_choice(self):
+        job=self.actor_job()
+        self.db[NAME]={key(self.unit['source'],self.unit['id']):{
+            'content_fingerprint':fingerprint(self.unit),'exercise_id':None,'exercise_context':None,'rules_version':retry.VERSION}}
+        with patch.object(retry,'analyze') as paid:
+            state=retry.step(self.repo)
+        paid.assert_not_called();self.assertEqual(state['skipped'],1)
+
+    def test_account_audit_recovery_never_repeats_paid_call_or_removes_previous_category(self):
+        job=self.actor_job();job['inflight']='account-recheck-result/test/audit'
+        self.db[retry.STATE]=job
+        self.db[job['inflight']]={'kept_previous':True,'result':{'thermometer_status':'needs_review','thermometer_category':None}}
+        with patch.object(retry,'analyze') as paid:
+            state=retry.step(self.repo)
+        paid.assert_not_called();self.assertEqual(state['review_required'],1)
+        self.assertEqual(self.original['result']['thermometer_category'],'neutral')
+
     def test_start_freezes_only_eligible_and_is_idempotent(self):
         units = []
         for state in ('needs_review', 'error', 'waiting_data', 'not_analyzed', 'assessed'):

@@ -146,6 +146,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     supplements = for_unit(root, unit, prepared['exercise_context'])
     if supplements:
         prepared['scenario_supplements'] = supplements
+    from exercise_accounts import for_unit as account_context_for_unit
+    actor_context = account_context_for_unit(root, unit)
+    if actor_context:
+        prepared['exercise_actor_context'] = actor_context
     image_parts, vision = prepare_images(unit, root)
     prepared["coverage"].update(images=bool(vision["reviewed_image_refs"]), image_review=vision)
     model = model_override or settings(root).get("OPENAI_MODEL") or DEFAULT_ANALYSIS_MODEL
@@ -184,6 +188,14 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "Naudok jį kartu su pradiniu kontekstu. Idėjos paminėjimas, citavimas, klausimas ar paneigimas nėra jos palaikymas. "
             "Scenarijaus veikėjų apibūdinimas savaime nenustato konkretaus autoriaus priklausomybės ar turinio krypties; "
             "spręsk pagal paties įrašo turinį, poziciją ir diskusijos kontekstą.")
+    if actor_context:
+        instructions += ("\nexercise_actor_context yra organizatoriaus nurodytas fiktyvių pratybų vaidmuo, o ne išvada apie tikrą žmogų. "
+            "Šį kontekstą naudok suprasdamas galimas užuominas, potekstę ir diskusijos eigą, bet vien vaidmuo nėra destabilizuojančio turinio įrodymas. "
+            "Kategoriją pagrįsk konkrečiu šio turinio komunikaciniu mechanizmu ir tikslia ištrauka arba peržiūrėtu vaizdu. "
+            "Nenustatyk privalomos destabilizuojančių ar neutralių įrašų dalies; visos trys kryptys lieka galimos. "
+            "Kasdienis, šeimos ar laisvalaikio turinys gali būti neutralus, jei pats turinys nekuria kito mechanizmo. "
+            "Paminėjimas, citavimas, persidalijimas, kritika ar paneigimas savaime nėra priešiškos idėjos palaikymas. "
+            "Nespėk slaptų ketinimų ar priklausomybės, jei jų nepatvirtina pateiktas turinys ir scenarijus.")
     reference = {"narrative_registry": narrative_registry.prompt_registry(catalog),
                  "directions": DEFINITIONS, "reason_codes": REASONS,
                  "rules_version": THERMOMETER_RULES_VERSION, "guidance_revision": GUIDANCE_REVISION,
@@ -296,6 +308,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "source_reference": source_reference(unit), "original_text": unit.get("text", ""),
             "exercise_context": prepared["exercise_context"], "coverage": prepared["coverage"],
             "scenario_supplement_ids": [s['id'] for s in supplements],
+            "exercise_actor_context_revision": actor_context['revision'] if actor_context else None,
             "result": result, "usage": raw.get("usage"), "automatically_applied": False}
 
 

@@ -64,6 +64,18 @@ def tick(repo, *, clock=None, monotonic=None):
             repo.write('background-schedule.json', {
                 'next_collection_at': (current + COLLECTION_INTERVAL).isoformat(),
                 'last_attempt_at': current.isoformat()})
+    import exercise_accounts
+    if collection not in ('already_running','pending') and exercise_accounts.needs_service(repo):
+        try:
+            exercise_accounts.service(repo, deadline=started+MAX_ANALYSIS_SECONDS, monotonic=monotonic)
+        except ValueError as error:
+            from cloud_storage import CloudStorageError
+            if isinstance(error,CloudStorageError):raise
+            account_state=exercise_accounts.current(repo)
+            if account_state:
+                account_state.update(status='resolution_error',reason=getattr(error,'reason','source_validation'),
+                    http_status=getattr(error,'http_status',None))
+                repo.write(exercise_accounts.STATE,account_state)
     state = repo.read('analysis-job.json', {}) or {}
     retried = False
     if state.get('status') == 'error' and state.get('reason') == 'analysis_validation':
