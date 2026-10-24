@@ -77,3 +77,14 @@ class ExerciseRuleTests(unittest.TestCase):
         self.assertEqual(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id=rule.ID)['id'], rule.ID)
         self.assertIsNone(rule.for_unit(self.repo, self.unit, thermometer_only=True, review_rule_id='other'))
         self.assertIsNone(rule.for_unit(self.repo, {**self.unit, 'author_id': 'other'}, thermometer_only=True, review_rule_id=rule.ID))
+
+    def test_historical_api_accepts_valid_extra_trigger_without_schema_failure(self):
+        import io,json,openai_analysis
+        unit={**self.unit,'kind':'post','media':[],'published_at':'2026-10-24T18:01:00Z'}
+        decoded={**self.result,'exercise_rule_trigger':rule.TRIGGERS[1]}
+        response={'status':'completed','output':[{'type':'message','content':[{'type':'output_text','text':json.dumps(decoded)}]}]}
+        with patch('exercise_rule.for_unit',return_value={'id':rule.ID,'provenance':'exercise_organizer'}),patch('exercise_accounts.for_unit',return_value=None),patch('scenario_supplement.for_unit',return_value=[]),patch.object(openai_analysis,'api_key',return_value='synthetic'),patch.object(openai_analysis,'build_opener') as opener:
+            opener.return_value.open.return_value.__enter__.return_value=io.BytesIO(json.dumps(response).encode())
+            result=openai_analysis.analyze(unit,thermometer_only=True,scoring_rule_review=rule.ID)
+            self.assertEqual(result['result']['thermometer_category'],'destabilizing')
+            self.assertTrue(result['exercise_rule_application']['applied'])

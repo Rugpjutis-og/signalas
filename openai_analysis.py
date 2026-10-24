@@ -274,7 +274,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             if rule_trigger not in TRIGGERS:
                 raise ValueError("Netinkamas pratybų taisyklės požymis")
         if thermometer_only:
-            if not isinstance(decoded, dict) or set(decoded) != set(schema["required"]):
+            if not isinstance(decoded, dict) or set(decoded) != (set(schema["required"]) - {"exercise_rule_trigger"}):
                 raise ValueError("Unexpected thermometer response fields")
             decoded["narrative_analysis"] = {"match_status": "no_narrative", "matches": [],
                                              "proposals": [], "uncertainty_reason": ""}
