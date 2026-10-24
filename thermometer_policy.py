@@ -19,7 +19,7 @@ REASONS = {
 
 # Prompt guidance revision is recorded without invalidating saved human decisions
 # or silently creating a paid full-dataset reanalysis.
-GUIDANCE_REVISION = "2026-10-24.1"
+GUIDANCE_REVISION = "2026-10-24.2"
 COMMUNICATION_GUIDANCE = (
     "Viešai veikiančių institucijų, valdžios, savivaldybės, kariuomenės, žiniasklaidos, žurnalistų ir kitų organizacijų komunikaciją vertink gyventojų saugumo, informavimo, paaiškinimų bei tiesos lūkesčio kontekste. Sąrašas nėra baigtinis.",
     "Destabilizuojančiai krypčiai nebūtinas raginimas agresyviai veikti: D3 gali pagrįsti apibendrinantis kolektyvinės kaltės ar bendros piktybiškos veiklos primetimas; D4 gali pagrįsti visuotinio apleistumo, bejėgiškumo ar saugios išeities nebuvimo formavimas, kai tai aiškiai parodo turinys ir kontekstas.",
@@ -27,6 +27,8 @@ COMMUNICATION_GUIDANCE = (
     "Kritikos aštrumas, emocingumas ar didelis nepasitikėjimas savaime nėra D3 ar D4. N1 nereikalauja pasitikėjimo valdžia: konkreti taiki kritika, informacijos ar atsakomybės reikalavimas gali likti N1 ir be institucijų palaikymo. Neigiama nuomonė apie Lietuvą, valdžią ar kariuomenę savaime nenulemia krypties.",
     "Institucijų palaikymas ar pasitikėjimas savaime nėra stabilizuojantis: suprantamas sprendimas ar taiki palaikymo nuomonė gali būti N1. S kategorijai būtinas konkretus S1–S4 mechanizmas.",
     "Vertink visą pasakymą: klausimas, citata, ironija, pasipiktinimas ar pateiktu kontekstu pagrįstas perspėjimas nėra automatiškai kolektyvinis kaltinimas. Nenaudok vien raktažodžių ar teigiamo / neigiamo tono. Nepriskirk autoriaus ketinimų ir neteigk, kad realus poveikis gyventojams buvo išmatuotas.",
+    "Pratybų, Lietuvos šaulių sąjungos, valdžios veiklos ar viešųjų lėšų naudojimo pašaipą ir smerkimą vertink pagal konkretų teiginį, o ne institucijos pavadinimą. Apibendrinantis kaltinimas, kad visa grupė yra vagys ar sąmoningai kenkia, gali pagrįsti D3; pasakojimas, kad visi saugumo ir informavimo kanalai sąmoningai apleido žmones, jokiais sprendimais negalima pasikliauti ir pagalbos nėra, gali pagrįsti D4 net be raginimo smurtauti.",
+    "Žodžiai korupcija, neveiksnumas, mokesčių mokėtojų pinigai, nutylėti faktai, informacijos trūkumas ar nepasitikėjimas nėra automatiniai D požymiai. Konkretaus sprendimo ar išlaidų kritika, pašaipa, įtarimo įvardijimas ir prašymas pateikti įrodymus ar paaiškinimus gali būti N1. Kaltinimo korupcija nelaikyk nei patvirtintu faktu, nei melu vien pagal jo toną. Nepaversk visos institucinės kritikos destabilizuojančia ir nenustatyk pageidaujamo D procento.",
     "D3 ar D4 paaiškinime įvardyk konkretų kolektyvinės kaltės, apleistumo ar bejėgiškumo mechanizmą ir pateik jo ištrauką. Nežinomų faktų nepaversk įrodyta melagyste; trūkstant būtino konteksto palik needs_review.",
 )
 COMMUNICATION_EXAMPLES = (
@@ -34,6 +36,10 @@ COMMUNICATION_EXAMPLES = (
     {"text": "Visos institucijos mus paliko, niekam mūsų saugumas nerūpi, jokiais paaiškinimais negalima tikėti.", "direction": "destabilizing", "reason_code": "D4", "basis": "Jei kontekstas patvirtina tokį komunikacinį mechanizmą, visuotinio apleistumo ir patikimos išeities nebuvimo formavimas galimas ir be raginimo agresyviai veikti; tai nėra automatinė raktažodžių taisyklė."},
     {"text": "Visi žurnalistai yra mūsų priešai ir sąmoningai kenkia gyventojams.", "direction": "destabilizing", "reason_code": "D3", "basis": "Visai grupei primetama kolektyvinė piktybiška veikla ir kuriamas priešo įvaizdis."},
     {"text": "Pasitikiu institucijomis, suprantu jų sprendimą.", "direction": "neutral", "reason_code": "N1", "basis": "Taiki nuomonė; vien palaikymo nepakanka S mechanizmui."},
+    {"text": "Šaulių sąjungoje visi vagys: kiekvienos pratybos tik priedanga susižerti mokesčių mokėtojų pinigus.", "direction": "destabilizing", "reason_code": "D3", "basis": "Visiems organizacijos nariams apibendrintai primetama nusikalstama veikla; tai kolektyvinio kaltinimo pavyzdys, o ne faktinis korupcijos patvirtinimas."},
+    {"text": "Valdžia ir visos saugumo institucijos sąmoningai mus paliko. Viską nutyli, niekas niekada nepadės, jokiais sprendimais pasikliauti negalima.", "direction": "destabilizing", "reason_code": "D4", "basis": "Formuojamas visuotinis apleistumas ir saugios išeities nebuvimas, o ne vien kritikuojamas konkretus informavimo trūkumas."},
+    {"text": "Pratybų organizatoriai nepaaiškino išlaidų. Įtariu korupciją ir nepasitikiu šiuo sprendimu; prašau paskelbti sutartis.", "direction": "neutral", "reason_code": "N1", "basis": "Konkreti atskaitomybės ir informacijos užklausa; nepasitikėjimas ir įtarimas savaime nėra D, o korupcija čia nepatvirtinta."},
+    {"text": "Puikios pratybos – informacijos gyventojams nulis! Už ką mokame mokesčius? Paskelbkite aiškų pranešimą.", "direction": "neutral", "reason_code": "N1", "basis": "Pašaipa ir aštri konkretaus neinformavimo kritika su reikalavimu paaiškinti; nėra kolektyvinės piktybiškos veiklos ar visuotinio bejėgiškumo teiginio."},
 )
 
 BY_CATEGORY = {
