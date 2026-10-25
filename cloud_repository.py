@@ -166,7 +166,13 @@ class Repository:
             if self.packet.get('storage_version') == 2 and len(self.packet['records']) != len(self.packet['record_keys']):
                 self.packet = None
                 raise CloudStorageError('Trūksta surinkimo sąraše nurodytų įrašų. Ankstesni duomenys nepakeisti.')
+        from collection_cutoff import current as cutoff, packet as scoped_packet
+        boundary = cutoff(self)
+        if getattr(self,'_cutoff_packet',None) is not self.packet or getattr(self,'_cutoff_value',None) != boundary:
+            self.packet = scoped_packet(self.packet,boundary)
+            self._cutoff_packet,self._cutoff_value = self.packet,boundary
         return self.packet
+
 
     def expand_unit(self, unit):
         if 'conversation_context' in unit or 'parent_post' in unit or getattr(self,'_bounded_analysis_units',{}).get((unit.get('source'),unit.get('id'))) is unit:
@@ -237,6 +243,8 @@ class Repository:
             records=json.loads(rows[0][0]) if rows else []
             if rows and len(records)!=int(rows[0][1]):
                 raise CloudStorageError('Trūksta surinkimo sąraše nurodytų įrašų. Ankstesni duomenys nepakeisti.')
+            from collection_cutoff import current as cutoff, records as scoped_records
+            records=scoped_records(records,cutoff(self))
             index=DiscussionIndex(records)
             result={k:index.expand(index.units[k]) for k in wanted if k in index.units}
             # Legacy snapshots predate canonical records; keep their existing safe reader.
@@ -248,6 +256,7 @@ class Repository:
         self._bounded_analysis_units=getattr(self,'_bounded_analysis_units',{})
         self._bounded_analysis_units.update(result)
         return result
+
 
     def analysis_queue_page(self, generation, offset, limit):
         rows = self.sql("""SELECT COALESCE((SELECT jsonb_agg(t.v ORDER BY t.n)
@@ -351,7 +360,7 @@ class Repository:
             FROM signalas_state WHERE scope=$1 AND (name LIKE 'analysis-result/%' OR
                 name IN ('openai-analysis-pilot.json','live-context.json','dashboard-period.json',
                          'thermometer-reviews.json','narrative-registry-state.json','narrative-subnarratives.json',
-                         'analysis-context-supplement.json'))''', [self.scope])['rows']
+                         'analysis-context-supplement.json','collection-cutoff.json'))''', [self.scope])['rows']
         return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):

@@ -130,3 +130,24 @@ class CollectionTests(unittest.TestCase):
     def test_all_unavailable_details_cannot_publish_empty_replacement(self):
         with self.assertRaises(DiasporaRequestError):
             cc.finish(Mock(),{'entries':[{'guid':'gone'}],'record_keys':[]})
+
+    def test_cutoff_keeps_earlier_units_and_discards_later_comments(self):
+        db=Memory();client=Client()
+        # Include only the last 14 posts at the first timestamp boundary.
+        cutoff=client.posts[20]['created_at']
+        db.db['collection-cutoff.json']={'published_until':cutoff}
+        original=client.collect_entries
+        def details(batch,**kwargs):
+            packet=original(batch,**kwargs)
+            packet['records'].append({'source':'example.org','id':'late','kind':'comment',
+                'parent_id':batch[0]['guid'],'published_at':'2026-10-25T15:00:00Z','text':'later'})
+            return packet
+        client.collect_entries=details
+        with patch.object(cc.cutoff_policy,'retained',return_value=[{'source':'example.org','id':'retained','kind':'post'}]), \
+             patch.object(cc,'checkpoint',side_effect=db.checkpoint),patch.object(cc,'previous',side_effect=db.prior),patch.object(cc,'finish',side_effect=db.finish):
+            self.run_collection(db,client)
+        snapshot=db.snapshots[0]
+        self.assertTrue(all(datetime.fromisoformat(e['created_at'])<=datetime.fromisoformat(cutoff) for e in snapshot['entries']))
+        self.assertTrue(any(r['id']=='retained' for r in snapshot['record_keys']))
+        self.assertFalse(any(r['id']=='late' for r in snapshot['record_keys']))
+        self.assertEqual(len(client.details),14)

@@ -199,7 +199,8 @@ class BoundedContextReaderTests(unittest.TestCase):
                  {'source':'test','id':'before','kind':'comment','parent_id':'p','text':'Before','published_at':'2026-10-24T10:01:00Z'},
                  {'source':'test','id':'target','kind':'comment','parent_id':'p','text':'Target','published_at':'2026-10-24T10:01:00Z'},
                  {'source':'test','id':'after','kind':'comment','parent_id':'p','text':'After','published_at':'2026-10-24T10:01:00Z'}]
-        repo=Repository({});repo.sql=Mock(return_value={'rows':[[json.dumps(records),len(records)]]})
+        repo=Repository({});repo.values['collection-cutoff.json']={}
+        repo.sql=Mock(return_value={'rows':[[json.dumps(records),len(records)]]})
         repo.latest=Mock(side_effect=AssertionError('full snapshot must not be loaded'))
         got=repo.analysis_units([['test','p'],['test','target']]);index=DiscussionIndex(records)
         for key,unit in got.items():

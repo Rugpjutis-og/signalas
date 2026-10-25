@@ -9,6 +9,7 @@ from urllib.parse import quote, urlencode, urlsplit
 
 from cloud_storage import query
 from diaspora_client import DiasporaRequestError
+import collection_cutoff as cutoff_policy
 
 STATE = 'collection-job.json'
 BATCH_SIZE = 4
@@ -63,6 +64,7 @@ def finish(repo, state):
         'mode':'live_sample','coverage':'account_stream_and_own_profile','stream_complete':False,
         'exercise_id':None,'membership':None,'record_keys':state['record_keys'],
         'post_count':state['post_count'],'comment_count':state['comment_count'],
+        'published_until':state.get('published_until'),
         'limits':{'post_limit':None,'pages_read':sum(state['pages'].values()),'comments_truncated':False},
         'account_scope':{'feed_posts':state['counts']['feed'],'own_profile_posts':state['counts']['profile'],
             'feed_pages':state['pages']['feed'],'profile_pages':state['pages']['profile'],'pagination_complete':True},
@@ -100,11 +102,17 @@ def run_step(repo, client, *, seconds=STEP_SECONDS, monotonic=None):
     clock=monotonic or time.monotonic
     deadline=clock()+seconds
     state=repo.read(STATE,{}) or {}
-    if state.get('status') not in ('running','error'):
+    cutoff=cutoff_policy.current(repo)
+    if state.get('status') not in ('running','error') or state.get('published_until') != cutoff:
         state={'status':'running','run_id':uuid.uuid4().hex,'source':urlsplit(client.base).hostname,
             'phase':'feed','cursor':None,'entries':[],'seen':[], 'record_keys':[], 'detail_cursor':0,
             'pages':{'feed':0,'profile':0},'counts':{'feed':0,'profile':0},'phase_seen':{'feed':[],'profile':[]},
             'post_count':0,'comment_count':0,'not_modified':0,'unavailable_details':0,'started_at':now()}
+        kept=cutoff_policy.retained(repo,cutoff)
+        state.update(published_until=cutoff,cursor=cutoff_policy.cursor(cutoff),
+            record_keys=[{'source':r['source'],'id':r['id']} for r in kept],
+            post_count=sum(r['kind']!='comment' for r in kept),
+            comment_count=sum(r['kind']=='comment' for r in kept))
         checkpoint(repo,state)
     state['status']='running'
     client.login()  # Private session recreated per invocation; cookies are never persisted.
@@ -124,13 +132,15 @@ def run_step(repo, client, *, seconds=STEP_SECONDS, monotonic=None):
             for entry in page:
                 if not isinstance(entry,dict) or entry.get('id') is None or not entry.get('guid'):
                     raise ValueError('Srauto įrašui trūksta pastovaus ID.')
+                if not cutoff_policy.allows(entry,cutoff,field='created_at'):
+                    continue
                 if entry['guid'] not in seen:
                     seen.add(entry['guid']);state['entries'].append({k:entry.get(k) for k in ('id','guid','created_at')})
-            state['phase_seen'][phase]=list(set(state['phase_seen'][phase]) | {e['guid'] for e in page})
+            state['phase_seen'][phase]=list(set(state['phase_seen'][phase]) | {e['guid'] for e in page if cutoff_policy.allows(e,cutoff,field='created_at')})
             state['counts'][phase]=len(state['phase_seen'][phase])
             state['seen']=list(seen);state['pages'][phase]+=1
             if len(page)<15:
-                state['phase']='profile' if phase=='feed' else 'details';state['cursor']=None
+                state['phase']='profile' if phase=='feed' else 'details';state['cursor']=cutoff_policy.cursor(cutoff)
             else:
                 oldest=min(datetime.fromisoformat(e['created_at'].replace('Z','+00:00')).timestamp() for e in page)
                 following=math.floor(oldest)+1
@@ -143,6 +153,7 @@ def run_step(repo, client, *, seconds=STEP_SECONDS, monotonic=None):
             if not batch:return finish(repo,state)
             prior=previous(repo,batch,state['source'])
             packet=client.collect_entries(batch,previous=prior,compact=True,workers=BATCH_SIZE,conditional=True,allow_empty=True)
+            packet['records']=cutoff_policy.records(packet['records'],cutoff)
             known={(r['source'],r['id']):r for r in prior['records']}
             changed=[r for r in packet['records'] if known.get((r['source'],r['id']))!=r]
             keys={(r['source'],r['id']) for r in state['record_keys']}
