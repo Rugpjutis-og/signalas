@@ -81,6 +81,58 @@ class Repository:
             self.values[name] = json.loads(rows[0][0]) if rows else default
         return self.values[name]
 
+    def dashboard_analyses(self, identities, context):
+        """Resolve small latest-result pointers, then fetch indexed bounded bodies.
+
+        Source/history rows remain unchanged. Context is shared in memory rather
+        than transferred once per result. Legacy array ordinals remain supported.
+        """
+        context_json = json.dumps(context,ensure_ascii=False)
+        for offset in range(0,len(identities),1000):
+            wanted = identities[offset:offset+1000]
+            rows = self.sql("""WITH assessments AS (
+                SELECT a,0 AS stage,n,'openai-analysis-pilot.json'::text AS row_name
+                FROM signalas_state,LATERAL jsonb_array_elements(value) WITH ORDINALITY t(a,n)
+                WHERE scope=$1 AND name='openai-analysis-pilot.json'
+                UNION ALL SELECT value AS a,1 AS stage,0 AS n,name AS row_name
+                FROM signalas_state WHERE scope=$1 AND name LIKE 'analysis-result/%'
+            ), selected AS (
+                SELECT DISTINCT ON(a->'source_reference'->>'source',a->'source_reference'->>'id')
+                    row_name,n,a->'source_reference'->>'source' AS source,
+                    a->'source_reference'->>'id' AS id,a->>'content_fingerprint' AS fingerprint
+                FROM assessments JOIN jsonb_to_recordset($3::jsonb)
+                    AS wanted(source text,id text,fingerprint text)
+                  ON a->'source_reference'->>'source'=wanted.source
+                    AND a->'source_reference'->>'id'=wanted.id
+                    AND a->>'content_fingerprint'=wanted.fingerprint
+                WHERE (a->>'analysis_executed'='true' OR a->>'processing_disposition'='needs_review')
+                  AND COALESCE(a->'exercise_context','null'::jsonb)=$2::jsonb
+                ORDER BY a->'source_reference'->>'source',a->'source_reference'->>'id',
+                    stage DESC,n DESC,COALESCE(a->>'recorded_at',a->>'classified_at',a->>'analyzed_at','') DESC
+            ) SELECT COALESCE(jsonb_agg(to_jsonb(selected)),'[]'::jsonb) FROM selected""",
+                [self.scope,context_json,json.dumps(wanted,ensure_ascii=False)])['rows']
+            pointers = json.loads(rows[0][0]) if rows else []
+            for page_start in range(0,len(pointers),100):
+                page = pointers[page_start:page_start+100]
+                rows = self.sql("""WITH selected AS (
+                    SELECT CASE WHEN wanted.n>0 THEN s.value->(wanted.n-1) ELSE s.value END AS a,
+                           wanted.source,wanted.id,wanted.fingerprint
+                    FROM jsonb_to_recordset($2::jsonb)
+                        AS wanted(row_name text,n integer,source text,id text,fingerprint text)
+                    JOIN signalas_state s ON s.scope=$1 AND s.name=wanted.row_name
+                ) SELECT COALESCE(jsonb_agg(a-'exercise_context'),'[]'::jsonb) FROM selected
+                  WHERE a->'source_reference'->>'source'=source AND a->'source_reference'->>'id'=id
+                    AND a->>'content_fingerprint'=fingerprint
+                    AND COALESCE(a->'exercise_context','null'::jsonb)=$3::jsonb""",
+                    [self.scope,json.dumps(page,ensure_ascii=False),context_json])['rows']
+                results = json.loads(rows[0][0]) if rows else []
+                if len(results) != len(page):
+                    raise CloudStorageError('Dalis aktualių vertinimų nepasiekiama. Išsaugoti duomenys nepakeisti.')
+                for analysis in results:
+                    analysis['exercise_context'] = context
+                    yield analysis
+
+
     def write(self, name, value):
         self.sql('''INSERT INTO signalas_state(scope,name,value) VALUES($1,$2,$3::jsonb)
             ON CONFLICT(scope,name) DO UPDATE SET value=EXCLUDED.value''', [self.scope, name, json.dumps(value)])

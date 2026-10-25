@@ -53,6 +53,23 @@ class LiveDataTests(unittest.TestCase):
                                 "instance_entities":{k:"" for k in narrative_registry.ENTITY_KEYS}}]}, "direction": "needs_review", "reason": "Teksto siūlymas",
                            "missing_context": "Trūksta pradinio konteksto.", "evidence": "Tekstas"}}
 
+    def test_cloud_projection_uses_current_fingerprints_instead_of_history(self):
+        from unittest.mock import Mock
+        unit=self.records[0]
+        analysis=self.analysis(unit)
+        class CloudRoot:
+            def __truediv__(inner,name):return self.root / name
+        root=CloudRoot()
+        root.dashboard_analyses=Mock(return_value=iter([analysis]))
+        packet,context,assessed=live_data.load(root)
+        refs=root.dashboard_analyses.call_args.args[0]
+        self.assertEqual(len(refs),len(self.records))
+        self.assertEqual(next(r['fingerprint'] for r in refs if r['id']==unit['id']),live_data.fingerprint(unit))
+        self.assertIn((unit['source'],unit['id']),assessed)
+        root.dashboard_analyses.reset_mock()
+        live_data.platform(7,root)
+        root.dashboard_analyses.assert_not_called()
+
     def test_real_dates_all_content_review_and_no_demo(self):
         data = live_data.bootstrap(self.root)
         self.assertEqual(data["mode"], "live")

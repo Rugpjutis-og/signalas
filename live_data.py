@@ -31,7 +31,7 @@ def fingerprint(unit):
     return hashlib.sha256(json.dumps(fields, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
-def load(root=ROOT):
+def load(root=ROOT, *, include_analyses=True):
     path = root / "var/diaspora-latest.json"
     packet = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {
         "records": [], "collected_at": datetime.now(ZONE).isoformat(), "source": "diaspora.sauliai.lt",
@@ -43,8 +43,19 @@ def load(root=ROOT):
     discussions = DiscussionIndex(packet['records'])
     context_path = root / "var/live-context.json"
     context = context_data(json.loads(context_path.read_text(encoding="utf-8"))) if context_path.exists() else None
-    analysis_path = root / "var/openai-analysis-pilot.json"
-    analyses = json.loads(analysis_path.read_text(encoding="utf-8")) if analysis_path.exists() else []
+    if not include_analyses:
+        return packet, context, {}
+    fingerprints = {}
+    def current_fingerprint(key):
+        if key not in fingerprints:
+            fingerprints[key] = fingerprint(discussions.expand(records[key]))
+        return fingerprints[key]
+    if hasattr(root, 'dashboard_analyses'):
+        identities = [{'source':key[0], 'id':key[1], 'fingerprint':current_fingerprint(key)} for key in records]
+        analyses = root.dashboard_analyses(identities, context)
+    else:
+        analysis_path = root / "var/openai-analysis-pilot.json"
+        analyses = json.loads(analysis_path.read_text(encoding="utf-8")) if analysis_path.exists() else []
     assessed = {}
     for analysis in analyses:
         ref = analysis.get("source_reference", {})
@@ -53,7 +64,7 @@ def load(root=ROOT):
         if (unit and (analysis.get("analysis_executed") is True or
                       analysis.get("processing_disposition") == "needs_review") and
                 analysis.get("exercise_context") == context
-                and analysis.get("content_fingerprint") == fingerprint(discussions.expand(unit))):
+                and analysis.get("content_fingerprint") == current_fingerprint(key)):
             assessed[key] = analysis
     return packet, context, assessed
 
@@ -160,7 +171,7 @@ def bootstrap(root=ROOT):
 
 
 def platform(period=None, root=ROOT, *, start_date=None, end_date=None):
-    packet, _, _ = load(root)
+    packet, _, _ = load(root, include_analyses=False)
     start, end = bounds(packet, period, root, start_date=start_date, end_date=end_date)
     period = (end.date() - start.date()).days
     result = platform_report(packet["records"], packet.get("membership_snapshots",[]),
