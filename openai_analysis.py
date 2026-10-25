@@ -138,12 +138,14 @@ def validate_result(result, catalog):
     return result
 
 
-def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=ANALYSIS_TIMEOUT_SECONDS, model_override=None, thermometer_only=False, scoring_rule_review=None):
+def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=ANALYSIS_TIMEOUT_SECONDS, model_override=None, thermometer_only=False, scoring_rule_review=None, scenario_supplement_review=None):
     started = time.monotonic()
     catalog = narrative_registry.load(root)
     prepared = prepare_input(unit, context, expanded_narratives)
     from scenario_supplement import for_unit
-    supplements = for_unit(root, unit, prepared['exercise_context'])
+    supplements = (for_unit(root, unit, prepared['exercise_context'], review_supplement_id=scenario_supplement_review)
+                   if thermometer_only and scenario_supplement_review else
+                   for_unit(root, unit, prepared['exercise_context']))
     if supplements:
         prepared['scenario_supplements'] = supplements
     from exercise_accounts import for_unit as account_context_for_unit

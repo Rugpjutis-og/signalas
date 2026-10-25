@@ -94,3 +94,10 @@ class SupplementTests(unittest.TestCase):
                 self.assertEqual(result['exercise_context'], self.context)
                 self.assertEqual(result['scenario_supplement_ids'], [self.value['id']])
                 self.assertIn('paminėjimas, citavimas, klausimas ar paneigimas nėra jos palaikymas', sent['instructions'])
+
+    def test_only_exact_explicit_historical_review_gets_detail_for_old_units(self):
+        self.repo.supplement_eligible.return_value=False
+        self.assertEqual(supplement.for_unit(self.repo,self.unit,self.context),[])
+        self.assertEqual(supplement.for_unit(self.repo,self.unit,self.context,review_supplement_id='other'),[])
+        self.assertEqual(supplement.for_unit(self.repo,self.unit,self.context,review_supplement_id=self.value['id']),
+                         [{'id':self.value['id'],'text':self.value['text']}])

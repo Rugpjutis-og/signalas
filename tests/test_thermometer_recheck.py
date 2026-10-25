@@ -250,6 +250,46 @@ class RecheckTests(unittest.TestCase):
             self.assertEqual(cloud_analysis.step(self.repo)['status'], 'complete')
         self.assertEqual(self.db[cloud_analysis.STATE], {'status': 'pending', 'remaining': 20})
 
+    def followup_job(self):
+        job=self.job()
+        job.update(selection_categories=['neutral','stabilizing'],preserve_previous=True,scenario_supplement_review='detail')
+        job['targets'][0]['previous_category']='neutral'
+        self.db[retry.STATE]=job
+        self.original['result'].update(thermometer_status='classified',thermometer_category='neutral')
+        return job
+
+    def test_deferred_audit_applies_latest_scenario_and_preserves_narratives(self):
+        self.followup_job()
+        response=self.response();response['result']['thermometer_category']='destabilizing'
+        with patch('scenario_supplement.current',return_value={'id':'detail'}),patch.object(retry,'analyze',return_value=response) as paid:
+            state=retry.step(self.repo)
+        self.assertEqual(state['reassigned'],1)
+        self.assertEqual(paid.call_args.kwargs['scenario_supplement_review'],'detail')
+        result=next(v for k,v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(result['result']['narrative_analysis'],{'original':True})
+
+    def test_deferred_audit_keeps_old_category_on_uncertainty_or_error(self):
+        for failure in (False,True):
+            with self.subTest(failure=failure):
+                self.db={};self.followup_job()
+                response=self.response();response['result'].update(thermometer_status='needs_review',thermometer_category=None)
+                with patch('scenario_supplement.current',return_value={'id':'detail'}),patch.object(retry,'analyze',side_effect=ValueError('synthetic') if failure else None,return_value=response):
+                    retry.step(self.repo)
+                self.assertFalse(any(k.startswith('analysis-result/') for k in self.db))
+                self.assertTrue(next(v for k,v in self.db.items() if k.startswith('direction-recheck-result/'))['kept_previous'])
+
+    def test_deferred_audit_skips_already_changed_category_and_protects_manual(self):
+        self.followup_job();self.original['result']['thermometer_category']='destabilizing'
+        with patch('scenario_supplement.current',return_value={'id':'detail'}),patch.object(retry,'analyze') as paid:
+            self.assertEqual(retry.step(self.repo)['skipped'],1)
+        paid.assert_not_called()
+        self.db={};self.followup_job()
+        self.db[NAME]={key(self.unit['source'],self.unit['id']):{
+            'content_fingerprint':fingerprint(self.unit),'exercise_id':None,'exercise_context':None,'rules_version':retry.VERSION}}
+        with patch.object(retry,'analyze') as paid:
+            self.assertEqual(retry.step(self.repo)['skipped'],1)
+        paid.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

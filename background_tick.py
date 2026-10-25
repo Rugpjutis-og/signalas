@@ -96,6 +96,8 @@ def tick(repo, *, clock=None, monotonic=None):
         state = enqueue(repo)
         retried = True
     import thermometer_recheck
+    from thermometer_followup import maybe_start
+    maybe_start(repo)
     if thermometer_recheck.active(repo):
         state = thermometer_recheck.status(repo)
     progressed = 0
