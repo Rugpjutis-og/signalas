@@ -92,15 +92,16 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  liveWindow.SignalThermometer.invalidate();await liveWindow.SignalThermometer.refresh(liveRoot,7);
  assert.equal(manualList.innerHTML,'draft remains','background refresh must not discard an edited review');
 
- // Saving one decision refetches the report immediately and confirms the persisted category.
- let shown=structuredClone(liveThermo),savedPayload=null;
- const savingWindow=runtime(async()=>({ok:true,json:async()=>shown}));
+ // A confirmed save updates the displayed report without a second full fetch.
+ let shown=structuredClone(liveThermo),savedPayload=null,thermoFetches=0;
+ const savingWindow=runtime(async()=>{thermoFetches++;return {ok:true,json:async()=>shown};});
  savingWindow.SignalLiveData={saveThermometerReview:async payload=>{
    savedPayload=payload;
    shown=structuredClone(shown);
    const unit=shown.units.find(u=>u.assessment.status!=='assessed');
    unit.assessment={...unit.assessment,status:'assessed',category:payload.category,method:'manual_review'};
    shown.assessed+=1;shown.unassessed-=1;
+   return {status:'saved',source:payload.source,id:payload.id,assessment:{...unit.assessment,reason_codes:[],reason:'Patvirtinta ranka.'}};
  }};
  const savingRoot=node();await savingWindow.SignalThermometer.mount(savingRoot,7);
  savingRoot.onclick({target:{closest:selector=>selector==='[data-thermo-category]'?manualButton:null}});
@@ -110,6 +111,7 @@ function node(){const children=new Map();return {innerHTML:'',isConnected:true,a
  await savingRoot.onsubmit({preventDefault(){},target:{closest:()=>form}});
  assert.equal(savedPayload.category,'neutral');
  assert(!Object.hasOwn(savedPayload,'reason_code'));
+ assert.equal(thermoFetches,1,'confirmation must not wait for a second thermometer request');
  assert(savingRoot.innerHTML.includes(`Aprėptis: ${shown.assessed} iš ${shown.total}`));
  assert(savingRoot.querySelector('[data-thermo-review-confirmation]').textContent.includes('įskaityta'));
  assert(savingRoot.querySelector('#thermo-evidence').innerHTML.includes('Laukia rankinio patvirtinimo'));

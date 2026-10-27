@@ -14,7 +14,11 @@ class FakeRepository:
         self.written = []
 
     def latest(self):
-        return {'records': [self.unit]}
+        raise AssertionError('A single manual decision must not read the full source snapshot')
+
+    def analysis_units(self, identities):
+        identity = (self.unit['source'], self.unit['id'])
+        return {identity: self.unit} if list(identity) in identities else {}
 
     def read(self, name, default=None):
         return default
@@ -41,6 +45,10 @@ class ReviewTests(unittest.TestCase):
         import json
         decision = json.loads(params[3])
         self.assertEqual(decision['category'], 'neutral')
+        self.assertEqual((result['source'], result['id']), ('pod.test', 'p1'))
+        self.assertEqual(result['assessment']['category'], 'neutral')
+        self.assertEqual(result['assessment']['status'], 'assessed')
+        self.assertEqual(result['assessment']['reason_codes'], ['N1'])
         self.assertTrue(review.applicable(decision, self.repo.unit, None))
         self.repo.unit['text'] = 'Pasikeitęs turinys'
         self.assertFalse(review.applicable(decision, self.repo.unit, None))
@@ -81,6 +89,7 @@ class ReviewTests(unittest.TestCase):
                 self.assertEqual(result['status'], 'saved')
                 self.assertEqual(decision['category'], category)
                 self.assertIsNone(decision['reason_code'])
+                self.assertEqual(result['assessment']['reason_codes'], [])
                 self.assertTrue(review.applicable(decision, self.repo.unit, None))
                 self.assertTrue(decision['reason'])
 
@@ -91,3 +100,13 @@ class ReviewTests(unittest.TestCase):
             with self.subTest(payload=payload), self.assertRaises(ValueError):
                 review.save(self.repo, payload)
         self.assertEqual(self.repo.written, [])
+
+    def test_failed_commit_does_not_return_a_success_or_discard_prior_decision(self):
+        from unittest.mock import Mock
+        from cloud_storage import CloudStorageError
+        previous = {'existing': 'decision'}
+        self.repo.values[review.NAME] = previous
+        self.repo.sql = Mock(side_effect=CloudStorageError())
+        with self.assertRaises(CloudStorageError):
+            review.save(self.repo, self.payload)
+        self.assertIs(self.repo.values[review.NAME], previous)

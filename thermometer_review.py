@@ -47,11 +47,9 @@ def save(repo, payload):
     reason = reason.strip() or 'Rankiniu būdu patvirtinta kryptis: ' + label + '.'
     if not isinstance(evidence, str) or len(evidence) > 2000:
         raise ValueError('Netinkama pagrindžianti ištrauka.')
-    unit = next((u for u in repo.latest()['records'] if u.get('source') == source and u.get('id') == unit_id), None)
+    unit = repo.analysis_units([[source, unit_id]]).get((source, unit_id))
     if unit is None:
         raise ValueError('Turinio vieneto nėra surinktoje imtyje.')
-    from discussion_context import DiscussionIndex
-    unit = DiscussionIndex(repo.latest()['records']).expand(unit)
     context = context_data(repo.read('live-context.json'))
     review = {'source_reference': source_reference(unit), 'content_fingerprint': fingerprint(unit),
               'exercise_id': unit.get('exercise_id'), 'exercise_context': context,
@@ -71,4 +69,10 @@ def save(repo, payload):
           THEN jsonb_build_array(signalas_state.value->$3->>'reason') ELSE '[]'::jsonb END))''',
              [repo.scope, NAME, review_key, json.dumps(review, ensure_ascii=False)])
     repo.values.pop(NAME, None)
-    return {'status': 'saved', 'category': category, 'reviewed_at': review['reviewed_at']}
+    return {'status': 'saved', 'category': category, 'reviewed_at': review['reviewed_at'],
+            'source': source, 'id': unit_id, 'published_at': unit['published_at'],
+            'assessment': {'category': category, 'status': 'assessed', 'method': 'manual_review',
+                'reason': review['reason'], 'context_version': None,
+                'reviewed_parts': ['analitiko peržiūra'],
+                'reason_codes': [code] if code else [], 'rules_version': VERSION,
+                'evidence': [{'kind': 'text', 'quote': review['evidence']}] if review['evidence'] else []}}

@@ -9,16 +9,58 @@ window.SignalThermometer = (() => {
   const date = value => new Intl.DateTimeFormat('lt-LT',{timeZone:'Europe/Vilnius',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value));
   let generation=0, active='all', expanded=false, current=null, currentPeriod=null;
   const cache=new Map();
+  let reviewRevision=0;
+  const dayFormatter=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Vilnius',year:'numeric',month:'2-digit',day:'2-digit'});
+  function percent(count,total){
+    if(!total)return null;
+    const value=count/total*100;
+    if(!value)return 0;
+    // Match Python round(value, 1), including ties, from the actual IEEE-754 value.
+    const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);
+    const bits=view.getBigUint64(0),exponent=Number((bits>>52n)&2047n)-1075;
+    let numerator=((bits&((1n<<52n)-1n))|(1n<<52n))*10n,denominator=1n;
+    if(exponent<0)denominator<<=BigInt(-exponent);else numerator<<=BigInt(exponent);
+    let rounded=numerator/denominator;const remainder=numerator%denominator;
+    if(remainder*2n>denominator||(remainder*2n===denominator&&rounded%2n))rounded++;
+    return Number(rounded)/10;
+  }
+  function proportions(units){
+    const counts=Object.fromEntries(Object.keys(labels).map(id=>[id,0]));
+    const pending={waiting_data:0,needs_review:0,error:0,not_analyzed:0};
+    for(const unit of units){
+      const a=unit.assessment;
+      if(a.status==='assessed'&&Object.hasOwn(counts,a.category))counts[a.category]++;
+      else if(Object.hasOwn(pending,a.status))pending[a.status]++;
+    }
+    const assessed=Object.values(counts).reduce((sum,n)=>sum+n,0),total=units.length;
+    return {total,assessed,unassessed:total-assessed,pending,coverage_percent:percent(assessed,total),
+      categories:Object.entries(labels).map(([id,label])=>({id,label,count:counts[id],percent:percent(counts[id],assessed)}))};
+  }
+  function applySavedReview(report,result){
+    const unit=report.units.find(u=>u.source===result.source&&u.id===result.id);
+    if(!unit)return;
+    unit.assessment={...result.assessment};
+    Object.assign(report,proportions(report.units));
+    const byDay=new Map();
+    for(const row of report.units){
+      const key=dayFormatter.format(new Date(row.published_at));
+      if(!byDay.has(key))byDay.set(key,[]);
+      byDay.get(key).push(row);
+    }
+    report.days=report.days.map(day=>({...day,...proportions(byDay.get(day.date)||[])}));
+  }
   const partLabel=part=>({text:'įrašo tekstas',conversation_context:'ankstesnė diskusija','image-1:illustration':'paveikslėlio iliustracija','image-1:ocr_text':'paveikslėlio tekstas','clip-1:transcript:10-18s':'transkripcija 10–18 s','clip-1:subtitles:10-18s':'subtitrai 10–18 s','clip-1:frames:10s,18s':'atrinkti kadrai: 10 ir 18 s'}[part]||part);
   async function acquire(period) {
     const key=period.key||period,query=period.query||`period=${period}`;
     if(cache.has(key)) return cache.get(key);
+    const startedRevision=reviewRevision;
     let response;
     try {
       response=await fetch(`/api/thermometer?${query}`,{cache:'no-store'});
       if(!response.ok) throw Error('API unavailable');
       const report=await response.json();
       if(!['demo','live'].includes(report.mode)||!Array.isArray(report.units)) throw Error('Unexpected response');
+      if(startedRevision!==reviewRevision)return acquire(period);
       cache.set(key,report);return report;
     } catch (_) {
       if(window.SignalLiveData?.active())throw Error('Tikro turinio duomenų įkelti nepavyko. Demonstraciniai pavyzdžiai nerodomi.');
@@ -125,16 +167,23 @@ window.SignalThermometer = (() => {
       const form=event.target.closest?.('[data-thermo-review]');if(!form)return;
       event.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;
       if(!form.reportValidity())return;
-      const savedPeriod=currentPeriod,savedGeneration=generation;
+      const savedPeriod=currentPeriod;
       const values=Object.fromEntries(new FormData(form));
       const payload={source:form.dataset.source,id:form.dataset.id,...values};
       submit.disabled=true;form.querySelector('.thermo-review-error').textContent='';
+      root.reviewEditing=true;
       try{
-        await window.SignalLiveData.saveThermometerReview(payload);
-        cache.clear();
-        if(savedGeneration!==generation||current!==root||!root.isConnected)return;
-        const updated=await acquire(savedPeriod);
-        if(savedGeneration!==generation||current!==root||!root.isConnected)return;
+        const result=await window.SignalLiveData.saveThermometerReview(payload);
+        if(result?.status!=='saved'||result.source!==payload.source||result.id!==payload.id||
+           result.assessment?.status!=='assessed'||!Object.hasOwn(labels,result.assessment.category))
+          throw Error('Serverio patvirtinimas neaiškus. Patikrinkite išsaugotą vertinimą.');
+        reviewRevision++;
+        for(const cached of new Set([...cache.values(),report]))applySavedReview(cached,result);
+        const key=savedPeriod.key||savedPeriod;
+        if(!cache.has(key))cache.set(key,report);
+        if(current!==root||!root.isConnected||(currentPeriod.key||currentPeriod)!==key)return;
+        generation++; // Earlier background reads must not repaint a pre-save snapshot.
+        const updated=cache.get(key);
         expanded=true;paint(root,updated);
         const confirmation=root.querySelector('[data-thermo-review-confirmation]');
         confirmation.textContent='Vertinimas išsaugotas. Kryptis įskaityta į termometro statistiką.';
