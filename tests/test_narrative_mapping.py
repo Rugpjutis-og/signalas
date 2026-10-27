@@ -192,6 +192,15 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(request['total'], 1)
         self.assertEqual(self.db[retry.STATE]['purpose'], 'narrative_only')
 
+    def test_open_app_services_pending_request_before_starting_another_primary_batch(self):
+        import cloud_analysis
+        self.db[mapping.STATE] = {'status': 'requested', 'revision': mapping.REVISION}
+        with patch('background_tick.tick') as tick, patch('cloud_analysis.step') as paid_step, \
+                patch('cloud_collection.status', return_value={'status': 'idle'}):
+            cloud_analysis.drain(self.repo)
+        tick.assert_called_once()
+        paid_step.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -54,6 +54,11 @@ def mentions(unit):
     return bool(re.search(PATTERN, unit.get('text') or '', re.IGNORECASE))
 
 
+def needs_service(repo):
+    request = repo.read(STATE, {}) or {}
+    return request.get('status') == 'requested' and request.get('revision') == REVISION
+
+
 def analyze_narratives(repo, unit, context, *, timeout, model):
     """Dedicated strict narrative response; no direction/scoring-rule fields."""
     from openai_analysis import prepare_input, AnalysisItemError, AnalysisServiceError, ANALYSIS_SERVICE_TIER
