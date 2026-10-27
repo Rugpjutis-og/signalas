@@ -152,6 +152,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     mapping = None if thermometer_only else narrative_mapping_for_unit(root, unit, prepared['exercise_context'])
     if mapping:
         prepared['narrative_scenario_mapping'] = mapping
+    import valare_direction
+    direction_guidance = valare_direction.for_unit(root, unit, prepared['exercise_context'])
+    if direction_guidance:
+        prepared['thermometer_scenario_guidance'] = direction_guidance
     from exercise_accounts import for_unit as account_context_for_unit
     actor_context = account_context_for_unit(root, unit)
     if actor_context:
@@ -214,6 +218,9 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
     if mapping:
         instructions += '\n' + mapping['interpretation']
     schema = analysis_schema(catalog)
+    if direction_guidance:
+        schema['properties']['valare_stabilizing_trigger'] = {'type': 'string', 'enum': list(valare_direction.TRIGGERS)}
+        schema['required'].append('valare_stabilizing_trigger')
     if thermometer_only:
         instructions += "\nVertink tik komunikacinę kryptį; naratyvų priskyrimų šiame bandyme nepateik."
         reference.pop("narrative_registry", None)
@@ -224,6 +231,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         instructions += "\n" + scoring_instructions(scoring_rule)
         schema["properties"]["exercise_rule_trigger"] = {"type": "string", "enum": list(scoring_triggers(scoring_rule))}
         schema["required"].append("exercise_rule_trigger")
+    if direction_guidance:
+        instructions += '\n' + direction_guidance['interpretation']
     payload = {
         "model": model, "service_tier": ANALYSIS_SERVICE_TIER, "store": False, "max_output_tokens": 6000,
         "instructions": instructions,
@@ -276,13 +285,16 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         raise ValueError("Modelis atsisakė pateikti rezultatą; turinys neklasifikuotas.")
     try:
         decoded = json.loads("".join(c["text"] for c in output if c.get("type") == "output_text"))
+        valare_trigger = decoded.pop('valare_stabilizing_trigger', None) if direction_guidance and isinstance(decoded, dict) else 'none'
+        if direction_guidance and valare_trigger not in valare_direction.TRIGGERS:
+            raise ValueError('Netinkamas VALARE stabilizuojančios pozicijos požymis')
         rule_trigger = "none"
         if scoring_rule:
             rule_trigger = decoded.pop("exercise_rule_trigger", None) if isinstance(decoded, dict) else None
             if rule_trigger not in scoring_triggers(scoring_rule):
                 raise ValueError("Netinkamas pratybų taisyklės požymis")
         if thermometer_only:
-            if not isinstance(decoded, dict) or set(decoded) != (set(schema["required"]) - {"exercise_rule_trigger"}):
+            if not isinstance(decoded, dict) or set(decoded) != (set(schema["required"]) - {"exercise_rule_trigger", "valare_stabilizing_trigger"}):
                 raise ValueError("Unexpected thermometer response fields")
             decoded["narrative_analysis"] = {"match_status": "no_narrative", "matches": [],
                                              "proposals": [], "uncertainty_reason": ""}
@@ -305,6 +317,11 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
         result.update(direction="needs_review", missing_context=
                       "Dalis vieneto arba pirminio įrašo medijos neperžiūrėta: " + ', '.join(sorted({m['reason'] for m in vision['missing']})))
     from exercise_rule import apply as apply_scoring_rule
+    valare_application = valare_direction.exception(result, direction_guidance, valare_trigger, unit,
+                                                    visual_refs=vision['own_image_refs'])
+    if valare_application and scoring_rule:
+        valare_application['overridden_scoring_rule_id'] = scoring_rule['id']
+        scoring_rule = None
     rule_application = apply_scoring_rule(result, scoring_rule, rule_trigger, unit, visual_refs=vision["own_image_refs"])
     if result["direction"] == "needs_review":
         result["reason_codes"] = []
@@ -332,6 +349,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "exercise_context": prepared["exercise_context"], "coverage": prepared["coverage"],
             "scenario_supplement_ids": [s['id'] for s in supplements],
             "narrative_mapping_revision": mapping['revision'] if mapping else None,
+            "valare_direction_revision": direction_guidance['revision'] if direction_guidance else None,
+            "valare_direction_application": valare_application,
             "exercise_actor_context_revision": actor_context['revision'] if actor_context else None,
             "exercise_rule_application": rule_application,
             "result": result, "usage": raw.get("usage"), "automatically_applied": False}

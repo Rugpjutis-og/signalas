@@ -98,6 +98,8 @@ def tick(repo, *, clock=None, monotonic=None):
     import thermometer_recheck
     from narrative_mapping import maybe_start as maybe_start_narrative_review
     maybe_start_narrative_review(repo)
+    from valare_direction import maybe_start as maybe_start_valare_direction
+    maybe_start_valare_direction(repo)
     from thermometer_followup import maybe_start
     maybe_start(repo)
     if thermometer_recheck.active(repo):

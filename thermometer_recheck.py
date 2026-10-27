@@ -148,12 +148,17 @@ def step(repo, *, deadline=None, monotonic=None):
             repo.write(STATE, state)
             return status(repo)
         target = state['targets'][state['cursor']]
+        direction_revision = target.get('valare_direction_revision')
         from optimized_analysis import enabled
         unit = (repo.analysis_units([[target['source'],target['id']]]).get((target['source'],target['id'])) if enabled(repo) else
                 next((r for r in repo.latest()['records'] if (r['source'],r['id'])==(target['source'],target['id'])),None))
         if not unit:
             return advance(repo, state, 'skipped')
         unit = repo.expand_unit(unit)
+        if direction_revision:
+            from valare_direction import REVISION, for_unit as direction_guidance
+            if direction_revision != REVISION or not direction_guidance(repo, unit, state['exercise_context']):
+                return advance(repo, state, 'skipped')
         if target.get('narrative_mapping_revision'):
             from narrative_mapping import run_target
             return run_target(repo, state, target, unit, deadline=deadline, monotonic=monotonic)
@@ -171,8 +176,8 @@ def step(repo, *, deadline=None, monotonic=None):
         if account_revision:
             if not actor or actor['revision'] != account_revision:
                 return advance(repo, state, 'skipped')
-        selected = None if account_revision else state.get('selection_category')
-        selected_categories = state.get('selection_categories')
+        selected = None if account_revision or direction_revision else state.get('selection_category')
+        selected_categories = None if direction_revision else state.get('selection_categories')
         if selected_categories:
             from scenario_supplement import current as current_supplement
             detail = current_supplement(repo)
@@ -183,7 +188,7 @@ def step(repo, *, deadline=None, monotonic=None):
         still_eligible = original and ((original['result'].get('thermometer_status') == 'classified' and
             original['result'].get('thermometer_category') == selected) if selected else
             original['result'].get('thermometer_status') in ELIGIBLE)
-        if account_revision:
+        if account_revision or direction_revision:
             still_eligible = bool(original and original.get('result'))
         if selected_categories:
             still_eligible = bool(original and original['result'].get('thermometer_status')=='classified'
@@ -199,6 +204,8 @@ def step(repo, *, deadline=None, monotonic=None):
                    'registry_version': state['registry_version'], 'thermometer_rules_version': VERSION,
                    'requested_model': MODEL, 'review_run_id': state['run_id'], 'vision_revision': VISION_REVISION}
         if actor:binding['exercise_actor_context_revision']=actor['revision']
+        if direction_revision:
+            binding['review_run_id'] += '/' + direction_revision
         scoring_review = target.get('scoring_rule_id')
         if scoring_review:
             from exercise_rule import for_unit as scoring_for_unit
@@ -208,7 +215,7 @@ def step(repo, *, deadline=None, monotonic=None):
         if state.get('scenario_supplement_review'):
             binding['scenario_supplement_review'] = state['scenario_supplement_review']
         result_name = analysis_result_name(binding)
-        preserve_previous = account_revision or state.get('preserve_previous')
+        preserve_previous = account_revision or direction_revision or state.get('preserve_previous')
         audit_name = ('account-recheck-result/' if account_revision else 'direction-recheck-result/')+state['run_id']+'/'+result_name.split('/')[-1] if preserve_previous else None
         state.update(status='category_running' if selected else 'running', inflight=audit_name or result_name, updated_at=now())
         if audit_name:state['inflight_analysis']=result_name
@@ -261,6 +268,12 @@ def step(repo, *, deadline=None, monotonic=None):
             if field in original:
                 result[field] = copy.deepcopy(original[field])
         result['result']['narrative_analysis'] = copy.deepcopy(original['result']['narrative_analysis'])
+        if direction_revision:
+            result['reviewed_image_refs'] = sorted(set(result.get('reviewed_image_refs', [])) |
+                                                  set(original.get('reviewed_image_refs', [])))
+            for field in ('narrative_review', 'narrative_mapping_revision'):
+                if field in original:
+                    result[field] = copy.deepcopy(original[field])
         classified = result['result']['thermometer_status'] == 'classified'
         if not preserve_previous or classified:
             repo.append_analysis(result)

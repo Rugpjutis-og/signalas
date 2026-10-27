@@ -282,7 +282,8 @@ def drain(repo, *, seconds=235, monotonic=None):
     collection_job = collection_status(repo)
     from exercise_accounts import needs_service as account_setup_pending
     from narrative_mapping import needs_service as narrative_setup_pending
-    if account_setup_pending(repo) or narrative_setup_pending(repo) or collection_job.get('status') == 'running' or (schedule and collection_due(schedule, datetime.now(timezone.utc))):
+    from valare_direction import needs_service as valare_setup_pending
+    if account_setup_pending(repo) or narrative_setup_pending(repo) or valare_setup_pending(repo) or collection_job.get('status') == 'running' or (schedule and collection_due(schedule, datetime.now(timezone.utc))):
         # An open authenticated app can service overdue collection before more paid calls.
         # The same shared lease and persisted retry deadline still protect all workers.
         outcome = tick(repo, monotonic=clock)

@@ -110,6 +110,7 @@ class MappingTests(unittest.TestCase):
     def test_normal_analysis_receives_mapping_without_changing_primary_model(self):
         import openai_analysis as ai
         value = {'narrative_analysis': self.value, 'direction': 'neutral', 'reason': 'Nuomonė.',
+                 'valare_stabilizing_trigger': 'none',
                  'reason_codes': ['N1'], 'missing_context': '', 'evidence': self.unit['text']}
         response = {'status': 'completed', 'model': 'gpt-6-luna', 'output': [{'type': 'message',
             'content': [{'type': 'output_text', 'text': json.dumps(value)}]}]}
