@@ -137,7 +137,7 @@ def step(repo, *, deadline=None, monotonic=None):
             result = repo.read(state['inflight'])
             if not result and state.get('inflight_analysis'):
                 result = repo.read(state['inflight_analysis'])
-            outcome = ('failed' if result.get('processing_disposition') == 'needs_review'
+            outcome = result.get('narrative_review_outcome') or ('failed' if result.get('processing_disposition') == 'needs_review'
                        else 'classified' if result['result']['thermometer_status'] == 'classified'
                        else 'review_required') if result else 'failed'
             return advance(repo, state, outcome, result)
@@ -154,6 +154,9 @@ def step(repo, *, deadline=None, monotonic=None):
         if not unit:
             return advance(repo, state, 'skipped')
         unit = repo.expand_unit(unit)
+        if target.get('narrative_mapping_revision'):
+            from narrative_mapping import run_target
+            return run_target(repo, state, target, unit, deadline=deadline, monotonic=monotonic)
         from thermometer_review import key
         manual = saved(repo).get(key(unit['source'], unit['id']))
         if (fingerprint(unit) != target['content_fingerprint'] or

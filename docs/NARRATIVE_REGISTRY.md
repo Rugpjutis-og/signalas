@@ -72,3 +72,27 @@ Pasirenkama headless vizualinė patikra: `NODE_PATH=<playwright paketų kataloga
 ## Patvirtinti subnaratyvai (2026-10-24)
 
 Vartotojo patvirtintas ryšys „pagrindinis naratyvas → subnaratyvas“ saugomas atskirai nuo 35 tipų registro Neon bazėje. N007 pavadinimas atnaujintas į „Sąmoningai slepiama ir nutylima tiesa“. Informacijos trūkumo teiginys gali būti teminė N007 atšaka, bet savaime neįrodo sąmoningo slėpimo. Pagrindinio teiginio tiesioginė atitiktis ir teminis grupavimas neskaičiuojami kaip tas pats rodiklis; palaikymas ir termometro kryptis nepaveldimi. Nauji vėliau pasiūlyti subnaratyvai vis tiek laukia administratoriaus patvirtinimo. Duomenų rinkimo ar pakartotinės mokamos analizės vien priskyrimui nereikia.
+# VALARE scenarijaus N031 interpretacija · 2026-10-27
+
+Organizatoriaus patvirtintas VALARE judėjimo, jo respublikos, alternatyvios valdžios
+ar Valarės šaulių palaikymas yra N031 „Alternatyvi jėga yra vienintelė išgelbėtoja“
+scenarijaus atmaina. Pažodinių žodžių „vienintelė“ ar „išgelbėtoja“ nereikia.
+Vien paminėjimas, citata, klausimas, žinia ar paneigimas nėra palaikymas.
+`narrative_mapping.py` saugo atitikmenis ir interpretaciją; ji galioja tik
+`diaspora.sauliai.lt` ir su išsaugotu pradiniu kontekstu susietam VALARE patikslinimui.
+Temų, tipų ID ir bendro registro versija nekeičiami.
+
+Nauja įprasta analizė gauna šią interpretaciją. Atskirai autorizuota Neon
+`narrative-mapping-review.json` užklausa sudaro vienkartinę jau analizuotų,
+aktyviame manifeste esančių VALARE minimų vienetų eilę (naujausi pirmiausia).
+Atrankai naudojamas tekstas ir ankstesni naratyvo įrodymai; tai nėra automatinis
+priskyrimas ir ne pažadas aptikti dar neperskaitytus pavadinimus vien vaizduose.
+Tikslinė peržiūra naudoja esamą Sol „medium“ juostą ir bendrą vykdymo blokavimą;
+įprasta analizė tęsiama pagal esamą 3:1 planavimą.
+
+Mokamas atsakymas turi tik naratyvų schemą. Sėkmingai patikrinus atnaujinamas tik
+`result.narrative_analysis` ir jo kilmės metaduomenys. Termometro rezultatas,
+ankstesni jo paaiškinimai ir rankiniai sprendimai nekeičiami. Neaiškus, netinkamas
+ar nutrūkęs vertinimas palieka ankstesnį priskyrimą ir atskirą mažą audito įrašą;
+sėkmingai įrašytas rezultatas po nutrūkimo pakartotinai neapmokestinamas.
+

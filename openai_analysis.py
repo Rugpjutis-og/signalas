@@ -148,6 +148,10 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
                    for_unit(root, unit, prepared['exercise_context']))
     if supplements:
         prepared['scenario_supplements'] = supplements
+    from narrative_mapping import for_unit as narrative_mapping_for_unit
+    mapping = None if thermometer_only else narrative_mapping_for_unit(root, unit, prepared['exercise_context'])
+    if mapping:
+        prepared['narrative_scenario_mapping'] = mapping
     from exercise_accounts import for_unit as account_context_for_unit
     actor_context = account_context_for_unit(root, unit)
     if actor_context:
@@ -207,6 +211,8 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
                  "rules_version": THERMOMETER_RULES_VERSION, "guidance_revision": GUIDANCE_REVISION,
                  "communication_examples": COMMUNICATION_EXAMPLES}
     dynamic = {"analysis_input": prepared, "pending_claims": [] if thermometer_only else pending_claims(unit, root, catalog)}
+    if mapping:
+        instructions += '\n' + mapping['interpretation']
     schema = analysis_schema(catalog)
     if thermometer_only:
         instructions += "\nVertink tik komunikacinę kryptį; naratyvų priskyrimų šiame bandyme nepateik."
@@ -325,6 +331,7 @@ def analyze(unit, context=None, root=ROOT, expanded_narratives=None, *, timeout=
             "source_reference": source_reference(unit), "original_text": unit.get("text", ""),
             "exercise_context": prepared["exercise_context"], "coverage": prepared["coverage"],
             "scenario_supplement_ids": [s['id'] for s in supplements],
+            "narrative_mapping_revision": mapping['revision'] if mapping else None,
             "exercise_actor_context_revision": actor_context['revision'] if actor_context else None,
             "exercise_rule_application": rule_application,
             "result": result, "usage": raw.get("usage"), "automatically_applied": False}
