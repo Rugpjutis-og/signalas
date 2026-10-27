@@ -82,7 +82,7 @@ class MappingTests(unittest.TestCase):
         payload = json.loads(opener.open.call_args.args[0].data)
         self.assertEqual(payload['model'], retry.MODEL)
         self.assertEqual(payload['reasoning']['effort'], 'medium')
-        self.assertEqual(payload['text']['format']['schema'], registry.schema(self.catalog))
+        self.assertEqual(payload['text']['format']['schema'], mapping.review_schema(self.catalog))
         self.assertNotIn('direction', payload['text']['format']['schema']['properties'])
         self.assertNotIn('exercise_actor_context', json.dumps(payload))
         self.assertIn('Vien pavadinimas', payload['instructions'])
@@ -126,6 +126,26 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(result['result']['thermometer_category'], 'neutral')
         dynamic = json.loads(payload['input'][-1]['content'][0]['text'])
         self.assertEqual(dynamic['analysis_input']['narrative_scenario_mapping']['type_id'], 'N031')
+
+    def test_source_evidence_restores_only_whitespace_and_optional_wrapper(self):
+        text = 'Remiu\u00a0Valarės\r\nšaulius.'
+        self.assertEqual(mapping.source_excerpt('„Remiu Valarės\nšaulius.“', text), text)
+        self.assertEqual(mapping.source_excerpt('Remiu kitus šaulius.', text), 'Remiu kitus šaulius.')
+        self.assertEqual(mapping.source_excerpt('I support Valare.', text), 'I support Valare.')
+
+    def test_targeted_review_retains_other_independent_narratives(self):
+        self.unit['text'] += ' Kitas savarankiškas teiginys.'
+        self.original['result']['narrative_analysis'] = {'match_status': 'matched', 'matches': [{
+            'type_id': 'N007', 'stance': 'quote', 'evidence': 'Kitas savarankiškas teiginys.',
+            'instance_entities': {k: '' for k in registry.ENTITY_KEYS}}], 'proposals': [], 'uncertainty_reason': ''}
+        previous = copy.deepcopy(self.original['result']['narrative_analysis']['matches'][0])
+        self.job()
+        with patch.object(mapping, 'analyze_narratives', return_value=self.response()):
+            state = retry.step(self.repo)
+        self.assertEqual(state['narrative_updated'], 1)
+        saved = next(v for k, v in self.db.items() if k.startswith('analysis-result/'))
+        self.assertEqual(saved['result']['narrative_analysis']['matches'][0], previous)
+        self.assertEqual(saved['result']['narrative_analysis']['matches'][1]['type_id'], 'N031')
 
     def test_narrative_response_rejects_invented_evidence_and_defers_unread_media(self):
         for missing in (False, True):

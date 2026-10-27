@@ -90,8 +90,13 @@ priskyrimas ir ne pažadas aptikti dar neperskaitytus pavadinimus vien vaizduose
 Tikslinė peržiūra naudoja esamą Sol „medium“ juostą ir bendrą vykdymo blokavimą;
 įprasta analizė tęsiama pagal esamą 3:1 planavimą.
 
-Mokamas atsakymas turi tik naratyvų schemą. Sėkmingai patikrinus atnaujinamas tik
-`result.narrative_analysis` ir jo kilmės metaduomenys. Termometro rezultatas,
+Mokamas istorinis atsakymas turi tik vieno N031 tipo schemą, be naujų pasiūlymų.
+Sėkmingai patikrinus atnaujinamas šio tipo priskyrimas `result.narrative_analysis`
+ir jo kilmės metaduomenys; kiti nepriklausomi naratyvai ir pasiūlymai išsaugomi.
+Tą patį tikslų įrodymą turintis ankstesnis priskyrimas pakeičiamas N031;
+dalinis įrodymų persidengimas paliekamas peržiūrai. Šaltinio ištraukose galima
+atkurti tik originalius tarpus/eilučių lūžius ar pašalinti pridėtas išorines kabutes;
+žodžiai, skyryba ir kalba nekeičiami. Termometro rezultatas,
 ankstesni jo paaiškinimai ir rankiniai sprendimai nekeičiami. Neaiškus, netinkamas
 ar nutrūkęs vertinimas palieka ankstesnį priskyrimą ir atskirą mažą audito įrašą;
 sėkmingai įrašytas rezultatas po nutrūkimo pakartotinai neapmokestinamas.
