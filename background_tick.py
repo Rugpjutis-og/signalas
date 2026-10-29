@@ -96,6 +96,8 @@ def tick(repo, *, clock=None, monotonic=None):
         state = enqueue(repo)
         retried = True
     import thermometer_recheck
+    from official_sources import maybe_activate as maybe_activate_official_sources
+    maybe_activate_official_sources(repo)
     from narrative_mapping import maybe_start as maybe_start_narrative_review
     maybe_start_narrative_review(repo)
     from valare_direction import maybe_start as maybe_start_valare_direction

@@ -360,7 +360,7 @@ class Repository:
             FROM signalas_state WHERE scope=$1 AND (name LIKE 'analysis-result/%' OR
                 name IN ('openai-analysis-pilot.json','live-context.json','dashboard-period.json',
                          'thermometer-reviews.json','narrative-registry-state.json','narrative-subnarratives.json',
-                         'analysis-context-supplement.json','collection-cutoff.json'))''', [self.scope])['rows']
+                         'analysis-context-supplement.json','collection-cutoff.json','official-exercise-sources.json'))''', [self.scope])['rows']
         return hashlib.sha256(json.dumps([self.collected_at(), rows]).encode()).hexdigest()
 
     def __truediv__(self, name):

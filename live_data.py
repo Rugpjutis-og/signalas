@@ -192,6 +192,8 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
     discussions = DiscussionIndex(packet['records'])
     from thermometer_review import applicable, key as review_key, saved as saved_reviews
     manual_reviews = saved_reviews(root)
+    from official_sources import assessment as organizer_source_assessment, current as official_source_rule
+    source_rule = official_source_rule(root)
     start, end = bounds(packet, period, root, start_date=start_date, end_date=end_date)
     period = (end.date() - start.date()).days
     rows = []
@@ -210,6 +212,7 @@ def thermometer(period=None, root=ROOT, *, start_date=None, end_date=None):
                       "reason_codes": result.get("reason_codes", []) if current_rules else [],
                       "rules_version": analysis.get("thermometer_rules_version") if analysis else None,
                       "evidence": [{"kind": "image" if result["evidence"].startswith("VAIZDAS[") else "text", "quote": result["evidence"]}] if current_rules and result.get("evidence") else []}
+        assessment = organizer_source_assessment(root, record, assessment, rule=source_rule)
         manual = manual_reviews.get(review_key(record['source'], record['id']))
         if applicable(manual, discussions.expand(record), context):
             assessment = {"category": manual['category'], "status": "assessed", "method": "manual_review",
